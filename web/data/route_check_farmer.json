@@ -1,0 +1,13 @@
+{
+ "valid": true,
+ "length_m": 0.2,
+ "start_m": 0.0,
+ "end_m": 0.0,
+ "outside_m": 0.0,
+ "outside_share": 0.0,
+ "canopy_m": 0.0,
+ "forbidden_m": 0.0,
+ "targets": 0,
+ "visited": 0,
+ "not_visited": []
+}
