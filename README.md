@@ -9,7 +9,7 @@ global block / row IDs → measurements → two walking routes → interactive w
 | Walking route, inspector (row gaps + waste) | [`route.geojson`](route.geojson) — one LineString, EPSG:32635, `length_m` |
 | Walking route, farmer (waste only) | [`route_waste.geojson`](route_waste.geojson) |
 | Measurements by `vineyard_id` / `row_id` | [`measurements.csv`](measurements.csv) |
-| Web interface | `web/` — [live link: TBD before submission] · local: `python -m http.server -d web 8000` |
+| Web interface | **https://viteokk.github.io/vineyard-ai/** (GitHub Pages from `web/`, branch `gh-pages`) · local: `python -m http.server -d web 8000` |
 | Model weights | [yolov8n-seg-vineyard-canopy.pt (GitHub release v0.1-weights)](https://github.com/Viteokk/vineyard-ai/releases/tag/v0.1-weights) |
 | Pre-annotations uploaded to Marcaj | `out/upload/*.zip` (CVAT for images 1.1, built by `pipeline/export_cvat.py`) |
 
