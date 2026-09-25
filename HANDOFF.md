@@ -51,6 +51,24 @@ după fiecare sarcină: rulare → rezultat → commit + push.
 | 12:30–13:30 | rezervă |
 | **≤ 14:00** | **PUBLISH** (o singură dată) → corectură în Marcaj |
 
+## Stare sâmbătă 02:10 (după AUDIT_night1 P1–P4 și lista A–F)
+- **Traseu inspector VALID** (`route.geojson`, `out/route_check_inspector.json`): 38,48 km, 1,46 % în afară (limita 2 %),
+  START 0,0 m, 0 m prin coroane/forbidden, 2 421 / 3 513 ținte (69 %), 78 % din golurile ≥ 5 m. Bugetul intern e 1,7 %
+  (măsurat exact ca validate.py). Acoperire ≥ 92 % **nu e posibilă** sub regula de 2 %: fiecare trecere între inter-rânduri
+  costă ~0,5 m „în afară”; turul complet (3 345 opriri) iese la 2,8 %.
+- Cauzele erorii inițiale (10 % în afară): rasterul cv2 umplea o celulă în plus pe două laturi + segmentele dintre celule
+  tăiau colțurile poligonului → acum test exact Shapely pe centrele celulelor și mers doar la ≥ 0,35 m în interior
+  (`grid-v5`), celule la < 0,36 m de coroane blocate.
+- Timp traseu: ~5 min (matrice de distanțe paralelă 2 min, TSP 60 s, buclă de buget cu cache pe segmente); re-rulări
+  pe aceleași detecții: ~3 min (cache `out/route_cache_inspector.npz`).
+- Ținte: prag 3 m (recall 100 % pe exemple; la 5 m doar 62 %); 97 goluri de la capete de rând marcate `reachable=false`.
+- Traseu fermier valid, gol (0 deșeuri automate; `out/waste_checklist.csv` = listă de verificat manual în Marcaj).
+- Web: ambele trasee, ținte (de la zoom 0.5), validare, cifre; local `python -m http.server -d web 8000`.
+- README, Dockerfile, `export_cvat.py --use-examples` (oprit până confirmă mentorii), release weights v0.1.
+- **De făcut pentru Marcaj:** 1) dry run cu `out/upload_test/test_r021_c012_r006_c004.zip` → raport import → Remove all;
+  2) upload cele 9 ZIP-uri din `out/upload/` unul câte unul (raport la fiecare) → Files = 311; 3) PUBLISH ≤ 14:00.
+- **De decis:** repo public + GitHub Pages (linkul site-ului în README).
+
 ## Termene (ora Chișinăului)
 | Când | Ce |
 |---|---|
