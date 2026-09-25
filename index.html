@@ -250,6 +250,7 @@ input[type=range]{accent-color:var(--accent);width:100%}
 <div class="toast" id="toast" role="status" hidden></div>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/proj4js/2.11.0/proj4.js"></script>
 <script>
 (async () => {
 'use strict';
@@ -351,8 +352,34 @@ const ROUTES = {};
 for (const [k, r] of Object.entries(EXTRA.routes)) {
   if (!r.fc?.features?.length) continue;
   const p = r.fc.features[0].properties || {};
-  ROUTES[k] = {...r, p, len: p.length_m || 0,
+  ROUTES[k] = {...r, key: k, p, len: p.length_m || 0,
     layer: L.layerGroup([geo(r.fc, {color: '#FFFFFF', weight: 7, opacity: .9}), geo(r.fc, {color: r.color, weight: 3.5})])};
+}
+/* EPSG:326xx (UTM north) -> WGS84 for GPX / GPS; the zone comes from the GeoJSON crs, nothing is hard-coded */
+const crsName = (EXTRA.routes.blue.fc || EXTRA.routes.red.fc || EXTRA.study || {}).crs?.properties?.name || '';
+const utmZone = (crsName.match(/EPSG::?(326)(\d\d)/) || [])[2];
+const UTM = (window.proj4 && utmZone) ? `+proj=utm +zone=${+utmZone} +datum=WGS84 +units=m +no_defs` : null;
+const toWGS = (x, y) => proj4(UTM, 'WGS84', [x, y]);          // -> [lon, lat]
+const fromWGS = (lon, lat) => proj4('WGS84', UTM, [lon, lat]); // -> [x, y]
+function gpxFor(key) {
+  const r = ROUTES[key]; if (!r || !UTM) return null;
+  const esc = s => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;');
+  const stamp = new Date().toISOString();
+  const wps = (r.tg?.features || []).map(f => ({...f.properties, xy: f.geometry.coordinates})).filter(t => t.order).sort((a, b) => a.order - b.order);
+  const out = [`<?xml version="1.0" encoding="UTF-8"?>`,
+    `<gpx version="1.1" creator="vineyard-ai Field Planner" xmlns="http://www.topografix.com/GPX/1/1">`,
+    `<metadata><name>${esc(r.name)} · ${esc(r.sub)}</name><desc>length_m=${Math.round(r.len)} · targets ${r.p.targets_visited ?? 0}/${r.p.targets_total ?? 0} · source EPSG:326${utmZone}</desc><time>${stamp}</time></metadata>`];
+  for (const t of wps) { const [lon, lat] = toWGS(t.xy[0], t.xy[1]); out.push(`<wpt lat="${lat.toFixed(7)}" lon="${lon.toFixed(7)}"><name>${esc(t.id)}</name><desc>#${t.order} ${t.type === 'waste' ? 'waste' : 'gap ' + (t.gap_m ?? '') + ' m'} · ${esc(t.vineyard_id || '')}${t.row_id ? ' / ' + esc(t.row_id) : ''}</desc><type>${t.type}</type></wpt>`); }
+  out.push(`<trk><name>${esc(r.name)}</name><type>${esc(r.p.mode || key)}</type><trkseg>`);
+  for (const [x, y] of r.fc.features[0].geometry.coordinates) { const [lon, lat] = toWGS(x, y); out.push(`<trkpt lat="${lat.toFixed(7)}" lon="${lon.toFixed(7)}"></trkpt>`); }
+  out.push(`</trkseg></trk></gpx>`);
+  return {name: r.file.replace('.geojson', '.gpx'), text: out.join('\n'), waypoints: wps.length};
+}
+function downloadText(name, text, mime = 'application/octet-stream') {
+  try {
+    const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([text], {type: mime})); a.download = name;
+    document.body.appendChild(a); a.click(); setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 2000); return true;
+  } catch (e) { return false; }
 }
 let targetsLayer = null;
 const TG = (EXTRA.routes.blue.tg?.features || EXTRA.routes.red.tg?.features || []).map(f => ({...f.properties, x: f.geometry.coordinates[0], y: f.geometry.coordinates[1]}));
@@ -520,7 +547,7 @@ function routeCard(r) {
     [ck.start_m <= 5 && ck.end_m <= 5, 'Pleacă și revine la START', `${fmt(ck.start_m, 1)} / ${fmt(ck.end_m, 1)} m · max 5 m`],
     [ck.canopy_m === 0 && ck.forbidden_m === 0, 'Fără coroane / forbidden', `${fmt(ck.canopy_m, 1)} / ${fmt(ck.forbidden_m, 1)} m`],
     [ck.targets === 0 || ck.visited >= 0.9 * ck.targets, 'Ținte atinse la ≤ 2 m', `${fmt(ck.visited)} / ${fmt(ck.targets)}`]] : [];
-  return `<section><div class="sec-title"><h2 style="display:flex;align-items:center;gap:8px"><span style="width:14px;height:4px;border-radius:2px;background:${r.color}"></span>Traseu ${r.name.toLowerCase()} · ${r.sub}</h2><span class="mono">${r.file}</span></div>
+  return `<section><div class="sec-title"><h2 style="display:flex;align-items:center;gap:8px"><span style="width:14px;height:4px;border-radius:2px;background:${r.color}"></span>Traseu ${r.name.toLowerCase()} · ${r.sub}</h2><span style="display:flex;gap:6px;align-items:center"><span class="mono">${r.file}</span>${UTM ? `<button class="btn" type="button" data-act="gpx" data-route="${r.key}" style="min-height:30px;padding:0 10px;font-size:12px" title="Descarcă traseul + țintele pentru GPS / telefon">GPX</button>` : ''}</span></div>
     <div class="stats"><div class="stat"><div class="v num" style="color:${r.color}">${kmH(r.len)}</div><div class="l">length_m = ${fmt(Math.round(r.len))}</div></div>
       <div class="stat"><div class="v num">${min >= 60 ? fmt(Math.floor(min / 60)) + '<small>h</small> ' + fmt(min % 60) : fmt(min)}<small>min</small></div><div class="l">pe jos, la 4 km/h</div></div>
       <div class="stat"><div class="v num">${fmt(p.targets_visited ?? 0)} / ${fmt(p.targets_total ?? 0)}</div><div class="l">ținte vizitate (≤ 2 m)</div></div>
@@ -653,6 +680,7 @@ function goRow(id) {
 function exportData(kind) {
   const s = cur(), u = s.sum;
   if (kind === 'summary') return {name: 'summary.json', note: `Rezumatul calculat din ${s.name.toLowerCase()}.`, text: JSON.stringify({...u, row_lengths: `[${(u.row_lengths || []).length} rânduri]`}, null, 2)};
+  if (kind === 'gpx' || kind === 'gpx_waste') { const g = gpxFor(kind === 'gpx' ? 'blue' : 'red'); return g ? {name: g.name, note: `Track = traseul, ${g.waypoints} waypoints = țintele în ordinea vizitării (WGS84, pentru GPS / telefon).`, text: g.text} : {name: 'gpx', note: 'Traseul nu e calculat încă sau CRS-ul nu e UTM.', text: ''}; }
   if (kind === 'route' || kind === 'route_waste') { const r = ROUTES[kind === 'route' ? 'blue' : 'red']; return {name: kind + '.geojson', note: r ? `Traseu ${r.name.toLowerCase()} (${r.sub}), ${fmt(Math.round(r.len))} m, un LineString EPSG:32635.` : 'Traseul nu e calculat încă; mai jos e punctul START.', text: JSON.stringify(r ? r.fc : EXTRA.start, null, 2)}; }
   const L1 = ['level,vineyard_id,row_id,length_m,canopy_m2,canopy_ha,interrow_m2,interrow_ha',
     `total,,,${u.total_row_length_m},${u.canopy_area_m2},${u.canopy_area_ha},${u.interrow_area_m2},${u.interrow_area_ha}`];
@@ -661,7 +689,7 @@ function exportData(kind) {
 }
 function openExport(kind = 'csv') {
   const d = exportData(kind);
-  $('#ex-tabs').innerHTML = [['csv', 'measurements.csv'], ['summary', 'summary.json'], ['route', 'route.geojson'], ['route_waste', 'route_waste.geojson']].map(([k, l]) => `<button type="button" data-exk="${k}" aria-pressed="${k === kind}">${l}</button>`).join('');
+  $('#ex-tabs').innerHTML = [['csv', 'measurements.csv'], ['summary', 'summary.json'], ['route', 'route.geojson'], ['route_waste', 'route_waste.geojson'], ['gpx', 'route.gpx'], ['gpx_waste', 'route_waste.gpx']].map(([k, l]) => `<button type="button" data-exk="${k}" aria-pressed="${k === kind}">${l}</button>`).join('');
   $('#ex-title').textContent = d.name; $('#ex-note').textContent = d.note; $('#ex-text').value = d.text;
   $('#ex-veil').hidden = false; $('#ex-veil [data-act="close"]').focus();
 }
@@ -692,6 +720,7 @@ document.addEventListener('click', e => {
     case 'layers': { const p = $('#layers'); p.hidden = !p.hidden; b.setAttribute('aria-expanded', !p.hidden); if (!p.hidden) $('#insp').hidden = true; return; }
     case 'theme': { const o = ['auto', 'light', 'dark'], n = o[(o.indexOf(store.get('theme', 'auto')) + 1) % 3]; store.set('theme', n); return applyTheme(n); }
     case 'export': return openExport('csv');
+    case 'gpx': { const g = gpxFor(b.dataset.route); if (!g) return toast('GPX indisponibil'); if (downloadText(g.name, g.text, 'application/gpx+xml')) toast(`${g.name} descărcat · ${g.waypoints} ținte`); else openExport(b.dataset.route === 'blue' ? 'gpx' : 'gpx_waste'); return; }
     case 'close': $('#ex-veil').hidden = true; return;
     case 'copy-ex': return copy($('#ex-text').value, $('#ex-text'));
     case 'copy-repro': return copy($('#repro').innerText.replace(/^Copiază\s*/, ''), null);
