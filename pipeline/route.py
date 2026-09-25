@@ -36,6 +36,7 @@ from scipy.sparse import coo_matrix
 from scipy.sparse.csgraph import dijkstra
 from shapely.geometry import LineString, Point, shape
 from shapely.ops import unary_union
+from shapely.strtree import STRtree
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 import config as C  # noqa: E402
@@ -43,7 +44,7 @@ from pipeline.to_geojson import convert  # noqa: E402
 
 RES = 0.5
 COST_CORE, COST_RIM, COST_LINK = 1.0, 2.5, 20.0
-VERSION = "grid-v4"       # bump when the cost grid changes: invalidates the cached distance matrix
+VERSION = "grid-v5"       # bump when the cost grid changes: invalidates the cached distance matrix
 INSET = 0.35              # walk only on cells >= this far inside inter-rows / passages, so the straight segments
                           # between cell centres (<= 0.71 m) never cut a polygon corner (validate.py is the referee)
 LINK_REACH = 6.0          # connector cells allowed within this distance of inter-rows / passages (m)
@@ -101,7 +102,8 @@ def build_cost(grid, inter, passages, canopies, forbidden, study, blocks):
     cost[region > 0] = COST_LINK                     # outside for the 2 % rule (headlands, row bands, edges)
     cost[core > 0] = COST_CORE
     cost[grid.raster(canopies) > 0] = np.inf
-    cost[grid.raster(forbidden) > 0] = np.inf
+    cost[grid.exact(canopies.buffer(INSET + 0.01)) > 0] = np.inf   # keep >= INSET from every canopy: a 0.71 m
+    cost[grid.raster(forbidden) > 0] = np.inf                       # diagonal step can then never clip one
     return cost
 
 
@@ -171,13 +173,32 @@ REACH_M = 1500.0          # Dijkstra limit per stop (metres of cost); pairs beyo
 _G = {}
 
 
-def _init_worker(g, nodes, reach):
-    _G.update(g=g, nodes=np.asarray(nodes), reach=reach)
+def _init_worker(g, nodes, reach, allowed=None, rc=None, grid=None, is_out=None):
+    _G.update(g=g, nodes=np.asarray(nodes), reach=reach, rc=rc, grid=grid, is_out=is_out)
+    if allowed is not None:
+        parts = list(getattr(allowed, "geoms", [allowed]))
+        _G.update(parts=parts, tree=STRtree(parts))
 
 
 def _leg_job(args):
+    """Cell path of one leg + its length and the metres outside inter-rows/passages measured exactly like
+    pipeline/validate.py (shapely difference against the allowed polygons)."""
     src, dst, limit = args
-    return leg(_G["g"], src, dst, limit)
+    seq = leg(_G["g"], src, dst, limit)
+    path = [src] + seq
+    rc = _G["rc"]
+    if len(path) < 2:
+        return seq, 0.0, 0.0
+    step = np.hypot(*(rc[path[1:]] - rc[path[:-1]]).T) * RES
+    length = float(step.sum())
+    io = _G["is_out"]
+    if not (io[path[1:]] | io[path[:-1]]).any():         # entirely on core cells: inside by construction
+        return seq, length, 0.0
+    xy = _G["grid"].to_xy(rc[path, 0], rc[path, 1])
+    line = LineString(xy)
+    near = [_G["parts"][i] for i in _G["tree"].query(line)]
+    outside = line.difference(unary_union(near)).length if near else line.length
+    return seq, length, float(outside)
 
 
 def _row(src):
@@ -222,7 +243,8 @@ def main() -> None:
     ap.add_argument("--out", default="", help="default: route.geojson / route_waste.geojson in the repo root")
     ap.add_argument("--targets-out", default="", help="default: out/targets_<mode>.geojson (with visit order)")
     ap.add_argument("--time", type=int, default=60, help="TSP time limit (s) for the first solve")
-    ap.add_argument("--max-outside", type=float, default=0.015, help="max share of length outside inter-rows + passages")
+    ap.add_argument("--max-outside", type=float, default=0.017, help="max share of length outside inter-rows + passages "
+                                                                       "(official limit 2 %%; measured like validate.py)")
     ap.add_argument("--recompute", action="store_true", help="ignore the cached distance matrix")
     ap.add_argument("--workers", type=int, default=max(1, (os.cpu_count() or 2) - 1), help="parallel Dijkstra workers")
     ap.add_argument("--reach", type=float, default=REACH_M, help="Dijkstra search limit per stop (m); farther pairs are"
@@ -276,6 +298,8 @@ def main() -> None:
     keep = sorted(alive)
     anchors, members = [anchors[i] for i in keep], [members[i] for i in keep]
     nodes = [s_node] + anchors
+    value = [1.0] + [max(10.0 if m["properties"]["type"] == "waste" else (3.0 if m["properties"].get("gap_m", 0) >= 5 else 1.0)
+                     for m in ms) for ms in members]
     print(f"{a.mode}: {len(feats)} targets -> {len(anchors)} stops ({len(unreachable)} unreachable)  ({time.time() - t0:.0f}s)")
 
     # distance matrix (cached: same inputs -> same nodes)
@@ -303,20 +327,18 @@ def main() -> None:
     tlimit = a.time
     leg_cache = {}
     ctx = mp.get_context("fork") if hasattr(os, "fork") else mp.get_context()
-    pool = ctx.Pool(a.workers, initializer=_init_worker, initargs=(g, nodes, REACH_M))
-    for it in range(15):
+    allowed_geom = unary_union([inter, passages]).buffer(0.01)
+    pool = ctx.Pool(a.workers, initializer=_init_worker, initargs=(g, nodes, REACH_M, allowed_geom, rc, grid, is_out))
+    for it in range(40):
         sub = [0] + active
         order = [sub[i] for i in solve_tsp(Dw[np.ix_(sub, sub)], tlimit)] + [0]
         pairs = [(u, v) for u, v in zip(order, order[1:]) if (u, v) not in leg_cache]
-        for (u, v), seq in zip(pairs, pool.imap(_leg_job, [(nodes[u], nodes[v], Dw[u, v] + 1) for u, v in pairs], chunksize=16)):
-            leg_cache[(u, v)] = seq
+        for (u, v), res in zip(pairs, pool.imap(_leg_job, [(nodes[u], nodes[v], Dw[u, v] + 1) for u, v in pairs], chunksize=16)):
+            leg_cache[(u, v)] = res
         legs, cells = [], []
         for u, v in zip(order, order[1:]):
-            seq = leg_cache[(u, v)]
-            path = [nodes[u]] + seq
-            step = np.hypot(*(rc[path[1:]] - rc[path[:-1]]).T) * RES if len(path) > 1 else np.zeros(0)
-            outside = float(step[(is_out[path[1:]] | is_out[path[:-1]])].sum()) if len(path) > 1 else 0.0
-            legs.append((u, v, float(step.sum()), outside))
+            seq, length, outside = leg_cache[(u, v)]
+            legs.append((u, v, length, outside))
             cells.append(seq)
         total = sum(L for _, _, L, _ in legs)
         outside = sum(o for _, _, _, o in legs)
@@ -325,13 +347,17 @@ def main() -> None:
               f"  ({time.time() - t0:.0f}s)")
         if share <= a.max_outside or not active:
             break
-        # outside metres attributable to each stop = its incoming + outgoing legs; drop the worst 15 %
+        # outside metres attributable to each stop = its incoming + outgoing legs; drop the worst few %
         attr = {}
         for u, v, _, o in legs:
             attr[v] = attr.get(v, 0.0) + o
             attr[u] = attr.get(u, 0.0) + o
         attr.pop(0, None)
-        worst = sorted(active, key=lambda i: -attr.get(i, 0.0))[:max(3, int(len(active) * 0.15))]
+        excess = outside - a.max_outside * total
+        frac = min(0.12, max(0.03, excess / max(outside, 1e-9) * 0.6))   # proportional to how far over budget
+        # drop first the stops that cost the most outside metres per unit of value: long gaps (>= 5 m, the
+        # likely reference targets) and waste are worth more than short gaps
+        worst = sorted(active, key=lambda i: -attr.get(i, 0.0) / value[i])[:max(3, int(len(active) * frac))]
         active = [i for i in active if i not in set(worst)]
         tlimit = min(a.time, 10)
     pool.close()
