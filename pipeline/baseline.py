@@ -54,6 +54,12 @@ class P:  # tunable parameters (metres unless noted)
     merge_m: float = 0.30        # bridge along-row gaps up to this length (fragments of one plant)
     dilate_m: float = 0.05       # outline growth (reference is traced loosely)
     min_canopy_m2: float = 0.12
+    tree_spill: float = 0.7      # a row is NOT a vine row if crown pixels beside the band >= this share ...
+    tree_med: float = 0.8        # ... and its median canopy area >= this (m2): orchards, tree lines, scrub
+    tree_spill_strong: float = 0.85  # inside a vineyard tile only clear tree rows are dropped
+    tree_med_strong: float = 1.5
+    side_in: float = 0.6         # side band (m from the axis) used to measure crown spill
+    side_out: float = 1.1
     split_len: float = 99.0      # blobs longer than this along the row are split; off by default: the
                                  # reference keeps connected blobs whole (p90 length 3-5 m) ...
     split_piece: float = 1.2     # ... into pieces of about this length
@@ -164,6 +170,7 @@ class Row:
     x1: float
     slope: float = 0.0            # small residual slope in rotated frame
     vines: list = field(default_factory=list)  # (xa, xb) along-row extents of detected canopies
+    spill: float = 0.0            # crown pixels beside the canopy band relative to inside it (trees spill)
 
     xc: float = 0.0               # x about which the slope is expressed
     open0: bool = False           # row runs out of the imagery (not a vine) at x0 / x1
@@ -329,6 +336,14 @@ def row_canopies(rc: np.ndarray, row: Row, Minv, tile_box, p: P) -> list[Polygon
     xx = np.arange(x0, x1)[None, :]
     band = (np.abs(yy - row.yat(xx)) <= hb).astype(np.uint8)
     cm = crop & band
+    ext = int(np.ceil(p.side_out / RES)) + 2
+    top2, bot2 = max(0, top - ext), min(H, bot + ext)
+    crop2 = rc[top2:bot2, x0:x1]
+    yy2 = np.arange(top2, bot2)[:, None]
+    d2 = np.abs(yy2 - row.yat(xx))
+    side = (d2 >= p.side_in / RES) & (d2 <= p.side_out / RES)
+    inb = d2 <= hb
+    row.spill = float(crop2[side].mean() / max(crop2[inb].mean(), 1e-3)) if side.any() else 0.0
     if not cm.any():
         return []
     if p.open_m > 0:                                # drop weed specks / thin grass
@@ -398,8 +413,49 @@ def drop_forbidden(objs: list[dict], tile: Tile, forbidden, p: P) -> list[dict]:
     return keep
 
 
+def vine_rows(rows: list[Row], row_polys: list[list[Polygon]], period: float, p: P, debug=None) -> list[bool]:
+    """Keep rows that look like grapevines, in runs of >= min_rows neighbouring rows.
+
+    Vines here are narrow (~0.6 m) with small canopies (median ~0.5 m2). Orchard / tree-line / scrub crowns are
+    2-4 m wide, so their vegetation spills far beyond the +-0.3 m canopy band, and the clipped blobs are big.
+    Measured on the reference and on visually checked tiles; rules only - no manual labels of Siret3.
+    """
+    ok = []
+    for row, polys in zip(rows, row_polys):
+        L = max((row.x1 - row.x0) * RES, 1e-6)
+        areas = np.array([g.area for g in polys]) * RES * RES if polys else np.zeros(1)
+        med, dens = float(np.median(areas)), len(polys) / L
+        # tree/orchard/meadow row: vegetation spills well beyond the canopy band AND the "canopies" are big.
+        # (continuous mature vine strips have big blobs but no spill; vines on grass spill but stay small)
+        good = not (row.spill >= p.tree_spill and med >= p.tree_med)
+        ok.append(good)
+        if debug is not None:
+            debug.append({"y": round(row.y), "len_m": round(L, 1), "n": len(polys), "med": round(med, 3),
+                          "p90": round(float(np.percentile(areas, 90)), 3), "dens": round(dens, 3), "spill": round(row.spill, 3), "vine": good})
+    # runs of neighbouring vine rows; isolated / short runs are not a vineyard
+    keep = [False] * len(rows)
+    i = 0
+    while i < len(rows):
+        if not ok[i]:
+            i += 1
+            continue
+        j = i
+        while j + 1 < len(rows) and ok[j + 1] and (rows[j + 1].y - rows[j].y) * RES <= p.max_neighbour * period:
+            j += 1
+        if j - i + 1 >= p.min_rows:
+            keep[i:j + 1] = [True] * (j - i + 1)
+        i = j + 1
+    if not any(keep):
+        return keep                                   # no vineyard on this tile
+    # Vineyard present: be conservative. Drawing a missed row in Marcaj is slow, deleting a false one is
+    # fast, so within a vineyard tile only clear tree rows go.
+    return [not (r.spill >= p.tree_spill_strong and float(np.median(np.array([g.area for g in ps]) * RES * RES
+                                                                          if ps else [0])) >= p.tree_med_strong)
+            for r, ps in zip(rows, row_polys)]
+
+
 # ---------------------------------------------------------------- main per-tile routine
-def process_tile(tile: Tile, p: P = P()) -> list[dict]:
+def process_tile(tile: Tile, p: P = P(), debug: list | None = None) -> list[dict]:
     img = tile.read()
     valid = valid_mask(img)
     e = exg(img)
@@ -427,8 +483,15 @@ def process_tile(tile: Tile, p: P = P()) -> list[dict]:
     rc = cv2.warpAffine((e > p.exg_crown).astype(np.uint8) & valid.astype(np.uint8), M, size,
                         flags=cv2.INTER_NEAREST)
     tile_box = box(0, 0, tile.width, tile.height)
-    for row in rows:
-        for poly in row_canopies(rc, row, Minv, tile_box, p):
+    row_polys = [row_canopies(rc, row, Minv, tile_box, p) for row in rows]
+    keep = vine_rows(rows, row_polys, period, p, debug)
+    rows = [r for r, k in zip(rows, keep) if k]
+    if len(rows) < p.min_rows:
+        return []
+    for polys, k in zip(row_polys, keep):
+        if not k:
+            continue
+        for poly in polys:
             objs.append({"label": "vineyard", "type": "polygon",
                          "points": list(poly.exterior.coords)[:-1], "attrs": {"vineyard_id": vid}})
 
