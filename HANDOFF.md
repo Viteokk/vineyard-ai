@@ -77,6 +77,10 @@ după fiecare sarcină: rulare → rezultat → commit + push.
   detecție — corect fizic), S7 ✓ `out/waste_checklist.csv` + `out/waste_checklist/README.md` (200 candidați cu miniaturi),
   S8 Dockerfile scris dar **docker nu e instalat pe acest Mac** (de testat pe alt calculator), README cu diagramă.
 - PRODUCT_PLAN (P1 → P2 → P6 → P4 → P5 → P3) începe după upload-ul în Marcaj; P5 (GPX + GPS) e deja gata.
+- **Traversarea rândurilor prin goluri e necesară.** Testat `route.py --no-row-crossing` (banda rândului impasabilă, mers
+  out-and-back): 361 opriri fără drum, rezultat 6,2 km / 24 opriri / 6 % în afară / 3 % acoperire → INVALID. Traseul
+  predat traversează doar prin goluri (fără butuci; 0 m prin coroane): 767 traversări × ~0,6 m = 513 m din cei 560 m „în afară”.
+  Argument la pitch: „nu trecem niciodată printr-o coroană; trecem între inter-rânduri doar unde lipsesc butuci."
 
 ## Termene (ora Chișinăului)
 | Când | Ce |
