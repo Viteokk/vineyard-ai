@@ -34,6 +34,7 @@ def main() -> None:
     ap.add_argument("--inp", default=str(C.OUT / "pre_global.xml"))
     ap.add_argument("--tiles", default=str(C.TILES))
     ap.add_argument("--targets", default=str(C.OUT / "targets.geojson"))
+    ap.add_argument("--json", default="", help="also write the check results here (for the web app)")
     a = ap.parse_args()
     fc = json.loads(Path(a.route).read_text())
     ok, msgs = True, []
@@ -72,11 +73,19 @@ def main() -> None:
                 f"(limit 2 %, target < 0.5 %)")
     msgs.append(f"INFO  through canopies: {line.intersection(canopies).length:.1f} m, "
                 f"through forbidden: {line.intersection(forbidden).length:.1f} m")
+    tg, miss = [], []
     if Path(a.targets).exists():
         tg = json.loads(Path(a.targets).read_text())["features"]
         miss = [f["properties"]["id"] for f in tg if line.distance(shape(f["geometry"])) > 2.0]
         msgs.append(f"INFO  targets visited (<= 2 m): {len(tg) - len(miss)} / {len(tg)}"
                     + (f"; not visited e.g. {miss[:8]}" if miss else ""))
+    if a.json:
+        Path(a.json).write_text(json.dumps({
+            "valid": bool(ok), "length_m": round(L, 1), "start_m": round(d0, 2), "end_m": round(d1, 2),
+            "outside_m": round(out_len, 1), "outside_share": round(share, 5),
+            "canopy_m": round(line.intersection(canopies).length, 1),
+            "forbidden_m": round(line.intersection(forbidden).length, 1),
+            "targets": len(tg), "visited": len(tg) - len(miss), "not_visited": miss}, indent=1))
     print("\n".join(msgs))
     print("ROUTE VALID" if ok else "ROUTE INVALID")
     sys.exit(0 if ok else 1)

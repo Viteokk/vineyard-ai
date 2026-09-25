@@ -12,6 +12,8 @@ decision for maximum score.** Official PDFs are in `../03_docs/` — they overri
 **Pre-annotations can be imported into Marcaj ONLY ONCE, before Publish (official target: Sat ~14:00; internal 12:00).**
 Dry run first: upload the example ZIP (05_examples), check the import, then Remove all.
 Route graph = interrow_area ∪ passage, avoiding vineyard canopies ∪ forbidden (official onboarding).
+**TWO ROUTES required (organiser update):** BLUE = inspector (row gaps / dead vines + waste) → `route.geojson`;
+RED = farmer (waste only) → `route_waste.geojson`. Web shows both, each with length, time @4 km/h, targets visited.
 
 ## Scoring (85% automatic, hidden subset of the 311 tiles)
 | Weight | What | Metric |

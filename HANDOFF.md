@@ -5,6 +5,52 @@ Challenge ales: **Marcaj — Vineyard AI Field Challenge** (premiu 30.000 MDL, u
 Obiectiv: punctaj MAXIM, strict după regulile oficiale (`../03_docs/*.pdf` au prioritate).
 Limba de comunicare cu echipa: română; cod/comentarii în engleză.
 
+## Echipă (actualizat sâmbătă 00:30): Vikea face TOT (Dev 1 + Dev 2), cu Claude Code. Dev 2 nu e inclus momentan.
+Sarcinile „Dev 2” de mai jos (targets, route ×2, validate, measurements, web) le face tot Vikea, în paralel cu antrenarea YOLO
+(care rulează în fundal pe GPU/MPS — nu porni o a doua antrenare/inferență grea pe GPU în același timp).
+
+## ⚠️ SCHIMBARE DE CERINȚĂ de la organizatori (vineri noapte) — DOUĂ TRASEE
+Organizatorii (Marcaj) au ajustat sarcina: aplicația trebuie să genereze și să afișeze **două trasee**:
+- **Traseu ALBASTRU — inspector de stat (AIPA)**: trece pe la TOATE țintele: butuci lipsă/morți (goluri) + deșeuri.
+- **Traseu ROȘU — fermier**: traseul optim DOAR pentru colectarea deșeurilor (pe baza rezultatelor inspecției).
+Ambele: START → ținte → START, doar pe interrow_area + passage, fără coroane/forbidden, EPSG:32635, cu length_m.
+Implementare: `pipeline/route.py --mode inspector` → `route.geojson` (albastru, include tot → acesta e cel punctat
+de „coverage of hidden targets: inspection locations AND waste”) și `--mode farmer` → `route_waste.geojson` (roșu).
+Web: ambele polilinii simultan (albastru + roșu), fiecare cu lungimea, timpul la 4 km/h și țintele vizitate; toggle pe fiecare.
+Întrebare deschisă pentru mentori: care fișier e punctat ca `route.geojson`? (presupunere: cel al inspectorului, ambele clase de ținte).
+Mentori disponibili sâmbătă de la 9:00: organizatorul + mentor Oleg (business case, viziune, feedback UI/UX, AI/ML);
+@x096a pentru blocaje tehnice / cod.
+
+## Plan v2 pe ore, până la PUBLISH (sâmbătă 26 sept; detaliat în ~/.claude/plans/lucky-sleeping-papert.md)
+Reguli: o singură persoană face tot; YOLO rulează pe GPU (MPS) și NU se oprește — în paralel doar sarcini CPU;
+după fiecare sarcină: rulare → rezultat → commit + push.
+
+| # | Sarcină | Stare (00:20) |
+|---|---|---|
+| a | commit `blocks.py` | făcut (`2508b0f`, `6f22c82`) |
+| b | blocuri < 3 rânduri eliminate (105 → 70), hartă înainte/după | făcut în cod; de arătat harta |
+| c | `export_cvat.py`: 9 ZIP-uri ≤ 58 MB, validate, 311 imagini byte-identice (`out/upload/`) | făcut; rămâne ZIP test cu exemplele |
+| d | `pipeline/waste.py` — detector clasic, prag strict | de făcut |
+| e | `targets.py` (1855 goluri ≥ 5 m) + `route.py --mode inspector/farmer` + `validate.py` | scrise; traseul albastru în calcul; modul farmer de adăugat |
+| f | `measurements.py` → `measurements.csv` în rădăcină | script scris; de rulat |
+| g | web: ambele trasee + ținte + cifre (lungime, timp la 4 km/h, ținte vizitate) | pregătit pentru un traseu; de extins |
+| h | YOLO gata (~03:00–03:30, ep. 9/50, mask mAP50 max 0.741) → `infer_yolo.py` → `eval.py` vs 0.817 | așteaptă |
+| i | dry run Marcaj → export final → upload 9 ZIP-uri → Files = 311 → PUBLISH ≤ 14:00 | sâmbătă dimineață |
+
+| Ora | Ce |
+|---|---|
+| 00:20–00:45 | (b) hartă blocuri · (c) ZIP test · traseu albastru → `validate.py` → pe site · commit |
+| 00:45–01:45 | (d) `waste.py` (CPU): pete luminoase compacte 0.05–4 m², nu pe axa rândului, nu tuburi albe · commit |
+| 01:45–02:30 | (e) `route_waste.geojson`, `validate.py` pe amândouă · (f) `measurements.csv` · commit |
+| 02:30–03:15 | (g) site cu 2 trasee simultan · commit · republicare link |
+| 03:15–03:45 | (h) YOLO terminat: inferență pe exemple → `eval.py`; păstrăm ce e mai bun; rulare pe 311 tile-uri |
+| 03:45–04:15 | `blocks.py` → `export_cvat.py` pe versiunea finală; regenerare web; commit. Somn. |
+| 09:00–10:00 | (i) dry run: upload `part5of5.zip` (10 MB) → raport → **Remove all** |
+| 10:00–11:00 | verificare vizuală a pre-adnotărilor finale; ultimele corecții |
+| 11:00–12:30 | export final → upload 9 ZIP-uri, unul câte unul, raport citit la fiecare → **Files = 311** |
+| 12:30–13:30 | rezervă |
+| **≤ 14:00** | **PUBLISH** (o singură dată) → corectură în Marcaj |
+
 ## Termene (ora Chișinăului)
 | Când | Ce |
 |---|---|
@@ -174,3 +220,12 @@ https://www.figma.com/board/OUUTJ6fjQehASrDNjiVvgX/Case-management?node-id=3622-
 - `python train/make_dataset.py` → `dataset/` (gold: r021_c012 ×10 în train, r006_c004 = val; pseudo-etichete din baseline pe restul, cache în `out/baseline_all.xml` — ȘTERGE-L după ce îmbunătățești baseline-ul, ca să se regenereze). Testat: etichetele se aliniază corect (out/label_check.jpg).
 - `python train/train_yolo.py --epochs 1 --fraction 0.1` = test rapid; `python train/train_yolo.py` = antrenare completă (mps, patience 10, augmentări rotație/flip).
 - `python train/watch.py` într-un al doilea terminal = tabel live (loss ↓, mask mAP50 ↑). Grafice: `runs/vineyard/canopy/results.png`; predicții pe validare: `val_batch*_pred.jpg`.
+
+## Audit complet folder (vineri ~23:00) — ce lipsește, în ordinea priorității
+1. **`pipeline/blocks.py` nu e în git** (untracked) → commit imediat.
+2. **Blocuri: 105, din care 38 < 500 m²** (fragmente de 1–2 rânduri, ex. V005–V009, V019–V025, V049–V066). Referința cere vie cu ≥ 3 rânduri; fragmentele umflă numărul de blocuri (2%) și pot fi coroane false (25%). De făcut: elimină blocurile cu < 3 rânduri (sau le lipește de blocul vecin dacă sunt la < 5 m pe aceeași direcție) și verifică vizual pe web. Harta blocurilor: out/blocks.geojson.
+3. **Export CVAT lipsește** (`pipeline/export_cvat.py`) + **ZIP-urile trebuie împărțite** (părțile 1–4 au deja 93–94 MB fără adnotări; limita e 90 MB) → ~10 ZIP-uri a câte ~30–35 tile-uri, fiecare cu annotations.xml propriu. Apoi dry run în Marcaj.
+4. **Deșeuri (10%)** — nimic încă. Minim: detector simplu (obiecte albe/foarte luminoase, compacte, nu pe axa rândului) cu prag strict, restul la corectura manuală.
+5. **Traseu (25%) + ținte + validare + measurements** (Dev 2) — nu există încă în repo. CRITIC: traseul valorează cât coroanele.
+6. YOLO: antrenare în curs (epoca 1: mask mAP50 = 0.665, ~3.2 min/epocă → ~2.5 h). Când termină: `infer_yolo.py` + comparație pe eval.py cu baseline 0.817.
+7. README final, link weights, timp procesare, deploy web (GitHub Pages).
