@@ -13,6 +13,19 @@ global block / row IDs → measurements → two walking routes → interactive w
 | Model weights | [yolov8n-seg-vineyard-canopy.pt (GitHub release v0.1-weights)](https://github.com/Viteokk/vineyard-ai/releases/tag/v0.1-weights) |
 | Pre-annotations uploaded to Marcaj | `out/upload/*.zip` (CVAT for images 1.1, built by `pipeline/export_cvat.py`) |
 
+## Architecture
+
+```
+ 311 GeoTIFF tiles ──► detect (pipeline.baseline: ExG → row grid → canopies / inter-rows / attributes,
+                       vine / non-vine + forbidden filters; optional pipeline.infer_yolo)
+                   ──► blocks (global vineyard_id / row_id across tiles)
+                   ──► export_cvat (Marcaj ZIPs) ──► human correction in Marcaj ──► export ──┐
+                   ──► targets (row gaps ≥ 3 m, waste) ──► route ×2 (grid graph + TSP) ──► validate  │
+                   ──► measurements.csv                                                              │
+                   ──► web/data (mosaic + GeoJSON) ──► web/index.html (Leaflet, static)  ◄───────────┘ (Sunday recompute)
+```
+Every arrow is a CLI stage (`python -m pipeline.<stage>`), chained by `pipeline/run.py`; all geometry in EPSG:32635 metres.
+
 ## Install
 
 ```bash

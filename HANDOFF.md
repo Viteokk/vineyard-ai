@@ -67,7 +67,16 @@ după fiecare sarcină: rulare → rezultat → commit + push.
 - README, Dockerfile, `export_cvat.py --use-examples` (oprit până confirmă mentorii), release weights v0.1.
 - **De făcut pentru Marcaj:** 1) dry run cu `out/upload_test/test_r021_c012_r006_c004.zip` → raport import → Remove all;
   2) upload cele 9 ZIP-uri din `out/upload/` unul câte unul (raport la fiecare) → Files = 311; 3) PUBLISH ≤ 14:00.
-- **De decis:** repo public + GitHub Pages (linkul site-ului în README).
+- **Repo PUBLIC + GitHub Pages LIVE: https://viteokk.github.io/vineyard-ai/** (branch `gh-pages` = conținutul `web/`;
+  după orice schimbare: `git subtree push --prefix web origin gh-pages`). Linkul e în README.
+- Web (03:00): export GPX per traseu (track + waypoints în ordinea turului, WGS84 prin proj4js, zona UTM din CRS-ul
+  GeoJSON) și navigare GPS pe telefon (poziție, distanță și direcție până la următoarea țintă, „Verificat” în localStorage).
+- SCORE_PLAN: S1 ✓ valid (acoperire ≥ 92 % imposibilă sub 2 %; varianta `--no-row-crossing` în test), S2 ✓ (prag 3 m,
+  recall 100 % pe exemple), S3 ✓ planșa `out/preview/vine_filter_emptied.jpg` (de confirmat uman), S4 sweep dilatare/closing
+  în curs (`out/s4_sweep.log`), S6 ✓ (0 rânduri duplicate, 0 blocuri tăiate de drumuri, 12 row_id sar peste un tile fără
+  detecție — corect fizic), S7 ✓ `out/waste_checklist.csv` + `out/waste_checklist/README.md` (200 candidați cu miniaturi),
+  S8 Dockerfile scris dar **docker nu e instalat pe acest Mac** (de testat pe alt calculator), README cu diagramă.
+- PRODUCT_PLAN (P1 → P2 → P6 → P4 → P5 → P3) începe după upload-ul în Marcaj; P5 (GPX + GPS) e deja gata.
 
 ## Termene (ora Chișinăului)
 | Când | Ce |
