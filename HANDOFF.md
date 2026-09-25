@@ -229,3 +229,15 @@ https://www.figma.com/board/OUUTJ6fjQehASrDNjiVvgX/Case-management?node-id=3622-
 5. **Traseu (25%) + ținte + validare + measurements** (Dev 2) — nu există încă în repo. CRITIC: traseul valorează cât coroanele.
 6. YOLO: antrenare în curs (epoca 1: mask mAP50 = 0.665, ~3.2 min/epocă → ~2.5 h). Când termină: `infer_yolo.py` + comparație pe eval.py cu baseline 0.817.
 7. README final, link weights, timp procesare, deploy web (GitHub Pages).
+
+## Extra pentru site (valoare pentru utilizatorul din vie) — după ce cerințele obligatorii sunt gata
+Ordinea = raport valoare / timp. Toate sunt front-end static (fără server, fără AI), se pot face în paralel cu corectura din Marcaj.
+1. **Export GPX** (30 min): buton care descarcă route.geojson / route_waste.geojson ca GPX (track + waypoints = ținte), pentru Gaia/OsmAnd/Garmin.
+2. **Navigare GPS pe telefon** (1 h): `navigator.geolocation.watchPosition` → punctul utilizatorului pe hartă (UTM → din WGS84 cu proj4js), distanța până la următoarea țintă nevizitată din ordinea traseului, buton „am verificat” (stare în localStorage).
+3. **Starea blocurilor** (1 h): fiecare bloc colorat după % rânduri disrupted (verde < 10 %, galben 10–30 %, roșu > 30 %); panou „blocuri care au nevoie de atenție”.
+4. **Costuri** (1 h): butuci lipsă estimați (din goluri / distanța de plantare ~1.2 m) × preț butaș (parametru editabil, implicit 15 MDL) = cost replantare pe bloc; ha × 52 000–80 000 MDL = cost întreținere anual (cifrele din brief-ul Marcaj).
+5. **Căutare după ID** (30 min): input „V02-R017” → zoom pe rând/bloc + fișa lui (lungime, structură, bloc).
+6. **Link partajabil** (30 min): starea (bloc selectat, straturi, zoom) în URL hash.
+7. **Legendă + explicații RO/EN** (30 min): ce înseamnă disrupted / bare_soil / mixed / țintă / passage; cine folosește fiecare traseu.
+8. **Rigla de măsurat** (15 min): distanță între două click-uri pe hartă.
+9. **Raport PDF de audit** (1–2 h, doar dacă rămâne timp duminică): hartă bloc + cifre + lista țintelor cu coordonate + data zborului, generat în browser (window.print cu CSS de print).

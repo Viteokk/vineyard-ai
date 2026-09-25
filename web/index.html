@@ -329,6 +329,7 @@ const CRS = L.extend({}, L.CRS.Simple, {transformation: new L.Transformation(1, 
 const ll = (x, y) => L.latLng(y, x);
 const bnds = b => L.latLngBounds(ll(b[0], b[1]), ll(b[2], b[3]));
 const map = L.map('map', {crs: CRS, zoomControl: false, attributionControl: false, minZoom: -3, maxZoom: 6.5, zoomSnap: 0.25, zoomDelta: 0.5, wheelPxPerZoomLevel: 100, preferCanvas: true, maxBounds: bnds([EXT[0] - 400, EXT[1] - 400, EXT[2] + 400, EXT[3] + 400])});
+map.setView(ll((EXT[0] + EXT[2]) / 2, (EXT[1] + EXT[3]) / 2), 0);   // layers need a view before being added
 const R = L.canvas({padding: 0.4, tolerance: 5});
 const ortho = L.layerGroup(IDX.chunks.map(c => L.imageOverlay(c.img, bnds(c.bounds), {className: 'ortho', opacity: S.op}))).addTo(map);
 const hires = L.layerGroup((IDX.hires || []).map(h => L.imageOverlay(h.img, bnds(h.bounds), {className: 'ortho', opacity: S.op})));
@@ -521,11 +522,15 @@ function routeCard(r) {
     ${checks.length ? `<div class="list" style="gap:2px;font-size:13px;margin-top:8px">${checks.map(([ok, t, v]) => `<div class="li" style="cursor:default"><span style="color:${ok ? 'var(--accent)' : 'var(--warn)'}">${ok ? IC.ok : '✕'}</span>${t}<span class="r">${v}</span></div>`).join('')}</div>` : ''}
     ${p.targets_total === 0 ? `<p class="note" style="margin-top:8px">Nicio țintă de acest tip încă: deșeurile se adnotează manual în Marcaj, apoi traseul se recalculează.</p>` : ''}</section>`;
 }
+function missingCard(r) {
+  return `<section><div class="sec-title"><h2 style="display:flex;align-items:center;gap:8px"><span style="width:14px;height:4px;border-radius:2px;background:${r.color}"></span>Traseu ${r.name.toLowerCase()} · ${r.sub}</h2><span class="mono">${r.file}</span></div>
+    <div class="callout"><b>Nu e calculat încă</b><p class="note">${r.name === 'Inspector' ? 'Trece pe la toate golurile din rânduri (butuci lipsă / morți) și pe la deșeuri.' : 'Trece doar pe la deșeuri, pentru colectare.'} Se calculează cu <span class="mono">pipeline/route.py --mode ${r.name === 'Inspector' ? 'inspector' : 'farmer'}</span>; harta îl afișează aici de îndată ce apare <span class="mono">web/data/${r.file}</span>.</p></div></section>`;
+}
 function viewTraseu() {
-  const sc = EXTRA.start?.features?.[0]?.geometry.coordinates, rs = Object.values(ROUTES);
-  $('#p-head').innerHTML = head('Două trasee · START → ținte → START', rs.length ? 'Inspector și fermier' : 'Traseele nu sunt calculate încă');
+  const sc = EXTRA.start?.features?.[0]?.geometry.coordinates;
+  $('#p-head').innerHTML = head('Două trasee · START → ținte → START', 'Inspector (albastru) și fermier (roșu)');
   $('#p-body').innerHTML = `
-    ${rs.length ? rs.map(routeCard).join('') : `<div class="callout"><b>Ce lipsește</b><p class="note">Traseele se calculează cu <span class="mono">pipeline/route.py --mode inspector|farmer</span>. Când apar <span class="mono">web/data/route.geojson</span> și <span class="mono">route_waste.geojson</span>, harta le afișează aici.</p></div>`}
+    ${['blue', 'red'].map(k => ROUTES[k] ? routeCard(ROUTES[k]) : missingCard(EXTRA.routes[k])).join('')}
     ${TG.length ? `<section><div class="sec-title"><h2>Ținte în ordinea turului (inspector)</h2><span>primele 150 din ${fmt(TG.length)}</span></div><div class="list">${TG.slice(0, 150).map(t => `<button type="button" class="li" data-target="${t.id}"><span class="dot" style="background:${t.type === 'waste' ? '#9333EA' : '#2563EB'}"></span><b>${t.id}</b>${t.visited === false ? '<span class="badge dis">nevizitat</span>' : ''}<span class="r">${t.order ? '#' + t.order + ' · ' : ''}${t.type === 'gap' ? 'gol ' + fmt(t.gap_m, 1) + ' m · ' + t.row_id : 'deșeu · ' + (t.vineyard_id || '—')}</span></button>`).join('')}</div></section>` : ''}
     <section><div class="sec-title"><h2>Date de intrare</h2><span>de la organizatori</span></div>
       <div class="stats">
