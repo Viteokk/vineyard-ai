@@ -282,7 +282,7 @@ try {
   IDX = await j('data/mosaic_index.json', true);
   if (!IDX) { const t = await j('data/tiles_index.json'); IDX = {chunks: t, hires: [], tiles: t}; }
   const [study, passages, forbidden, start, route, targets] = await Promise.all(['study_area', 'passages', 'forbidden', 'start', 'route', 'targets'].map(n => j(`data/${n}.geojson`, true)));
-  EXTRA = {study, passages, forbidden, start, route, targets};
+  EXTRA = {study, passages, forbidden, start, route, targets, check: await j('data/route_check.json', true)};
   const [pSum, pRows, pInter, pCan, rSum, rRows, rInter, rCan] = await Promise.all([
     j('data/pred/summary.json', true), j('data/pred/rows.geojson', true), j('data/pred/interrows.geojson', true), j('data/pred/canopies.json', true),
     j('data/summary.json', true), j('data/rows.geojson', true), j('data/interrows.geojson', true), j('data/canopies.geojson', true)]);
@@ -314,7 +314,7 @@ Object.values(SRC).forEach(indexSource);
 /* ============ state ============ */
 const S = {
   view: 'harta', src: store.get('src', SRC.pred ? 'pred' : 'ref'), sel: null, q: '', collapsed: false,
-  layers: Object.assign({ortho: true, canopy: true, rows: true, inter: true, passage: true, forbidden: true, study: true, grid: false, route: true}, store.get('layers', {})),
+  layers: Object.assign({ortho: true, canopy: true, rows: true, inter: true, passage: true, forbidden: true, study: true, grid: false, route: true, targets: true}, store.get('layers', {})),
   op: store.get('op', 1)
 };
 if (!SRC[S.src]) S.src = Object.keys(SRC)[0];
@@ -342,10 +342,20 @@ if (EXTRA.start?.features?.[0]) {
   const c = EXTRA.start.features[0].geometry.coordinates; startLL = ll(c[0], c[1]);
   L.marker(startLL, {icon: L.divIcon({className: '', html: '<div class="start-ic"><i></i><span>START</span></div>', iconSize: [90, 22], iconAnchor: [9, 11]}), keyboard: false, interactive: false, zIndexOffset: 1000}).addTo(map);
 }
-let routeLayer = null, routeLen = 0;
+let routeLayer = null, routeLen = 0, targetsLayer = null;
 if (EXTRA.route?.features?.length) {
-  routeLayer = L.layerGroup([geo(EXTRA.route, {color: '#FFFFFF', weight: 8, opacity: .9}), geo(EXTRA.route, {color: '#F2561D', weight: 4})]);
+  routeLayer = L.layerGroup([geo(EXTRA.route, {color: '#FFFFFF', weight: 7, opacity: .9}), geo(EXTRA.route, {color: '#F2561D', weight: 3.5})]);
   routeLen = EXTRA.route.features[0].properties?.length_m || 0;
+}
+const TG = (EXTRA.targets?.features || []).map(f => ({...f.properties, x: f.geometry.coordinates[0], y: f.geometry.coordinates[1]}));
+TG.sort((a, b) => (a.order ?? 1e9) - (b.order ?? 1e9));
+if (TG.length) {
+  targetsLayer = L.layerGroup(TG.map(t => {
+    const w = t.type === 'waste';
+    const m = L.circleMarker(ll(t.x, t.y), {renderer: R, radius: w ? 6 : 5, color: '#FFFFFF', weight: 1.5, fillColor: w ? '#9333EA' : '#2563EB', fillOpacity: 1});
+    m.on('click', e => { L.DomEvent.stop(e); select({type: 'target', t}); });
+    return m;
+  }));
 }
 
 /* annotation layers, drawn per visible tile */
@@ -398,6 +408,7 @@ function applyLayers() {
   S.layers.ortho ? ortho.addTo(map) : map.removeLayer(ortho);
   for (const k of ['study', 'passage', 'forbidden', 'grid']) S.layers[k] ? ctx[k].addTo(map) : map.removeLayer(ctx[k]);
   if (routeLayer) S.layers.route ? routeLayer.addTo(map) : map.removeLayer(routeLayer);
+  if (targetsLayer) S.layers.targets ? targetsLayer.addTo(map) : map.removeLayer(targetsLayer);
   ortho.eachLayer(l => l.setOpacity(S.op)); hires.eachLayer(l => l.setOpacity(S.op));
   refreshAnnotations();
 }
@@ -441,6 +452,11 @@ function select(sel) {
     html = `<div class="p-top"><div><div class="eyebrow">Coroană · vineyard</div><h2 style="font-size:19px">${fmt(Math.abs(a) / 2, 2)} m²</h2></div>${close}</div>
       <dl><dt>Tile</dt><dd>${short(sel.tile)}</dd><dt>Centru X, Y</dt><dd class="mono">${(r.reduce((s, p) => s + p[0], 0) / r.length).toFixed(1)}, ${(r.reduce((s, p) => s + p[1], 0) / r.length).toFixed(1)}</dd></dl>`;
     hi = L.polygon(sel.layer.getLatLngs(), {renderer: R, color: '#FFFFFF', weight: 3, fill: false}).addTo(map);
+  } else if (sel.type === 'target') {
+    const t = sel.t;
+    html = `<div class="p-top"><div><div class="eyebrow">${t.type === 'waste' ? 'Deșeu' : 'Țintă de inspecție'}${t.order ? ' · oprirea ' + t.order : ''}</div><h2 style="font-size:19px">${t.id}</h2></div>${close}</div>
+      <dl>${t.type === 'gap' ? `<dt>Gol în rând</dt><dd class="num">${fmt(t.gap_m, 1)} m</dd>` : ''}<dt>vineyard_id</dt><dd>${t.vineyard_id || '—'}</dd>${t.row_id ? `<dt>row_id</dt><dd>${t.row_id}</dd>` : ''}<dt>X, Y</dt><dd class="mono">${t.x.toFixed(2)}, ${t.y.toFixed(2)}</dd></dl>`;
+    hi = L.circleMarker(ll(t.x, t.y), {renderer: R, radius: 11, color: '#FFFFFF', weight: 3, fill: false}).addTo(map);
   } else if (sel.type === 'tile') {
     const g = cur().by[sel.name], b = TB[sel.name];
     html = `<div class="p-top"><div><div class="eyebrow">Tile · 51,2 × 51,2 m</div><h2 style="font-size:19px">${short(sel.name)}</h2></div>${close}</div>
@@ -460,7 +476,7 @@ const srcSeg = () => Object.keys(SRC).length > 1 ? seg(Object.entries(SRC).map((
 function statsBlock(s) {
   const u = s.sum;
   return `<div class="stats">
-    <div class="stat"><div class="v num">${S.src === 'pred' ? u.tiles_with_objects ?? s.tiles.length : u.blocks}</div><div class="l">${S.src === 'pred' ? 'tile-uri cu vie detectată' : 'blocuri (vineyard_id)'}</div></div>
+    <div class="stat"><div class="v num">${u.blocks}</div><div class="l">blocuri (vineyard_id)${S.src === 'pred' ? ` · ${u.tiles_with_objects ?? s.tiles.length} tile-uri` : ''}</div></div>
     <div class="stat"><div class="v num">${fmt(u.rows)}</div><div class="l">rânduri (row_id)</div></div>
     <div class="stat"><div class="v num">${kmH(u.total_row_length_m)}</div><div class="l">lungime totală rânduri</div></div>
     <div class="stat"><div class="v num">${fmt(u.canopy_count)}</div><div class="l">coroane (vineyard)</div></div>
@@ -484,25 +500,27 @@ function polyArea(fc) {
   return a;
 }
 function viewTraseu() {
-  const sc = EXTRA.start?.features?.[0]?.geometry.coordinates;
+  const sc = EXTRA.start?.features?.[0]?.geometry.coordinates, ck = EXTRA.check;
   $('#p-head').innerHTML = head('Traseu · START → ținte → START', routeLayer ? `Traseu ${kmT(routeLen)}` : 'Traseul nu e calculat încă');
+  const checks = ck ? [
+    [ck.outside_share <= 0.02, 'Doar pe inter-rânduri + passage', `${fmt(ck.outside_share * 100, 2)}% în afară · limita 2%`],
+    [ck.start_m <= 5 && ck.end_m <= 5, 'Pleacă și revine la START', `${fmt(ck.start_m, 1)} m / ${fmt(ck.end_m, 1)} m · max 5 m`],
+    [ck.canopy_m === 0 && ck.forbidden_m === 0, 'Nu trece prin coroane / forbidden', `${fmt(ck.canopy_m, 1)} m / ${fmt(ck.forbidden_m, 1)} m`],
+    [ck.visited >= 0.9 * ck.targets, 'Ținte atinse la ≤ 2 m', `${fmt(ck.visited)} / ${fmt(ck.targets)}`]] : [];
   $('#p-body').innerHTML = `
-    ${routeLayer ? `<div class="stats"><div class="stat"><div class="v num">${kmH(routeLen)}</div><div class="l">length_m</div></div><div class="stat"><div class="v num">${Math.round(routeLen / 4000 * 60)}<small>min</small></div><div class="l">la 4 km/h</div></div></div>`
-      : `<div class="callout"><b>Ce lipsește</b><p class="note">Traseul se calculează în <span class="mono">pipeline/route.py</span> din inter-rândurile corectate în Marcaj și drumurile de mai jos. Când apare <span class="mono">web/data/route.geojson</span>, harta îl afișează automat aici, cu lungimea și validarea.</p></div>`}
-    <section><div class="sec-title"><h2>Date de intrare pentru traseu</h2><span>de la organizatori</span></div>
+    ${routeLayer ? `<div class="stats"><div class="stat"><div class="v num">${kmH(routeLen)}</div><div class="l">length_m = ${fmt(Math.round(routeLen))}</div></div><div class="stat"><div class="v num">${fmt(Math.round(routeLen / 4000 * 60 / 60 * 10) / 10, 1)}<small>h</small></div><div class="l">pe jos, la 4 km/h</div></div>
+      <div class="stat"><div class="v num">${fmt(TG.length)}</div><div class="l">ținte (goluri ≥ 5 m, deșeuri)</div></div><div class="stat"><div class="v num">${ck ? (ck.valid ? 'valid' : 'INVALID') : '—'}</div><div class="l">validare regulament</div></div></div>`
+      : `<div class="callout"><b>Ce lipsește</b><p class="note">Traseul se calculează cu <span class="mono">pipeline/route.py</span>. Când apare <span class="mono">web/data/route.geojson</span>, harta îl afișează automat aici.</p></div>`}
+    ${checks.length ? `<section><div class="sec-title"><h2>Validare automată</h2><span>pipeline/validate.py</span></div><div class="list" style="gap:2px;font-size:13px">${checks.map(([ok, t, v]) => `<div class="li" style="cursor:default"><span style="color:${ok ? 'var(--accent)' : 'var(--warn)'}">${ok ? IC.ok : '✕'}</span>${t}<span class="r">${v}</span></div>`).join('')}</div></section>` : ''}
+    ${TG.length ? `<section><div class="sec-title"><h2>Ținte în ordinea turului</h2><span>primele 150</span></div><div class="list">${TG.slice(0, 150).map(t => `<button type="button" class="li" data-target="${t.id}"><span class="dot" style="background:${t.type === 'waste' ? '#9333EA' : '#2563EB'}"></span><b>${t.id}</b><span class="r">${t.order ? '#' + t.order + ' · ' : ''}${t.type === 'gap' ? 'gol ' + fmt(t.gap_m, 1) + ' m · ' + t.row_id : 'deșeu · ' + (t.vineyard_id || '—')}</span></button>`).join('')}</div></section>` : ''}
+    <section><div class="sec-title"><h2>Date de intrare</h2><span>de la organizatori</span></div>
       <div class="stats">
         <div class="stat"><div class="v num">${fmt(polyArea(EXTRA.passages) / 1e4, 2)}<small>ha</small></div><div class="l">passage (drumuri permise)</div></div>
         <div class="stat"><div class="v num">${EXTRA.forbidden?.features?.length ?? 0}</div><div class="l">zone forbidden · ${fmt(polyArea(EXTRA.forbidden) / 1e4, 2)} ha</div></div>
         <div class="stat"><div class="v num">${fmt(polyArea(EXTRA.study) / 1e4, 1)}<small>ha</small></div><div class="l">zona de studiu</div></div>
         <div class="stat"><div class="v mono" style="font-size:13px;padding-top:6px">${sc ? sc[0].toFixed(2) + '<br>' + sc[1].toFixed(2) : '—'}</div><div class="l">START (X, Y)</div></div>
       </div></section>
-    <section><div class="sec-title"><h2>Reguli verificate la calcul</h2></div>
-      <div class="list" style="gap:2px;font-size:13px">
-        <div class="li" style="cursor:default">${IC.ok}Doar pe inter-rânduri + passage<span class="r">≥ 98% din lungime</span></div>
-        <div class="li" style="cursor:default">${IC.ok}Revine la START<span class="r">≤ 5 m</span></div>
-        <div class="li" style="cursor:default">${IC.ok}Ținte atinse<span class="r">≤ 2 m</span></div>
-        <div class="li" style="cursor:default">${IC.ok}Eficiența se punctează<span class="r">de la 90% acoperire</span></div></div></section>
-    <div style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn primary" type="button" data-act="goto-start">Arată START</button><button class="btn" type="button" data-act="fit">Toată zona de studiu</button></div>`;
+    <div style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn primary" type="button" data-act="goto-start">Arată START</button><button class="btn" type="button" data-act="fit">Toată zona</button></div>`;
 }
 function viewMas() {
   const s = cur(), u = s.sum, q = S.q.trim().toUpperCase();
@@ -521,7 +539,7 @@ function viewMas() {
       <div class="tbl" style="margin-top:8px"><table><thead><tr><th>row_id</th><th>vineyard_id</th><th>Lungime</th></tr></thead><tbody>
       ${rows.slice(0, 120).map(r => `<tr data-rowid="${r.row_id}"><td><b>${r.row_id}</b></td><td>${r.vineyard_id}</td><td class="num">${fmt(r.length_m, 2)} m</td></tr>`).join('')}</tbody></table></div>
       ${rows.length > 120 ? `<p class="note" style="margin-top:6px">Primele 120 din ${fmt(rows.length)}.</p>` : ''}</section>
-    <p class="note">${S.src === 'pred' ? 'ID-urile sunt încă locale pe tile (T021_012-R05). Blocurile și row_id globale peste tot mozaicul vin din pasul „ID-uri globale”, apoi din corectura în Marcaj.' : 'Calculat din adnotările oficiale: aria coroanelor = reuniunea poligoanelor.'}</p>`;
+    <p class="note">${S.src === 'pred' ? 'ID-uri globale peste tot mozaicul (pipeline/blocks.py): un bloc = plantație continuă, separată de drumuri; același row_id pe toate tile-urile unui rând. Aria coroanelor = reuniunea poligoanelor. Valorile finale vin din exportul Marcaj corectat.' : 'Calculat din adnotările oficiale: aria coroanelor = reuniunea poligoanelor.'}</p>`;
 }
 function viewPipe() {
   const nC = IDX.chunks.length, nH = (IDX.hires || []).length, p = SRC.pred?.sum;
@@ -564,6 +582,7 @@ function renderLayers() {
   const L1 = [['ortho', 'Ortofoto', 'linear-gradient(135deg,#8A9A5B,#B29873)'], ['canopy', 'Coroane (vineyard)', '#FF3DAA'], ['rows', 'Rânduri + row_id', '#FFD43B'], ['inter', 'Inter-rânduri', '#22D3EE'],
     ['passage', 'Passage (drumuri)', '#FFFFFF'], ['forbidden', 'Forbidden', '#FF4D4D'], ['study', 'Zona de studiu', '#FFFFFF'], ['grid', 'Grilă tile-uri', '#9AA59F']];
   if (routeLayer) L1.push(['route', 'Traseu', '#F2561D']);
+  if (targetsLayer) L1.push(['targets', 'Ținte (goluri, deșeuri)', '#2563EB']);
   $('#layers').innerHTML = `<div class="sec-title" style="padding:2px 4px 4px"><h2>Straturi</h2><span><kbd>L</kbd></span></div>` +
     L1.map(([k, l, c]) => `<button type="button" class="sw" role="switch" aria-checked="${!!S.layers[k]}" data-layer="${k}"><span class="sw-i" style="background:${c};border:1px solid var(--line)"></span>${l}<span class="tg"></span></button>`).join('') +
     `<label for="op">Opacitate ortofoto<input type="range" id="op" min="15" max="100" value="${Math.round(S.op * 100)}"></label>
@@ -635,6 +654,7 @@ document.addEventListener('click', e => {
   if (b.dataset.src) return setSrc(b.dataset.src);
   if (b.dataset.layer) { S.layers[b.dataset.layer] = !S.layers[b.dataset.layer]; store.set('layers', S.layers); renderLayers(); return applyLayers(); }
   if (b.dataset.tile) return goTile(b.dataset.tile);
+  if (b.dataset.target) { const t = TG.find(x => x.id === b.dataset.target); if (t) { map.flyTo(ll(t.x, t.y), 3.5, {duration: .6}); select({type: 'target', t}); } return; }
   if (b.dataset.rowid) return goRow(b.dataset.rowid);
   if (b.dataset.exk) return openExport(b.dataset.exk);
   switch (b.dataset.act) {
