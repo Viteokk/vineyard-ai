@@ -23,6 +23,8 @@ from __future__ import annotations
 import argparse
 import hashlib
 import json
+import multiprocessing as mp
+import os
 import sys
 import time
 from pathlib import Path
@@ -165,6 +167,37 @@ def solve_tsp(D, time_limit):
     return order
 
 
+REACH_M = 1500.0          # Dijkstra limit per stop (metres of cost); pairs beyond it get a large distance
+_G = {}
+
+
+def _init_worker(g, nodes, reach):
+    _G.update(g=g, nodes=np.asarray(nodes), reach=reach)
+
+
+def _row(src):
+    d = dijkstra(_G["g"], directed=True, indices=src, limit=_G["reach"] * COST_CORE)[_G["nodes"]]
+    return src, d
+
+
+def distance_matrix(g, nodes, workers, t0, reach=REACH_M):
+    """Shortest-path cost from every stop to every other stop, one Dijkstra per stop, in parallel.
+    Each search stops at REACH_M; unreached pairs are +inf and later replaced by a large constant."""
+    D = np.zeros((len(nodes), len(nodes)))
+    pos = {n: i for i, n in enumerate(nodes)}
+    D[0] = dijkstra(g, directed=True, indices=nodes[0])[nodes]      # depot row: no limit, every stop must connect
+    ctx = mp.get_context("fork") if hasattr(os, "fork") else mp.get_context()
+    done = 0
+    with ctx.Pool(workers, initializer=_init_worker, initargs=(g, nodes, reach)) as pool:
+        for src, d in pool.imap_unordered(_row, nodes[1:], chunksize=8):
+            D[pos[src]] = d
+            done += 1
+            if done % 200 == 0:
+                print(f"  distances {done}/{len(nodes)}  ({time.time() - t0:.0f}s, {workers} workers)", flush=True)
+    D[:, 0] = D[0]                                                   # the grid graph is symmetric
+    return D
+
+
 def leg(g, src, dst, limit):
     """Cell path src -> dst (list of cell ids, src excluded)."""
     _, pred = dijkstra(g, directed=True, indices=src, return_predecessors=True, limit=limit)
@@ -186,6 +219,9 @@ def main() -> None:
     ap.add_argument("--time", type=int, default=60, help="TSP time limit (s) for the first solve")
     ap.add_argument("--max-outside", type=float, default=0.015, help="max share of length outside inter-rows + passages")
     ap.add_argument("--recompute", action="store_true", help="ignore the cached distance matrix")
+    ap.add_argument("--workers", type=int, default=max(1, (os.cpu_count() or 2) - 1), help="parallel Dijkstra workers")
+    ap.add_argument("--reach", type=float, default=REACH_M, help="Dijkstra search limit per stop (m); farther pairs are"
+                                                                  " never consecutive in a good tour")
     a = ap.parse_args()
     types, default_out = MODES[a.mode]
     out_path = Path(a.out) if a.out else C.ROOT / default_out
@@ -249,11 +285,7 @@ def main() -> None:
             D = z["D"][np.ix_(sel, sel)]
             print("distance matrix from cache")
     if D is None:
-        D = np.zeros((len(nodes), len(nodes)))
-        for k, src in enumerate(nodes):
-            D[k] = dijkstra(g, directed=True, indices=src)[nodes]
-            if k % 200 == 0:
-                print(f"  distances {k}/{len(nodes)}  ({time.time() - t0:.0f}s)", flush=True)
+        D = distance_matrix(g, nodes, a.workers, t0, a.reach)
         np.savez_compressed(cache, D=D, nodes=np.array(nodes), key=np.array(key))
     reach = np.isfinite(D[0]) & np.isfinite(D[:, 0])
     if not reach.all():
