@@ -91,7 +91,7 @@ class Grid:
         return m
 
 
-def build_cost(grid, inter, passages, canopies, forbidden, study, blocks):
+def build_cost(grid, inter, passages, canopies, forbidden, study, blocks, rows=None):
     allowed = unary_union([inter, passages])
     m_allowed = grid.exact(allowed)                  # cell centre inside inter-rows / passages (exact)
     core = grid.exact(allowed.buffer(-INSET))        # ... and at least INSET inside: the only cheap cells
@@ -104,6 +104,9 @@ def build_cost(grid, inter, passages, canopies, forbidden, study, blocks):
     cost[grid.raster(canopies) > 0] = np.inf
     cost[grid.exact(canopies.buffer(INSET + 0.01)) > 0] = np.inf   # keep >= INSET from every canopy: a 0.71 m
     cost[grid.raster(forbidden) > 0] = np.inf                       # diagonal step can then never clip one
+    if rows is not None:                                             # --no-row-crossing: the row band is a wall
+        band = unary_union([r.buffer(0.3 + INSET) for r in rows])
+        cost[grid.exact(band) > 0] = np.inf
     return cost
 
 
@@ -246,6 +249,9 @@ def main() -> None:
     ap.add_argument("--max-outside", type=float, default=0.017, help="max share of length outside inter-rows + passages "
                                                                        "(official limit 2 %%; measured like validate.py)")
     ap.add_argument("--recompute", action="store_true", help="ignore the cached distance matrix")
+    ap.add_argument("--no-row-crossing", action="store_true",
+                    help="never step over a vine row, not even through a planting gap: move between inter-rows only "
+                         "via headlands and passages (out-and-back walking)")
     ap.add_argument("--workers", type=int, default=max(1, (os.cpu_count() or 2) - 1), help="parallel Dijkstra workers")
     ap.add_argument("--reach", type=float, default=REACH_M, help="Dijkstra search limit per stop (m); farther pairs are"
                                                                   " never consecutive in a good tour")
@@ -264,7 +270,8 @@ def main() -> None:
     blocks = load(C.OUT / "blocks.geojson") if (C.OUT / "blocks.geojson").exists() else inter.buffer(3)
     start = json.loads((C.ROUTE_IN / "start.geojson").read_text())["features"][0]["geometry"]["coordinates"]
     grid = Grid(study.union(passages).bounds)
-    cost = build_cost(grid, inter, passages, canopies, forbidden, study, blocks)
+    row_lines = [shape(f["geometry"]) for f in layers.get("rows", [])] if a.no_row_crossing else None
+    cost = build_cost(grid, inter, passages, canopies, forbidden, study, blocks, row_lines)
     g, idx = graph(cost)
     rc = np.column_stack(np.unravel_index(np.flatnonzero(np.isfinite(cost).ravel()), cost.shape))
     is_out = (cost[rc[:, 0], rc[:, 1]] >= COST_LINK)          # per walkable cell: outside inter-rows + passages
@@ -303,8 +310,8 @@ def main() -> None:
     print(f"{a.mode}: {len(feats)} targets -> {len(anchors)} stops ({len(unreachable)} unreachable)  ({time.time() - t0:.0f}s)")
 
     # distance matrix (cached: same inputs -> same nodes)
-    key = hashlib.md5((Path(a.inp).read_bytes() + VERSION.encode())).hexdigest()   # same grid -> same distances
-    cache = C.OUT / f"route_cache_{a.mode}.npz"
+    key = hashlib.md5((Path(a.inp).read_bytes() + VERSION.encode() + str(a.no_row_crossing).encode())).hexdigest()
+    cache = C.OUT / f"route_cache_{a.mode}{'_norc' if a.no_row_crossing else ''}.npz"
     D = None
     if cache.exists() and not a.recompute:
         z = np.load(cache, allow_pickle=False)
