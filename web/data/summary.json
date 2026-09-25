@@ -1,0 +1,272 @@
+{
+ "blocks": 2,
+ "block_ids": [
+  "V01",
+  "V02"
+ ],
+ "rows": 51,
+ "total_row_length_m": 1941.55,
+ "canopy_area_m2": 536.18,
+ "canopy_area_ha": 0.0536,
+ "interrow_area_m2": 4064.39,
+ "interrow_area_ha": 0.4064,
+ "canopy_count": 650,
+ "waste_count": 0,
+ "row_lengths": [
+  {
+   "row_id": "V01-R01",
+   "vineyard_id": "V01",
+   "length_m": 1.1
+  },
+  {
+   "row_id": "V01-R02",
+   "vineyard_id": "V01",
+   "length_m": 6.4
+  },
+  {
+   "row_id": "V01-R03",
+   "vineyard_id": "V01",
+   "length_m": 12.4
+  },
+  {
+   "row_id": "V01-R04",
+   "vineyard_id": "V01",
+   "length_m": 18.0
+  },
+  {
+   "row_id": "V01-R05",
+   "vineyard_id": "V01",
+   "length_m": 24.3
+  },
+  {
+   "row_id": "V01-R06",
+   "vineyard_id": "V01",
+   "length_m": 30.18
+  },
+  {
+   "row_id": "V01-R07",
+   "vineyard_id": "V01",
+   "length_m": 36.07
+  },
+  {
+   "row_id": "V01-R08",
+   "vineyard_id": "V01",
+   "length_m": 42.3
+  },
+  {
+   "row_id": "V01-R09",
+   "vineyard_id": "V01",
+   "length_m": 48.03
+  },
+  {
+   "row_id": "V01-R10",
+   "vineyard_id": "V01",
+   "length_m": 55.79
+  },
+  {
+   "row_id": "V01-R11",
+   "vineyard_id": "V01",
+   "length_m": 63.29
+  },
+  {
+   "row_id": "V01-R12",
+   "vineyard_id": "V01",
+   "length_m": 64.61
+  },
+  {
+   "row_id": "V01-R13",
+   "vineyard_id": "V01",
+   "length_m": 64.54
+  },
+  {
+   "row_id": "V01-R14",
+   "vineyard_id": "V01",
+   "length_m": 64.35
+  },
+  {
+   "row_id": "V01-R15",
+   "vineyard_id": "V01",
+   "length_m": 63.45
+  },
+  {
+   "row_id": "V01-R16",
+   "vineyard_id": "V01",
+   "length_m": 58.0
+  },
+  {
+   "row_id": "V01-R17",
+   "vineyard_id": "V01",
+   "length_m": 52.38
+  },
+  {
+   "row_id": "V01-R18",
+   "vineyard_id": "V01",
+   "length_m": 46.02
+  },
+  {
+   "row_id": "V01-R19",
+   "vineyard_id": "V01",
+   "length_m": 39.85
+  },
+  {
+   "row_id": "V01-R20",
+   "vineyard_id": "V01",
+   "length_m": 34.01
+  },
+  {
+   "row_id": "V01-R21",
+   "vineyard_id": "V01",
+   "length_m": 28.36
+  },
+  {
+   "row_id": "V01-R22",
+   "vineyard_id": "V01",
+   "length_m": 22.53
+  },
+  {
+   "row_id": "V01-R23",
+   "vineyard_id": "V01",
+   "length_m": 16.74
+  },
+  {
+   "row_id": "V01-R24",
+   "vineyard_id": "V01",
+   "length_m": 11.33
+  },
+  {
+   "row_id": "V01-R25",
+   "vineyard_id": "V01",
+   "length_m": 6.06
+  },
+  {
+   "row_id": "V02-R01",
+   "vineyard_id": "V02",
+   "length_m": 5.13
+  },
+  {
+   "row_id": "V02-R02",
+   "vineyard_id": "V02",
+   "length_m": 11.98
+  },
+  {
+   "row_id": "V02-R03",
+   "vineyard_id": "V02",
+   "length_m": 18.97
+  },
+  {
+   "row_id": "V02-R04",
+   "vineyard_id": "V02",
+   "length_m": 26.52
+  },
+  {
+   "row_id": "V02-R05",
+   "vineyard_id": "V02",
+   "length_m": 33.77
+  },
+  {
+   "row_id": "V02-R06",
+   "vineyard_id": "V02",
+   "length_m": 40.98
+  },
+  {
+   "row_id": "V02-R07",
+   "vineyard_id": "V02",
+   "length_m": 47.69
+  },
+  {
+   "row_id": "V02-R08",
+   "vineyard_id": "V02",
+   "length_m": 55.38
+  },
+  {
+   "row_id": "V02-R09",
+   "vineyard_id": "V02",
+   "length_m": 55.58
+  },
+  {
+   "row_id": "V02-R10",
+   "vineyard_id": "V02",
+   "length_m": 55.49
+  },
+  {
+   "row_id": "V02-R11",
+   "vineyard_id": "V02",
+   "length_m": 55.55
+  },
+  {
+   "row_id": "V02-R12",
+   "vineyard_id": "V02",
+   "length_m": 55.51
+  },
+  {
+   "row_id": "V02-R13",
+   "vineyard_id": "V02",
+   "length_m": 55.55
+  },
+  {
+   "row_id": "V02-R14",
+   "vineyard_id": "V02",
+   "length_m": 55.52
+  },
+  {
+   "row_id": "V02-R15",
+   "vineyard_id": "V02",
+   "length_m": 55.62
+  },
+  {
+   "row_id": "V02-R16",
+   "vineyard_id": "V02",
+   "length_m": 55.61
+  },
+  {
+   "row_id": "V02-R17",
+   "vineyard_id": "V02",
+   "length_m": 55.56
+  },
+  {
+   "row_id": "V02-R18",
+   "vineyard_id": "V02",
+   "length_m": 55.57
+  },
+  {
+   "row_id": "V02-R19",
+   "vineyard_id": "V02",
+   "length_m": 53.84
+  },
+  {
+   "row_id": "V02-R20",
+   "vineyard_id": "V02",
+   "length_m": 46.52
+  },
+  {
+   "row_id": "V02-R21",
+   "vineyard_id": "V02",
+   "length_m": 40.02
+  },
+  {
+   "row_id": "V02-R22",
+   "vineyard_id": "V02",
+   "length_m": 33.58
+  },
+  {
+   "row_id": "V02-R23",
+   "vineyard_id": "V02",
+   "length_m": 25.73
+  },
+  {
+   "row_id": "V02-R24",
+   "vineyard_id": "V02",
+   "length_m": 18.8
+  },
+  {
+   "row_id": "V02-R25",
+   "vineyard_id": "V02",
+   "length_m": 12.03
+  },
+  {
+   "row_id": "V02-R26",
+   "vineyard_id": "V02",
+   "length_m": 4.99
+  }
+ ]
+}

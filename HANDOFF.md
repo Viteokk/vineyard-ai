@@ -59,6 +59,21 @@ tăiată de marginea tile-ului (referința e exact asta: 4064.4 vs 4062.0 m²); 
 **Atenție:** pe 311 tile-uri (113 s, ~0.36 s/tile) detectorul pune rânduri pe 292/311 tile-uri, inclusiv
 livezi, sat, câmpuri arate → trebuie filtru vie / non-vie înainte de export (penalizare coroane false).
 
+## Update vineri noapte (după planul aprobat)
+- **Filtru vie / non-vie** în `baseline.py` (`vine_rows`): un rând e pom/livadă/pășune dacă vegetația iese mult în afara
+  benzii ±0,3 m (`spill` ≥ 0,7) ȘI coroanele sunt mari (mediana ≥ 0,8 m²). Tile-urile fără ≥ 3 rânduri de vie consecutive
+  se golesc; în tile-urile cu vie se scot doar rândurile clar de pom (spill ≥ 0,85 și ≥ 1,5 m²) — mai ușor de șters în
+  Marcaj decât de desenat. Rezultat: 292 → 194 tile-uri cu detecții, 5161 → 3262 rânduri; scor exemple neschimbat 0,817.
+  De reverificat în Marcaj (posibil vie tânără pe iarbă): r031_c018, r037_c024, r026_c019, r029_c019.
+- **Filtru forbidden**: obiectele > 50% în `forbidden.geojson` se scot (`--no-forbidden` îl dezactivează).
+- **YOLO**: `dataset/` construit (3037 crop-uri train, 16 val); antrenare `train/train_yolo.py --name canopy` pornită în
+  fundal pe M4 Pro (MPS), log `out/train_canopy.log`, weights în `runs/vineyard/canopy/weights/best.pt`.
+- **Web**: `web/index.html` + `web/data` (mozaic 10 cm/px, hi-res pe exemple, pred/ + referință) sunt în repo;
+  local: `python -m http.server -d web 8000`. Regenerare: `scripts/make_web_tiles.py` → `scripts/build_web_map.py`.
+- Planul complet de acum până duminică: vezi `/Users/victoristrati/.claude/plans/lucky-sleeping-papert.md` (rezumat:
+  blocks.py → export_cvat.py cu ZIP-uri împărțite < 85 MiB → dry run → PUBLISH ≤ 12:00; Dev 2: targets/route/validate/
+  measurements). **Atenție: ZIP-urile părților 1–4 au deja 93–94 MB fără adnotări → trebuie împărțite.**
+
 ## Parametri măsurați pe referință (folosește-i)
 - distanță axă–axă: 2.53–2.78 m (mediană); coroană: mediană ~0.5 m² (p10 0.25, p90 1.1–1.9 m²)
 - centrul coroanei la ~5 cm de axă; distanța dintre coroane pe rând: mediană 2–3 m (lipsesc butuci)

@@ -1,5 +1,7 @@
-# data (never commit tiles / orthomosaic)
-data/
+# data (never commit tiles / orthomosaic) - raw package extracted at the repo root only
+/data/
+# web map: 512 px JPEGs are only an input of scripts/build_web_map.py (the site uses web/data/mosaic)
+web/data/tiles/
 *.tif
 *.tiff
 *.zip
