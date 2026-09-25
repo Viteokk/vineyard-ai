@@ -67,6 +67,10 @@ def row_gaps(segs, canopies, min_gap: float):
     return out
 
 
+REACH = 1.6             # a target is inspectable if an inter-row / passage lies within this distance
+                        # (the walker must pass within 2 m while staying on inter-rows and passages)
+
+
 def build(layers, min_gap: float):
     rows = defaultdict(list)
     for f in layers.get("rows", []):
@@ -101,8 +105,14 @@ def build(layers, min_gap: float):
         feats.append({"type": "Feature", "geometry": {"type": "Point", "coordinates": [round(p.x, 2), round(p.y, 2)]},
                       "properties": {"type": "waste", "vineyard_id": f["properties"].get("vineyard_id", ""),
                                      "row_id": ""}})
+    from shapely.ops import unary_union
+    walk = unary_union([shape(f["geometry"]) for f in layers.get("interrows", [])])
+    pas = C.ROUTE_IN / "passages.geojson"
+    if pas.exists():
+        walk = unary_union([walk] + [shape(f["geometry"]) for f in json.loads(pas.read_text())["features"]])
     n_t = n_w = 0
     for f in feats:                                       # IDs: T0001 inspection, W001 waste
+        f["properties"]["reachable"] = bool(walk.distance(Point(f["geometry"]["coordinates"])) <= REACH)
         if f["properties"]["type"] == "waste":
             n_w += 1
             f["properties"]["id"] = f"W{n_w:03d}"
@@ -124,7 +134,9 @@ def main() -> None:
     feats = build(layers, a.min_gap)
     Path(a.out).write_text(json.dumps({"type": "FeatureCollection", "crs": CRS, "features": feats}))
     n_w = sum(f["properties"]["type"] == "waste" for f in feats)
-    print(f"{len(feats) - n_w} gap targets + {n_w} waste targets -> {a.out}")
+    n_u = sum(not f["properties"]["reachable"] for f in feats)
+    print(f"{len(feats) - n_w} gap targets + {n_w} waste targets ({n_u} not reachable from inter-rows / passages: "
+          f"row ends beyond the last inter-row) -> {a.out}")
 
 
 if __name__ == "__main__":

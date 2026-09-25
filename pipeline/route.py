@@ -5,10 +5,9 @@ Two routes (organiser requirement):
   --mode farmer     RED   waste only                        -> route_waste.geojson
 
 Grid graph at 0.5 m over the study area:
-  cost 1    inter-row core (>= 0.5 m inside the polygon) and organiser passages
-  cost 1.6  inter-row rim (keeps the walk in the middle of the inter-row)
-  cost 20   connectors: other ground inside a vineyard block or within 6 m of inter-rows / passages
-            (headlands, gaps between vines). Walkable but "outside" for the official 2 % rule.
+  cost 1    cells >= 0.35 m inside inter-rows / passages (exact shapely test on the cell centre)
+  cost 20   connectors: the rest of the inter-row / passage area, other ground inside a vineyard block or within
+            6 m of it (headlands, row bands at gaps). Walkable but "outside" for the official 2 % rule.
   blocked   canopies, forbidden zones, everything else
 Targets are anchored to the nearest cheap cell within 2 m (visited = within 2 m), anchors covering the same
 targets are merged, the order is a TSP (OR-Tools) on shortest-path distances with START as depot.
@@ -42,7 +41,9 @@ from pipeline.to_geojson import convert  # noqa: E402
 
 RES = 0.5
 COST_CORE, COST_RIM, COST_LINK = 1.0, 2.5, 20.0
-VERSION = "grid-v3"       # bump when the cost grid changes: invalidates the cached distance matrix
+VERSION = "grid-v4"       # bump when the cost grid changes: invalidates the cached distance matrix
+INSET = 0.35              # walk only on cells >= this far inside inter-rows / passages, so the straight segments
+                          # between cell centres (<= 0.71 m) never cut a polygon corner (validate.py is the referee)
 LINK_REACH = 6.0          # connector cells allowed within this distance of inter-rows / passages (m)
 VISIT = 2.0               # target visited if the route passes within this distance (m)
 CRS = {"type": "name", "properties": {"name": "urn:ogc:def:crs:EPSG::32635"}}
@@ -88,17 +89,15 @@ class Grid:
 
 
 def build_cost(grid, inter, passages, canopies, forbidden, study, blocks):
-    m_inter = grid.exact(inter)                      # allowed area: exact cell-centre test
-    core = cv2.erode(m_inter, np.ones((3, 3), np.uint8))
-    m_pass = grid.exact(passages)
+    allowed = unary_union([inter, passages])
+    m_allowed = grid.exact(allowed)                  # cell centre inside inter-rows / passages (exact)
+    core = grid.exact(allowed.buffer(-INSET))        # ... and at least INSET inside: the only cheap cells
     k = int(2 * LINK_REACH / RES) + 1
-    near = cv2.dilate(np.maximum(m_inter, m_pass), cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (k, k)))
-    region = (grid.raster(study) | m_pass) & (near | grid.raster(blocks))
+    near = cv2.dilate(m_allowed, cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (k, k)))
+    region = (grid.raster(study) | m_allowed) & (near | grid.raster(blocks))
     cost = np.full((grid.h, grid.w), np.inf, np.float32)
-    cost[region > 0] = COST_LINK
-    cost[m_inter > 0] = COST_RIM
+    cost[region > 0] = COST_LINK                     # outside for the 2 % rule (headlands, row bands, edges)
     cost[core > 0] = COST_CORE
-    cost[m_pass > 0] = COST_CORE
     cost[grid.raster(canopies) > 0] = np.inf
     cost[grid.raster(forbidden) > 0] = np.inf
     return cost
@@ -208,7 +207,8 @@ def main() -> None:
     is_out = (cost[rc[:, 0], rc[:, 1]] >= COST_LINK)          # per walkable cell: outside inter-rows + passages
     print(f"grid {grid.w}x{grid.h}, {g.shape[0]:,} walkable cells  ({time.time() - t0:.0f}s)")
 
-    feats = [f for f in json.loads(Path(a.targets).read_text())["features"] if f["properties"]["type"] in types.split(",")]
+    feats = [f for f in json.loads(Path(a.targets).read_text())["features"]
+             if f["properties"]["type"] in types.split(",") and f["properties"].get("reachable", True)]
     s_node = anchor(grid, cost, idx, start, radius=5.0)
     anchors, members, unreachable = [], [], []
     for f in feats:
@@ -238,13 +238,15 @@ def main() -> None:
     print(f"{a.mode}: {len(feats)} targets -> {len(anchors)} stops ({len(unreachable)} unreachable)  ({time.time() - t0:.0f}s)")
 
     # distance matrix (cached: same inputs -> same nodes)
-    key = hashlib.md5((Path(a.inp).read_bytes() + Path(a.targets).read_bytes() + types.encode() + VERSION.encode())).hexdigest()
+    key = hashlib.md5((Path(a.inp).read_bytes() + VERSION.encode())).hexdigest()   # same grid -> same distances
     cache = C.OUT / f"route_cache_{a.mode}.npz"
     D = None
     if cache.exists() and not a.recompute:
         z = np.load(cache, allow_pickle=False)
-        if str(z["key"]) == key and list(z["nodes"]) == nodes:
-            D = z["D"]
+        pos = {int(n): i for i, n in enumerate(z["nodes"])}
+        if str(z["key"]) == key and all(n in pos for n in nodes):       # any subset of the cached stops
+            sel = [pos[n] for n in nodes]
+            D = z["D"][np.ix_(sel, sel)]
             print("distance matrix from cache")
     if D is None:
         D = np.zeros((len(nodes), len(nodes)))
