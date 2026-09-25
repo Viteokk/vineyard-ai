@@ -39,6 +39,8 @@ WASTE_DIST = 10.0    # waste gets a vineyard_id if within this distance of a blo
 ANG_MAX = 6.0        # deg, max angle between two segments of one row (per-tile fits differ by up to ~4 deg)
 D0, DK = 0.5, 0.02   # facing-end offset tolerance: D0 + DK * gap (m)
 GAP_MAX = 60.0       # max along-row gap bridged between two segments (one missing tile)
+MIN_ROWS = 3         # a vineyard needs >= 3 rows (garden rule); smaller blocks are fragments / false positives
+OUTSIDE_MAX = 3.0    # canopies / inter-rows further than this from every block are dropped
 
 
 def load_passages():
@@ -184,7 +186,16 @@ def assign(data: dict[str, list[dict]], tiles_dir: Path):
         if best is None:
             best = block_of(g)
         per_block[best].append((n, k, g))
+    # only blocks that hold rows exist; renumber them north-west first
+    keep_ids = sorted(per_block, key=lambda i: (-round(blocks[i].centroid.y / 25), blocks[i].centroid.x))
+    blocks = [blocks[i] for i in keep_ids]
+    per_block = {new_i: per_block[old_i] for new_i, old_i in enumerate(keep_ids)}
+    width = max(2, len(str(len(blocks))))
+    bid = [f"V{i + 1:0{width}d}" for i in range(len(blocks))]
+    tree = STRtree(blocks)
     n_rows = 0
+    block_rows = {}
+    row_vid = {}                                         # (tile, original index) -> vineyard_id
     for bi, items in per_block.items():
         chains = link_rows([g for _, _, g in items], [n for n, _, _ in items])
         # number chains across the block (perpendicular to its mean direction)
@@ -202,19 +213,27 @@ def assign(data: dict[str, list[dict]], tiles_dir: Path):
         rw = max(2, len(str(len(order))))
         name_of = {c: f"{bid[bi]}-R{r + 1:0{rw}d}" for r, c in enumerate(order)}
         n_rows += len(order)
+        block_rows[bi] = list(name_of.values())
         for (n, k, g), c in zip(items, chains):
             new[n][k]["attrs"]["vineyard_id"] = bid[bi]
             new[n][k]["attrs"]["row_id"] = name_of[c]
+            row_vid[(n, k)] = bid[bi]
     # canopies, inter-rows, waste
+    drop = set()
     for n, k, lab, g in geo:
         if lab == "row":
             continue
         if lab == "waste":
             bi = block_of(g, WASTE_DIST)
         else:
-            bi = block_of(g)
+            bi = block_of(g, OUTSIDE_MAX)
+            if bi is None:                                # not part of any block (its rows were dropped)
+                drop.add((n, k))
+                continue
         new[n][k]["attrs"]["vineyard_id"] = bid[bi] if bi is not None else ""
-    return new, blocks, bid, n_rows
+    new = {n: [o for k, o in enumerate(objs) if (n, k) not in drop] for n, objs in new.items()}
+    rows_per_block = {bid[bi]: len(names) for bi, names in block_rows.items()}
+    return new, blocks, bid, n_rows, rows_per_block, row_vid
 
 
 def main() -> None:
@@ -225,8 +244,16 @@ def main() -> None:
     ap.add_argument("--geojson", default=str(C.OUT / "blocks.geojson"))
     a = ap.parse_args()
     data = read_cvat(a.inp)
-    new, blocks, bid, n_rows = assign(data, Path(a.tiles))
+    dropped = 0
+    for _ in range(3):                                   # drop fragment blocks, then rebuild without them
+        new, blocks, bid, n_rows, rpb, row_vid = assign(data, Path(a.tiles))
+        small = {b for b, r in rpb.items() if r < MIN_ROWS}
+        if not small:
+            break
+        dropped += len(small)
+        data = {n: [o for k, o in enumerate(objs) if row_vid.get((n, k)) not in small] for n, objs in data.items()}
     write_cvat(new, a.out)
+    print(f"dropped {dropped} fragment blocks with < {MIN_ROWS} rows")
     fc = {"type": "FeatureCollection",
           "crs": {"type": "name", "properties": {"name": "urn:ogc:def:crs:EPSG::32635"}},
           "features": [{"type": "Feature", "properties": {"vineyard_id": b, "area_m2": round(p.area, 1)},
