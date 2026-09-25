@@ -416,15 +416,21 @@ function applyLayers() {
   S.layers.ortho ? ortho.addTo(map) : map.removeLayer(ortho);
   for (const k of ['study', 'passage', 'forbidden', 'grid']) S.layers[k] ? ctx[k].addTo(map) : map.removeLayer(ctx[k]);
   for (const [k, r] of Object.entries(ROUTES)) S.layers['route_' + k] ? r.layer.addTo(map) : map.removeLayer(r.layer);
-  if (targetsLayer) S.layers.targets ? targetsLayer.addTo(map) : map.removeLayer(targetsLayer);
+  syncTargets();
   ortho.eachLayer(l => l.setOpacity(S.op)); hires.eachLayer(l => l.setOpacity(S.op));
   refreshAnnotations();
+}
+function syncTargets() {                      // thousands of targets: only from zoom 0.5 up (~0.7 m/px)
+  if (!targetsLayer) return;
+  const on = S.layers.targets && map.getZoom() >= 0.5;
+  if (on && !map.hasLayer(targetsLayer)) targetsLayer.addTo(map);
+  if (!on && map.hasLayer(targetsLayer)) map.removeLayer(targetsLayer);
 }
 function scale() {
   const pxm = Math.pow(2, map.getZoom()), m = [1, 2, 5, 10, 20, 50, 100, 200, 500, 1000].find(v => v * pxm >= 60) || 1000;
   $('#sb-bar').style.width = (m * pxm).toFixed(0) + 'px'; $('#sb-txt').textContent = m >= 1000 ? m / 1000 + ' km' : m + ' m';
 }
-map.on('moveend zoomend', () => { refreshAnnotations(); scale(); });
+map.on('moveend zoomend', () => { refreshAnnotations(); syncTargets(); scale(); });
 const tileAt = (x, y) => TILES.find(t => t.name && x >= t.bounds[0] && x < t.bounds[2] && y >= t.bounds[1] && y < t.bounds[3]);
 map.on('mousemove', e => { const x = e.latlng.lng, y = e.latlng.lat, t = tileAt(x, y); $('#xy').textContent = `X ${x.toFixed(1)}  Y ${y.toFixed(1)}${t ? '  ·  ' + short(t.name) : ''}`; });
 map.on('click', e => { const t = tileAt(e.latlng.lng, e.latlng.lat); t ? select({type: 'tile', name: t.name}) : select(null); });
