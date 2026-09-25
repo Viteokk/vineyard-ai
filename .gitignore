@@ -16,3 +16,6 @@ venv/
 .DS_Store
 # outputs (except final deliverables in repo root)
 out/
+
+# yolo dataset (generated)
+dataset/

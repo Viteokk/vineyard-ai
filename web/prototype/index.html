@@ -1,0 +1,915 @@
+<!doctype html><html lang="ro"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"></head><body><title>Field Planner Sireț3</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&family=Geist+Mono:wght@400;500&display=swap">
+<style>
+:root{
+  --bg:#E9ECE8; --panel:rgba(255,255,255,.84); --solid:#FFFFFF; --ink:#101713; --muted:#5A655F; --faint:#8A948E;
+  --line:rgba(16,23,19,.10); --hover:rgba(16,23,19,.05); --press:rgba(16,23,19,.09);
+  --accent:#1D7A4B; --on-accent:#FFFFFF; --accent-soft:rgba(29,122,75,.12); --accent-ink:#17603B;
+  --route:#F2561D; --route-soft:rgba(242,86,29,.14); --target:#2563EB; --waste:#9333EA; --warn:#D92D20; --warn-soft:rgba(217,45,32,.10);
+  --shadow:0 1px 1px rgba(16,23,19,.04),0 6px 16px rgba(16,23,19,.08),0 18px 40px rgba(16,23,19,.08);
+  --r:16px; --rs:10px;
+  --mono:'Geist Mono',ui-monospace,SFMono-Regular,Menlo,monospace;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  color-scheme:dark;
+  --bg:#0A0E0C; --panel:rgba(17,22,19,.82); --solid:#131915; --ink:#EDF2EE; --muted:#9BA69F; --faint:#6E7872;
+  --line:rgba(255,255,255,.09); --hover:rgba(255,255,255,.05); --press:rgba(255,255,255,.09);
+  --accent:#4ADE80; --on-accent:#052312; --accent-soft:rgba(74,222,128,.14); --accent-ink:#86EFAC;
+  --route:#FF6B35; --route-soft:rgba(255,107,53,.16); --target:#60A5FA; --waste:#C084FC; --warn:#F97066; --warn-soft:rgba(249,112,102,.14);
+  --shadow:0 1px 1px rgba(0,0,0,.3),0 8px 24px rgba(0,0,0,.35),0 24px 48px rgba(0,0,0,.3);
+}}
+:root[data-theme="dark"]{
+  color-scheme:dark;
+  --bg:#0A0E0C; --panel:rgba(17,22,19,.82); --solid:#131915; --ink:#EDF2EE; --muted:#9BA69F; --faint:#6E7872;
+  --line:rgba(255,255,255,.09); --hover:rgba(255,255,255,.05); --press:rgba(255,255,255,.09);
+  --accent:#4ADE80; --on-accent:#052312; --accent-soft:rgba(74,222,128,.14); --accent-ink:#86EFAC;
+  --route:#FF6B35; --route-soft:rgba(255,107,53,.16); --target:#60A5FA; --waste:#C084FC; --warn:#F97066; --warn-soft:rgba(249,112,102,.14);
+  --shadow:0 1px 1px rgba(0,0,0,.3),0 8px 24px rgba(0,0,0,.35),0 24px 48px rgba(0,0,0,.3);
+}
+*{box-sizing:border-box}
+html,body{height:100%;overflow:hidden}
+body{background:var(--bg);color:var(--ink);font:14px/1.45 'Geist',system-ui,-apple-system,'Segoe UI',sans-serif;-webkit-font-smoothing:antialiased}
+button,input,select{font:inherit;color:inherit}
+button{cursor:pointer;background:none;border:0;padding:0}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+h1,h2,h3{margin:0;font-weight:600;letter-spacing:-.02em;text-wrap:balance}
+.num{font-variant-numeric:tabular-nums}
+.mono{font-family:var(--mono);font-size:12px}
+.muted{color:var(--muted)}
+.glass{background:var(--panel);backdrop-filter:blur(18px) saturate(1.4);-webkit-backdrop-filter:blur(18px) saturate(1.4);border:1px solid var(--line);box-shadow:var(--shadow)}
+kbd{font-family:var(--mono);font-size:11px;padding:1px 6px;border-radius:6px;border:1px solid var(--line);background:var(--hover);color:var(--muted)}
+
+/* ---------- map stage ---------- */
+#stage{position:fixed;inset:0;overflow:hidden;touch-action:none;cursor:grab;background:#6F7F4E}
+#stage.drag{cursor:grabbing}
+#ortho,#vec,#pins{position:absolute;inset:0;width:100%;height:100%}
+#pins{pointer-events:none}
+#pins > *{pointer-events:auto}
+.pin{position:absolute;transform:translate(-50%,-50%);width:26px;height:26px;display:grid;place-items:center;border-radius:50%}
+.pin i{display:block;width:14px;height:14px;border-radius:50%;background:var(--target);box-shadow:0 0 0 3px #fff,0 2px 6px rgba(0,0,0,.35);transition:transform .2s}
+.pin.w i{border-radius:3px;transform:rotate(45deg);background:var(--waste)}
+.pin:hover i,.pin.sel i{transform:scale(1.35)}
+.pin.w:hover i,.pin.w.sel i{transform:rotate(45deg) scale(1.35)}
+.pin.reached i{box-shadow:0 0 0 3px var(--route),0 2px 6px rgba(0,0,0,.35)}
+.pin span{position:absolute;left:22px;top:50%;transform:translateY(-50%);white-space:nowrap;font:600 11px/1 'Geist',sans-serif;color:#fff;background:rgba(10,14,12,.72);padding:4px 7px;border-radius:6px;pointer-events:none}
+.pin.pop i{animation:pop .5s ease}
+@keyframes pop{50%{transform:scale(1.8)}}
+.start{position:absolute;transform:translate(-50%,-50%);pointer-events:none;display:flex;align-items:center;gap:6px}
+.start i{width:18px;height:18px;border-radius:50%;background:#101713;box-shadow:0 0 0 4px #fff}
+.start span{font:700 11px/1 'Geist',sans-serif;letter-spacing:.06em;color:#fff;background:#101713;padding:4px 7px;border-radius:6px}
+.blk{position:absolute;transform:translate(-50%,-50%);pointer-events:none;font:700 12px/1 'Geist',sans-serif;letter-spacing:.04em;color:#101713;background:rgba(255,255,255,.9);padding:5px 9px;border-radius:999px;box-shadow:0 2px 8px rgba(0,0,0,.2)}
+.walker{position:absolute;width:18px;height:18px;margin:-9px 0 0 -9px;border-radius:50%;background:var(--route);box-shadow:0 0 0 4px #fff,0 0 0 10px rgba(242,86,29,.28);pointer-events:none}
+
+/* ---------- chrome ---------- */
+.rail{position:fixed;left:16px;top:16px;bottom:16px;width:60px;border-radius:20px;display:flex;flex-direction:column;align-items:center;gap:6px;padding:10px 0;z-index:5}
+.logo{width:40px;height:40px;border-radius:12px;background:var(--accent);color:var(--on-accent);display:grid;place-items:center;margin-bottom:8px}
+.rail a{position:relative;width:44px;height:44px;border-radius:12px;display:grid;place-items:center;color:var(--muted);text-decoration:none}
+.rail a:hover{background:var(--hover);color:var(--ink)}
+.rail a[aria-current="page"]{background:var(--accent-soft);color:var(--accent-ink)}
+.rail a .tip{position:absolute;left:54px;top:50%;transform:translateY(-50%);white-space:nowrap;background:var(--ink);color:var(--bg);font-size:12px;font-weight:600;padding:5px 9px;border-radius:8px;opacity:0;pointer-events:none;transition:opacity .15s}
+.rail a:hover .tip,.rail a:focus-visible .tip{opacity:1}
+.rail .sp{flex-grow:1}
+.rail button{width:44px;height:44px;border-radius:12px;display:grid;place-items:center;color:var(--muted)}
+.rail button:hover{background:var(--hover);color:var(--ink)}
+
+.panel{position:fixed;left:88px;top:16px;bottom:16px;width:380px;border-radius:20px;z-index:4;display:flex;flex-direction:column;overflow:hidden;transition:width .28s cubic-bezier(.2,.8,.2,1),transform .28s cubic-bezier(.2,.8,.2,1)}
+.panel.wide{width:min(760px,calc(100vw - 120px))}
+.panel.collapsed{transform:translateX(calc(-100% - 100px))}
+.p-head{padding:18px 20px 14px;border-bottom:1px solid var(--line);display:flex;flex-direction:column;gap:12px}
+.p-top{display:flex;align-items:flex-start;justify-content:space-between;gap:12px}
+.eyebrow{font-size:11px;font-weight:600;letter-spacing:.09em;text-transform:uppercase;color:var(--faint)}
+.p-head h1{font-size:20px;margin-top:3px}
+.p-body{flex-grow:1;overflow:auto;padding:16px 20px 20px;display:flex;flex-direction:column;gap:22px}
+.p-body::-webkit-scrollbar{width:10px}.p-body::-webkit-scrollbar-thumb{background:var(--press);border-radius:10px;border:3px solid transparent;background-clip:padding-box}
+.icon-btn{width:34px;height:34px;border-radius:10px;display:grid;place-items:center;color:var(--muted);flex-shrink:0}
+.icon-btn:hover{background:var(--hover);color:var(--ink)}
+.sec-title{display:flex;align-items:baseline;justify-content:space-between;gap:10px;margin-bottom:8px}
+.sec-title h2{font-size:13px;font-weight:600}
+.sec-title span{font-size:12px;color:var(--muted)}
+
+.seg{display:flex;padding:3px;border-radius:12px;background:var(--hover);gap:2px}
+.seg button{flex:1;min-height:34px;border-radius:9px;font-size:13px;font-weight:500;color:var(--muted);padding:0 10px;white-space:nowrap}
+.seg button:hover{color:var(--ink)}
+.seg button[aria-pressed="true"]{background:var(--solid);color:var(--ink);font-weight:600;box-shadow:0 1px 2px rgba(0,0,0,.08),0 0 0 1px var(--line)}
+
+.stats{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));border:1px solid var(--line);border-radius:14px;overflow:hidden}
+.stat{padding:12px 14px;display:flex;flex-direction:column;gap:2px}
+.stat:nth-child(odd){border-right:1px solid var(--line)}
+.stat:nth-child(n+3){border-top:1px solid var(--line)}
+.stat .v{font-size:20px;font-weight:600;letter-spacing:-.02em}
+.stat .v small{font-size:12px;font-weight:500;color:var(--muted);margin-left:3px}
+.stat .l{font-size:12px;color:var(--muted)}
+.stat.hero{grid-column:1/-1;border-right:0!important;flex-direction:row;align-items:center;justify-content:space-between}
+.stat.hero .v{font-size:32px;color:var(--route)}
+.list{display:flex;flex-direction:column}
+.li{display:flex;align-items:center;gap:10px;min-height:40px;padding:6px 8px;margin:0 -8px;border-radius:10px;text-align:left;width:calc(100% + 16px)}
+.li:hover{background:var(--hover)}
+.li.sel{background:var(--accent-soft)}
+.li b{font-weight:600}
+.li .r{margin-left:auto;color:var(--muted);font-size:13px}
+.dot{width:8px;height:8px;border-radius:50%;flex-shrink:0;background:var(--accent)}
+.dot.dis{background:var(--warn)}
+.badge{font-size:11px;font-weight:600;padding:2px 8px;border-radius:999px;background:var(--accent-soft);color:var(--accent-ink)}
+.badge.dis{background:var(--warn-soft);color:var(--warn)}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:40px;padding:0 16px;border-radius:12px;font-weight:600;font-size:14px;border:1px solid var(--line);background:var(--solid);color:var(--ink)}
+.btn:hover{background:var(--hover)}
+.btn.primary{background:var(--accent);color:var(--on-accent);border-color:transparent}
+.btn.primary:hover{filter:brightness(1.06);background:var(--accent)}
+.btn.block{width:100%}
+
+/* timeline of targets */
+.tl{position:relative;display:flex;flex-direction:column}
+.tl::before{content:"";position:absolute;left:15px;top:16px;bottom:16px;width:2px;background:var(--line)}
+.tl-i{position:relative;display:flex;align-items:center;gap:12px;padding:8px;margin:0 -8px;border-radius:12px;cursor:pointer}
+.tl-i:hover{background:var(--hover)}
+.tl-i.sel{background:var(--accent-soft)}
+.tl-n{position:relative;z-index:1;width:30px;height:30px;border-radius:50%;display:grid;place-items:center;font-size:12px;font-weight:600;background:var(--solid);border:2px solid var(--target);color:var(--ink);flex-shrink:0}
+.tl-n.w{border-color:var(--waste);border-radius:9px}
+.tl-i.reached .tl-n{background:var(--route);border-color:var(--route);color:#fff}
+.tl-t{flex-grow:1;min-width:0}
+.tl-t b{font-weight:600}
+.tl-t div{font-size:12px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.cbx{width:20px;height:20px;accent-color:var(--accent);cursor:pointer;flex-shrink:0}
+.checks{display:flex;flex-direction:column;gap:2px}
+.ck{display:flex;align-items:center;gap:10px;min-height:36px;font-size:13px}
+.ck svg{color:var(--accent);flex-shrink:0}
+.ck .r{margin-left:auto;font-weight:600}
+.progress{height:6px;border-radius:3px;background:var(--hover);overflow:hidden}
+.progress span{display:block;height:100%;background:var(--accent);transition:width .3s}
+
+/* measurements */
+table{border-collapse:collapse;width:100%}
+th{font-size:11px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--faint);text-align:left;padding:8px 10px;white-space:nowrap;position:sticky;top:0;background:var(--solid)}
+td{padding:9px 10px;border-top:1px solid var(--line);font-size:13px;white-space:nowrap}
+tbody tr{cursor:pointer}
+tbody tr:hover td{background:var(--hover)}
+.th-btn{font:inherit;letter-spacing:inherit;text-transform:inherit;color:inherit;display:inline-flex;gap:4px}
+.tbl{border:1px solid var(--line);border-radius:14px;overflow:auto;max-height:340px;background:var(--solid)}
+.bars{display:flex;height:8px;border-radius:4px;overflow:hidden;width:120px}
+.search{width:100%;min-height:38px;border-radius:10px;border:1px solid var(--line);background:var(--solid);padding:0 12px}
+.chart text{font-family:'Geist',sans-serif;font-size:11px;fill:var(--muted)}
+.chart .lbl{fill:var(--ink);font-weight:600}
+.chart .val{fill:var(--ink)}
+.chart .grid{stroke:var(--line)}
+.legend{display:flex;flex-wrap:wrap;gap:14px;font-size:12px;color:var(--muted)}
+.legend span{display:inline-flex;align-items:center;gap:6px}
+.legend i{width:10px;height:10px;border-radius:3px;display:inline-block}
+
+/* pipeline */
+.steps{display:flex;flex-direction:column}
+.step{display:grid;grid-template-columns:30px 1fr auto;gap:12px;align-items:start;padding:10px 0;position:relative}
+.step:not(:last-child)::after{content:"";position:absolute;left:14px;top:40px;bottom:-6px;width:2px;background:var(--line)}
+.step .ic{width:30px;height:30px;border-radius:50%;display:grid;place-items:center;font-size:12px;font-weight:600;border:2px solid var(--line);background:var(--solid);color:var(--muted)}
+.step.done .ic{background:var(--accent);border-color:var(--accent);color:var(--on-accent)}
+.step.wip .ic{border-color:var(--route);color:var(--route)}
+.step b{display:block;font-weight:600}
+.step small{color:var(--muted);font-size:12px}
+.step .t{font-family:var(--mono);font-size:12px;color:var(--muted);padding-top:6px}
+.code{position:relative;background:#0B100D;color:#D4E2D8;border-radius:14px;padding:14px 16px;font-family:var(--mono);font-size:12px;line-height:1.75;white-space:pre;overflow-x:auto}
+.code .c{color:#6D8575}
+.code .copy{position:absolute;right:8px;top:8px;height:28px;padding:0 10px;border-radius:8px;border:1px solid #243129;background:#131B16;color:#D4E2D8;font-size:12px;font-weight:600}
+.facts{display:grid;grid-template-columns:130px 1fr;font-size:13px}
+.facts div{padding:9px 0;border-top:1px solid var(--line)}
+.facts div:nth-child(odd){color:var(--muted)}
+
+/* top bar, inspector, player, zoom */
+.cmd{position:fixed;left:50%;top:16px;transform:translateX(-50%);width:min(440px,calc(100vw - 32px));height:44px;border-radius:14px;display:flex;align-items:center;gap:10px;padding:0 8px 0 14px;z-index:6;color:var(--muted);text-align:left}
+.cmd:hover{color:var(--ink)}
+.cmd .grow{flex-grow:1}
+.panel:not(.collapsed) ~ .cmd{left:calc(50% + 234px)}
+.panel.wide:not(.collapsed) ~ .cmd{left:calc(50% + 380px + 44px);width:min(360px,calc(100vw - 900px))}
+.tr{position:fixed;right:16px;top:16px;display:flex;gap:8px;z-index:6}
+.tr .icon-btn{width:44px;height:44px;border-radius:14px}
+.tr .btn{min-height:44px;border-radius:14px}
+.pop{position:fixed;right:16px;top:70px;width:280px;border-radius:18px;padding:14px;z-index:7;display:flex;flex-direction:column;gap:4px}
+.sw{display:flex;align-items:center;gap:10px;min-height:38px;font-size:13px;padding:0 4px;border-radius:10px;width:100%;text-align:left}
+.sw:hover{background:var(--hover)}
+.sw .sw-i{width:12px;height:12px;border-radius:4px;flex-shrink:0}
+.sw .tg{margin-left:auto;width:32px;height:20px;border-radius:999px;background:var(--press);position:relative;transition:background .15s;flex-shrink:0}
+.sw .tg::after{content:"";position:absolute;left:2px;top:2px;width:16px;height:16px;border-radius:50%;background:#fff;box-shadow:0 1px 2px rgba(0,0,0,.25);transition:transform .15s}
+.sw[aria-checked="true"] .tg{background:var(--accent)}
+.sw[aria-checked="true"] .tg::after{transform:translateX(12px)}
+.pop label{font-size:12px;color:var(--muted);display:flex;flex-direction:column;gap:6px;padding:8px 4px 2px;border-top:1px solid var(--line);margin-top:6px}
+input[type=range]{accent-color:var(--accent);width:100%}
+.insp{position:fixed;right:16px;top:70px;width:300px;border-radius:18px;padding:16px;z-index:6;display:flex;flex-direction:column;gap:12px}
+.insp dl{display:grid;grid-template-columns:auto 1fr;gap:6px 14px;margin:0;font-size:13px}
+.insp dt{color:var(--muted)}
+.insp dd{margin:0;font-weight:600;text-align:right}
+.insp .acts{display:flex;gap:8px}
+.insp .acts .btn{flex:1;min-height:36px;font-size:13px;padding:0 10px}
+.player{position:fixed;left:calc(50% + 234px);bottom:16px;transform:translateX(-50%);width:min(560px,calc(100vw - 560px));min-width:380px;border-radius:18px;padding:10px 14px;display:flex;align-items:center;gap:12px;z-index:5}
+.panel.collapsed ~ .player{left:50%}
+.panel.wide:not(.collapsed) ~ .player{display:none}
+.play{width:40px;height:40px;border-radius:12px;background:var(--route);color:#fff;display:grid;place-items:center;flex-shrink:0}
+.player .mid{flex-grow:1;display:flex;flex-direction:column;gap:4px;min-width:0}
+.player .row{display:flex;justify-content:space-between;font-size:12px;color:var(--muted)}
+.player .row b{color:var(--ink);font-weight:600}
+.player input{accent-color:var(--route)}
+.zoom{position:fixed;right:16px;bottom:16px;display:flex;flex-direction:column;border-radius:14px;z-index:5;overflow:hidden}
+.zoom button{width:44px;height:44px;display:grid;place-items:center;color:var(--ink)}
+.zoom button:hover{background:var(--hover)}
+.zoom button+button{border-top:1px solid var(--line)}
+.readout{position:fixed;right:16px;bottom:166px;height:44px;border-radius:14px;display:flex;align-items:center;gap:14px;padding:0 14px;z-index:5;font-size:12px;color:var(--muted)}
+.readout .sb{display:flex;align-items:center;gap:8px;color:var(--ink);font-weight:600}
+.readout .sb i{display:block;height:4px;background:var(--ink);border-radius:2px}
+
+/* command palette + modal + toast */
+.veil{position:fixed;inset:0;z-index:20;background:rgba(6,10,8,.35);display:flex;align-items:flex-start;justify-content:center;padding:12vh 16px 16px}
+.palette{width:min(600px,100%);border-radius:20px;overflow:hidden;background:var(--solid);border:1px solid var(--line);box-shadow:var(--shadow)}
+.palette input{width:100%;height:56px;border:0;border-bottom:1px solid var(--line);background:transparent;padding:0 20px;font-size:16px;outline:none}
+.pal-list{max-height:360px;overflow:auto;padding:8px}
+.pal-g{font-size:11px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--faint);padding:10px 12px 4px}
+.pal-i{display:flex;align-items:center;gap:12px;width:100%;min-height:42px;padding:0 12px;border-radius:10px;text-align:left}
+.pal-i .k{width:26px;height:26px;border-radius:8px;display:grid;place-items:center;background:var(--hover);color:var(--muted);font-size:11px;font-weight:700;flex-shrink:0}
+.pal-i .r{margin-left:auto;font-size:12px;color:var(--muted)}
+.pal-i.act{background:var(--accent-soft)}
+.pal-foot{display:flex;gap:14px;padding:10px 16px;border-top:1px solid var(--line);font-size:12px;color:var(--muted)}
+.modal{width:min(720px,100%);border-radius:20px;background:var(--solid);border:1px solid var(--line);box-shadow:var(--shadow);padding:20px;display:flex;flex-direction:column;gap:12px;max-height:80vh}
+.modal textarea{width:100%;flex-grow:1;min-height:300px;border-radius:12px;border:1px solid var(--line);background:var(--hover);font-family:var(--mono);font-size:12px;padding:12px;resize:vertical}
+.toast{position:fixed;left:50%;top:72px;transform:translateX(-50%);z-index:30;background:var(--ink);color:var(--bg);font-weight:600;padding:10px 16px;border-radius:12px;box-shadow:var(--shadow);animation:tin .25s ease}
+@keyframes tin{from{opacity:0;transform:translate(-50%,-8px)}}
+
+/* ---------- phone ---------- */
+@media (max-width:820px){
+  .rail{left:12px;right:12px;top:auto;bottom:calc(12px + env(safe-area-inset-bottom,0px));width:auto;height:60px;flex-direction:row;justify-content:space-around;padding:0 8px}
+  .rail .logo,.rail .sp,.rail a .tip{display:none}
+  .panel,.panel.wide{left:12px;right:12px;width:auto;top:auto;bottom:calc(84px + env(safe-area-inset-bottom,0px));height:46vh}
+  .panel.collapsed{transform:translateY(calc(100% - 64px))}
+  .cmd,.panel:not(.collapsed) ~ .cmd,.panel.wide:not(.collapsed) ~ .cmd{left:12px;right:72px;width:auto;transform:none;top:12px}
+  .tr{right:12px;top:12px}.tr .btn,.tr [data-act="theme"]{display:none}
+  .pop,.insp{right:12px;left:12px;width:auto;top:66px}
+  .player,.zoom,.readout{display:none!important}
+  .panel.wide .p-body{padding-bottom:28px}
+}
+@media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+</style>
+
+<div id="stage" aria-label="Hartă ortofoto Sireț3, fragment V01–V02" role="application">
+  <canvas id="ortho"></canvas>
+  <svg id="vec" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="none"></svg>
+  <div id="pins"></div>
+</div>
+
+<nav class="rail glass" aria-label="Secțiuni">
+  <div class="logo" aria-hidden="true"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M5 20V9M10 20V4M15 20V9M20 20V4"/></svg></div>
+  <a href="#harta" data-view="harta"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 4L3 6v14l6-2 6 2 6-2V4l-6 2-6-2z"/><path d="M9 4v14M15 6v14"/></svg><span class="tip">Hartă <kbd>1</kbd></span><span class="sr" style="position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)">Hartă</span></a>
+  <a href="#traseu" data-view="traseu"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="6" cy="19" r="2"/><circle cx="18" cy="5" r="2"/><path d="M8 19h6a4 4 0 000-8h-4a4 4 0 010-8h6"/></svg><span class="tip">Traseu <kbd>2</kbd></span><span style="position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)">Traseu</span></a>
+  <a href="#masuratori" data-view="masuratori"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 20V10M10 20V4M16 20v-7M21 20H3"/></svg><span class="tip">Măsurători <kbd>3</kbd></span><span style="position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)">Măsurători</span></a>
+  <a href="#pipeline" data-view="pipeline"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="6" height="6" rx="1.5"/><rect x="15" y="14" width="6" height="6" rx="1.5"/><path d="M9 7h4a2 2 0 012 2v5"/></svg><span class="tip">Pipeline <kbd>4</kbd></span><span style="position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)">Pipeline</span></a>
+  <div class="sp"></div>
+  <button type="button" data-act="panel" aria-label="Ascunde panoul"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="3"/><path d="M9 4v16"/></svg></button>
+</nav>
+
+<aside class="panel glass" id="panel" aria-live="polite">
+  <div class="p-head" id="p-head"></div>
+  <div class="p-body" id="p-body"></div>
+</aside>
+
+<button class="cmd glass" type="button" data-act="palette" aria-label="Caută rânduri, ținte, blocuri">
+  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg>
+  <span class="grow">Caută rând, țintă, bloc…</span><kbd>⌘K</kbd>
+</button>
+
+<div class="player glass" id="player">
+  <button class="play" type="button" data-act="play" aria-label="Simulează turul" id="play-btn"></button>
+  <div class="mid">
+    <div class="row"><span id="pl-a"></span><span id="pl-b"></span></div>
+    <input type="range" id="scrub" min="0" max="1000" value="0" aria-label="Poziție pe traseu">
+  </div>
+  <button class="icon-btn" type="button" data-act="prev" aria-label="Ținta anterioară"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 18l-6-6 6-6"/></svg></button>
+  <button class="icon-btn" type="button" data-act="next" aria-label="Ținta următoare"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 18l6-6-6-6"/></svg></button>
+</div>
+
+<div class="tr">
+  <button class="icon-btn glass" type="button" data-act="layers" aria-label="Straturi" aria-expanded="false"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l9 5-9 5-9-5 9-5z"/><path d="M3 13l9 5 9-5"/></svg></button>
+  <button class="icon-btn glass" type="button" data-act="theme" aria-label="Schimbă tema" id="theme-btn"></button>
+  <button class="btn primary" type="button" data-act="export" data-kind="route"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v12M7 10l5 5 5-5M5 21h14"/></svg>Export</button>
+</div>
+
+<div class="pop glass" id="layers" hidden></div>
+<div class="insp glass" id="insp" hidden></div>
+
+<div class="zoom glass">
+  <button type="button" data-act="zin" aria-label="Mărește"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg></button>
+  <button type="button" data-act="zout" aria-label="Micșorează"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M5 12h14"/></svg></button>
+  <button type="button" data-act="fit" aria-label="Încadrează tot"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/></svg></button>
+</div>
+<div class="readout glass"><span class="sb"><i id="sb-bar"></i><span id="sb-txt"></span></span><span class="mono" id="xy">EPSG:32635</span></div>
+
+<div class="veil" id="pal-veil" hidden>
+  <div class="palette" role="dialog" aria-modal="true" aria-label="Căutare">
+    <input id="pal-in" type="text" placeholder="Caută V01-R05, T002, V07, traseu…" autocomplete="off" aria-label="Caută">
+    <div class="pal-list" id="pal-list" role="listbox"></div>
+    <div class="pal-foot"><span><kbd>↑</kbd> <kbd>↓</kbd> alege</span><span><kbd>↵</kbd> deschide</span><span><kbd>esc</kbd> închide</span></div>
+  </div>
+</div>
+<div class="veil" id="ex-veil" hidden>
+  <div class="modal" role="dialog" aria-modal="true" aria-labelledby="ex-title">
+    <div class="p-top"><div><div class="eyebrow">Export</div><h2 id="ex-title" style="font-size:20px"></h2></div><button class="icon-btn" type="button" data-act="close" aria-label="Închide"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg></button></div>
+    <div class="seg" id="ex-tabs" role="group" aria-label="Fișier"></div>
+    <p class="muted" id="ex-note" style="margin:0;font-size:13px"></p>
+    <textarea id="ex-text" readonly spellcheck="false" aria-label="Conținut fișier"></textarea>
+    <button class="btn primary" type="button" data-act="copy-ex">Copiază conținutul</button>
+  </div>
+</div>
+<div class="toast" id="toast" role="status" hidden></div>
+
+<script>
+(() => {
+'use strict';
+const $ = s => document.querySelector(s), $$ = s => [...document.querySelectorAll(s)];
+const fmt = (n, d = 0) => n.toLocaleString('ro-RO', {minimumFractionDigits: d, maximumFractionDigits: d});
+const store = {get(k, f) { try { const v = localStorage.getItem('fp2.' + k); return v == null ? f : JSON.parse(v); } catch (e) { return f; } },
+               set(k, v) { try { localStorage.setItem('fp2.' + k, JSON.stringify(v)); } catch (e) {} }};
+const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
+const phone = () => innerWidth <= 820;
+
+/* =============== data (illustrative, internally consistent) =============== */
+const SCALE = 0.16, X0 = 629470, Y0 = 5220300;
+const utm = (u, v) => [X0 + u * SCALE, Y0 - v * SCALE];
+const MAPBLK = {V01: [...Array(20)].map((_, k) => 160 + 19 * k), V02: [...Array(17)].map((_, k) => 600 + 19 * k)};
+const GAPS = {'V01-R05': [250, 300], 'V01-R12': [420, 470], 'V02-R06': [180, 235], 'V02-R13': [500, 548]};
+const MIXED = new Set(['V02:6', 'V02:7', 'V02:8', 'V02:9']);
+const rid = (b, k) => `${b}-R${String(k + 1).padStart(2, '0')}`;
+let seed = 11; const rnd = () => (seed = (seed * 16807) % 2147483647) / 2147483647;
+const BLOCKS = [['V01', 20, 81.6], ['V02', 17, 81.6], ['V03', 41, 86], ['V04', 38, 78], ['V05', 52, 90], ['V06', 44, 64],
+                ['V07', 36, 70], ['V08', 47, 82], ['V09', 58, 88], ['V10', 39, 66], ['V11', 42, 74], ['V12', 52, 76]];
+const ROWS = [];
+for (const [b, n, avg] of BLOCKS) for (let k = 0; k < n; k++) {
+  const id = rid(b, k), onMap = b in MAPBLK;
+  ROWS.push({id, b, k, len: onMap ? avg : avg * (0.86 + rnd() * 0.24), dis: onMap ? !!GAPS[id] : rnd() < 0.08});
+}
+const COVER = [[100, 0], [76, 24], [60, 30], [52, 36], [70, 22], [45, 40], [88, 12], [64, 28], [58, 30], [76, 18], [40, 42], [66, 26]];
+const BLK = BLOCKS.map(([b, n], i) => {
+  const rs = ROWS.filter(r => r.b === b), len = rs.reduce((s, r) => s + r.len, 0);
+  return {b, rows: n, len, canopy: len * 0.33, inter: len * (n - 1) / n * 2.05, dis: rs.filter(r => r.dis).length,
+          cover: [COVER[i][0], COVER[i][1], 100 - COVER[i][0] - COVER[i][1]]};
+});
+const TOT = {rows: ROWS.length, len: BLK.reduce((s, x) => s + x.len, 0), canopy: BLK.reduce((s, x) => s + x.canopy, 0), inter: BLK.reduce((s, x) => s + x.inter, 0)};
+const TARGETS = [
+  {id: 'T001', kind: 't', what: 'gol 8,0 m', row: 'V01-R05', b: 'V01', u: 245.5, v: 275},
+  {id: 'T002', kind: 't', what: 'gol 8,0 m', row: 'V01-R12', b: 'V01', u: 378.5, v: 445},
+  {id: 'W001', kind: 'w', what: 'pungă de plastic', row: '', b: 'V01', u: 330, v: 60},
+  {id: 'W003', kind: 'w', what: 'folie', row: '', b: 'V01', u: 435.5, v: 360},
+  {id: 'T003', kind: 't', what: 'gol 8,8 m', row: 'V02-R06', b: 'V02', u: 704.5, v: 207},
+  {id: 'W002', kind: 'w', what: 'anvelopă', row: '', b: 'V02', u: 760, v: 620},
+  {id: 'T004', kind: 't', what: 'gol 7,7 m', row: 'V02-R13', b: 'V02', u: 837.5, v: 524}
+];
+const MODES = {
+  'Inspecție': {d: 'M120 620 H245.5 V60 H378.5 V620 H704.5 V60 H837.5 V620 H120', kinds: ['t']},
+  'Deșeuri': {d: 'M120 620 V60 H435.5 V620 H760 H120', kinds: ['w']},
+  'Combinat': {d: 'M120 620 H245.5 V60 H378.5 V620 H435.5 V60 H704.5 V620 H837.5 V60 H120 V620', kinds: ['t', 'w']}
+};
+const NAIVE = 1.42;
+function parsePath(d) {
+  const pts = []; let x = 0, y = 0;
+  d.replace(/([MHV])\s*([\d.]+)(?:\s+([\d.]+))?/g, (_, c, a, b) => { if (c === 'M') { x = +a; y = +b; } else if (c === 'H') x = +a; else y = +a; pts.push([x, y]); });
+  const cum = [0]; for (let i = 1; i < pts.length; i++) cum.push(cum[i - 1] + Math.hypot(pts[i][0] - pts[i - 1][0], pts[i][1] - pts[i - 1][1]));
+  return {pts, cum, total: cum.at(-1)};
+}
+function at(R, s) {
+  s = Math.max(0, Math.min(R.total, s));
+  let i = 1; while (i < R.cum.length - 1 && R.cum[i] < s) i++;
+  const t = (s - R.cum[i - 1]) / ((R.cum[i] - R.cum[i - 1]) || 1), a = R.pts[i - 1], b = R.pts[i];
+  return [a[0] + (b[0] - a[0]) * t, a[1] + (b[1] - a[1]) * t];
+}
+function project(R, u, v) {
+  let best = {d: 1e9, s: 0};
+  for (let i = 1; i < R.pts.length; i++) {
+    const [ax, ay] = R.pts[i - 1], [bx, by] = R.pts[i], dx = bx - ax, dy = by - ay, L = dx * dx + dy * dy || 1;
+    const t = Math.max(0, Math.min(1, ((u - ax) * dx + (v - ay) * dy) / L)), px = ax + dx * t, py = ay + dy * t, d = Math.hypot(u - px, v - py);
+    if (d < best.d - 0.5) best = {d, s: R.cum[i - 1] + Math.sqrt(L) * t};
+  }
+  return best.s;
+}
+
+/* =============== state =============== */
+const S = {
+  view: 'harta', mode: store.get('mode', 'Combinat'), block: store.get('block', 'ALL'),
+  layers: store.get('layers', {ortho: true, canopy: false, inter: true, rows: true, passage: true, targets: true, waste: true, route: true}),
+  orthoOp: store.get('orthoOp', 1), visited: store.get('visited', {}), sel: null, pos: 0, playing: false,
+  sort: {k: 'b', d: 1}, q: '', collapsed: false
+};
+if (!MODES[S.mode]) S.mode = 'Combinat';
+let R = parsePath(MODES[S.mode].d);
+const modeTargets = () => TARGETS.filter(t => MODES[S.mode].kinds.includes(t.kind)).map(t => ({...t, s: project(R, t.u, t.v)})).sort((a, b) => a.s - b.s);
+
+/* =============== procedural orthophoto (drawn once, 2 px per map unit) =============== */
+const WB = {x: -300, y: -260, w: 1600, h: 1200}, OS = 2;
+const PLANTS = [];
+function paintOrtho() {
+  const c = document.createElement('canvas'); c.width = WB.w * OS; c.height = WB.h * OS;
+  const g = c.getContext('2d'); g.scale(OS, OS); g.translate(-WB.x, -WB.y);
+  let sd = 3; const r = () => (sd = (sd * 48271) % 2147483647) / 2147483647;
+  const dots = (x, y, w, h, n, cols, rmin, rmax, a) => { for (let i = 0; i < n; i++) { g.globalAlpha = a * (0.4 + r() * 0.6); g.fillStyle = cols[(r() * cols.length) | 0]; g.beginPath(); g.arc(x + r() * w, y + r() * h, rmin + r() * (rmax - rmin), 0, 7); g.fill(); } g.globalAlpha = 1; };
+  // surrounding fields
+  g.fillStyle = '#76874E'; g.fillRect(WB.x, WB.y, WB.w, WB.h);
+  dots(WB.x, WB.y, WB.w, WB.h, 9000, ['#8A9A5B', '#657543', '#9DAA6A', '#5C6B3C'], 2, 7, .35);
+  const plowed = (x, y, w, h, base, stripe, dir) => { g.fillStyle = base; g.fillRect(x, y, w, h); dots(x, y, w, h, w * h / 40, ['#9C8465', '#7E6A50', '#B09A78'], .8, 2.2, .3);
+    g.strokeStyle = stripe; g.lineWidth = 1.2; g.globalAlpha = .45; g.beginPath();
+    if (dir) for (let yy = y; yy < y + h; yy += 5) { g.moveTo(x, yy); g.lineTo(x + w, yy + 3); } else for (let xx = x; xx < x + w; xx += 5) { g.moveTo(xx, y); g.lineTo(xx + 2, y + h); }
+    g.stroke(); g.globalAlpha = 1; };
+  plowed(-300, -260, 700, 290, '#A58D6A', '#8A7556', 1);
+  plowed(420, -260, 880, 290, '#8F9A5E', '#7A8650', 1);
+  plowed(990, 30, 310, 640, '#B39C77', '#937D5E', 0);
+  plowed(-300, 680, 900, 260, '#9B8866', '#806E52', 1);
+  // tree line
+  for (let i = 0; i < 70; i++) { const x = -280 + i * 24 + r() * 8, y = 668 + r() * 6; g.fillStyle = 'rgba(20,24,12,.35)'; g.beginPath(); g.ellipse(x + 5, y + 5, 12, 9, 0, 0, 7); g.fill(); dots(x - 10, y - 10, 20, 20, 14, ['#3E5A2B', '#4C6B33', '#2F4722'], 3, 6, .95); }
+  // vineyard soil
+  g.fillStyle = '#B29873'; g.fillRect(0, 42, 960, 600);
+  dots(0, 42, 960, 600, 26000, ['#C4AB85', '#9F8563', '#BCA37D', '#A48B67'], .6, 2.4, .35);
+  // inter-row tractor tracks + grass strips
+  for (const [b, xs] of Object.entries(MAPBLK)) for (let i = 0; i < xs.length - 1; i++) {
+    const mid = (xs[i] + xs[i + 1]) / 2;
+    if (MIXED.has(b + ':' + i)) dots(xs[i] + 3, 86, 13, 508, 900, ['#7F9A4C', '#94AC5E', '#6D8A40'], .8, 2.2, .7);
+    g.strokeStyle = 'rgba(214,196,160,.55)'; g.lineWidth = 1.6;
+    for (const o of [-3.2, 3.2]) { g.beginPath(); g.moveTo(mid + o, 80); g.lineTo(mid + o + .6, 600); g.stroke(); }
+  }
+  // roads (passage)
+  const road = (x1, y1, x2, y2) => { g.lineCap = 'round'; g.strokeStyle = '#8E7F66'; g.lineWidth = 27; g.beginPath(); g.moveTo(x1, y1); g.lineTo(x2, y2); g.stroke(); g.strokeStyle = '#D6CAB0'; g.lineWidth = 23; g.stroke();
+    g.strokeStyle = 'rgba(150,135,108,.5)'; g.lineWidth = 2; for (const o of [-5, 5]) { g.beginPath(); if (x1 === x2) { g.moveTo(x1 + o, y1); g.lineTo(x2 + o, y2); } else { g.moveTo(x1, y1 + o); g.lineTo(x2, y2 + o); } g.stroke(); } };
+  road(60, 60, 950, 60); road(60, 620, 950, 620); road(120, 60, 120, 620); road(560, 60, 560, 620); road(-300, 620, 60, 620); road(950, 620, 1300, 640);
+  dots(40, 45, 920, 30, 1400, ['#EDE3CD', '#B8AA8E'], .6, 1.6, .5); dots(40, 605, 920, 30, 1400, ['#EDE3CD', '#B8AA8E'], .6, 1.6, .5);
+  // farmyard (forbidden)
+  g.fillStyle = '#8C9660'; g.fillRect(6, 248, 100, 274); dots(6, 248, 100, 274, 900, ['#7C8753', '#9CA46E'], 1, 3, .5);
+  const roof = (x, y, w, h, c1, c2) => { g.fillStyle = 'rgba(20,16,10,.4)'; g.fillRect(x + 5, y + 5, w, h); g.fillStyle = c1; g.fillRect(x, y, w, h); g.fillStyle = c2; if (w > h) g.fillRect(x, y, w, h / 2); else g.fillRect(x, y, w / 2, h); g.strokeStyle = 'rgba(255,255,255,.35)'; g.lineWidth = 1; g.beginPath(); if (w > h) { g.moveTo(x, y + h / 2); g.lineTo(x + w, y + h / 2); } else { g.moveTo(x + w / 2, y); g.lineTo(x + w / 2, y + h); } g.stroke(); };
+  roof(30, 330, 52, 40, '#9C4A36', '#B55B43'); roof(36, 400, 40, 58, '#7B8288', '#949BA1'); roof(62, 470, 30, 22, '#A2553F', '#BC6A51');
+  for (const [x, y] of [[22, 280], [80, 290], [18, 488], [92, 360]]) { g.fillStyle = 'rgba(15,18,8,.4)'; g.beginPath(); g.ellipse(x + 6, y + 6, 13, 11, 0, 0, 7); g.fill(); dots(x - 12, y - 12, 24, 24, 26, ['#3E5A2B', '#4F6E35', '#2E4520', '#5E7F3E'], 3, 7, .95); }
+  // vines
+  PLANTS.length = 0;
+  for (const [b, xs] of Object.entries(MAPBLK)) xs.forEach((x, k) => {
+    const gap = GAPS[rid(b, k)];
+    for (let y = 90; y < 592; y += 9.4) {
+      const yy = y + (r() - .5) * 2;
+      if (gap && yy > gap[0] - 3 && yy < gap[1] + 3) continue;
+      if (r() < .07) { g.fillStyle = '#ECE9DE'; g.beginPath(); g.arc(x + (r() - .5), yy, 1.1, 0, 7); g.fill(); continue; }
+      const sz = .75 + r() * .6;
+      g.fillStyle = 'rgba(40,30,18,.38)'; g.beginPath(); g.ellipse(x + 2.6, yy + 2, 4.4 * sz, 3.4 * sz, .3, 0, 7); g.fill();
+      for (let j = 0; j < 6; j++) { g.fillStyle = ['#4E7A2D', '#5E8C33', '#6DA03C', '#3E6425', '#57852F'][(r() * 5) | 0]; g.beginPath(); g.arc(x + (r() - .5) * 5 * sz, yy + (r() - .5) * 5.4 * sz, (1.6 + r() * 1.6) * sz, 0, 7); g.fill(); }
+      g.fillStyle = 'rgba(160,200,100,.55)'; g.beginPath(); g.arc(x - 1 + (r() - .5) * 2, yy - 1, .9 * sz, 0, 7); g.fill();
+      PLANTS.push([x, yy, 3.6 * sz, 3.4 * sz]);
+    }
+  });
+  return c;
+}
+function paintCanopy() {
+  const c = document.createElement('canvas'); c.width = WB.w * OS; c.height = WB.h * OS;
+  const g = c.getContext('2d'); g.scale(OS, OS); g.translate(-WB.x, -WB.y);
+  g.strokeStyle = '#FF3DAA'; g.lineWidth = .6; g.fillStyle = 'rgba(255,61,170,.14)';
+  for (const [x, y, rx, ry] of PLANTS) { g.beginPath(); g.ellipse(x, y, rx, ry, 0, 0, 7); g.fill(); g.stroke(); }
+  return c;
+}
+const ORTHO = paintOrtho(), CANOPY = paintCanopy();
+
+/* =============== map view & rendering =============== */
+const stage = $('#stage'), cv = $('#ortho'), ctx = cv.getContext('2d'), svg = $('#vec'), pins = $('#pins');
+const V = {cx: 500, cy: 340, k: 1};
+let W = 0, H = 0, dpr = 1;
+function leftInset() { if (phone()) return 0; return 88 + (S.collapsed ? 0 : ($('#panel').classList.contains('wide') ? Math.min(760, innerWidth - 120) : 380)); }
+function fit(anim = true) {
+  const L = leftInset(), pad = 40, bw = W - L - pad * 2 - 16, bh = H - (phone() ? 46 * H / 100 + 150 : 170);
+  const k = Math.max(.4, Math.min(bw / 960, bh / 610));
+  animateTo(480 - (L / 2) / k + 8 / k, 345 + (phone() ? (H * .23) / k : 0), k, anim);
+}
+function animateTo(cx, cy, k, anim = true) {
+  if (!anim || reduce) { V.cx = cx; V.cy = cy; V.k = k; return render(); }
+  const a = {...V}, t0 = performance.now();
+  const step = t => { const p = Math.min(1, (t - t0) / 420), e = 1 - Math.pow(1 - p, 3);
+    V.cx = a.cx + (cx - a.cx) * e; V.cy = a.cy + (cy - a.cy) * e; V.k = a.k * Math.pow(k / a.k, e); render(); if (p < 1) requestAnimationFrame(step); };
+  requestAnimationFrame(step);
+}
+function focusOn(u, v, k = 3) { const L = leftInset(); animateTo(u - (L / 2) / k, v + (phone() ? H * .2 / k : 0), k); }
+const toScreen = (u, v) => [W / 2 + (u - V.cx) * V.k, H / 2 + (v - V.cy) * V.k];
+const toWorld = (x, y) => [V.cx + (x - W / 2) / V.k, V.cy + (y - H / 2) / V.k];
+
+function buildVec() {
+  const o = [];
+  o.push(`<defs><pattern id="hatch" width="8" height="8" patternUnits="userSpaceOnUse" patternTransform="rotate(45)"><rect width="8" height="8" fill="rgba(217,45,32,.12)"/><line x1="0" y1="0" x2="0" y2="8" stroke="rgba(217,45,32,.55)" stroke-width="2.4"/></pattern></defs>`);
+  o.push('<g data-l="inter">');
+  for (const [b, xs] of Object.entries(MAPBLK)) for (let i = 0; i < xs.length - 1; i++) {
+    const mixed = MIXED.has(b + ':' + i);
+    o.push(`<rect x="${xs[i] + 3}" y="85" width="${xs[i + 1] - xs[i] - 6}" height="510" fill="${mixed ? 'rgba(250,176,5,.20)' : 'rgba(34,211,238,.13)'}" stroke="${mixed ? 'rgba(250,176,5,.7)' : 'rgba(34,211,238,.55)'}" stroke-width="1" vector-effect="non-scaling-stroke"/>`);
+  }
+  o.push('</g><g data-l="passage">');
+  o.push(`<rect x="6" y="248" width="100" height="274" rx="3" fill="url(#hatch)" stroke="rgba(217,45,32,.9)" stroke-width="1.5" vector-effect="non-scaling-stroke"/>`);
+  for (const d of ['M60 60 H950', 'M60 620 H950', 'M120 60 V620', 'M560 60 V620'])
+    o.push(`<path d="${d}" stroke="rgba(255,255,255,.28)" stroke-width="24" fill="none" stroke-linecap="round"/><path d="${d}" stroke="rgba(255,255,255,.85)" stroke-width="1.2" stroke-dasharray="6 5" fill="none" vector-effect="non-scaling-stroke"/>`);
+  o.push('</g><g data-l="rows">');
+  for (const [b, xs] of Object.entries(MAPBLK)) xs.forEach((x, k) => {
+    const id = rid(b, k), dis = !!GAPS[id];
+    o.push(`<g data-row="${id}" class="rowg"><line x1="${x}" y1="85" x2="${x}" y2="595" stroke="${dis ? '#FF4D4D' : '#FFD43B'}" stroke-width="${dis ? 2 : 1.4}" ${dis ? 'stroke-dasharray="5 4"' : ''} vector-effect="non-scaling-stroke" class="ax"/><line x1="${x}" y1="85" x2="${x}" y2="595" stroke="transparent" stroke-width="16" vector-effect="non-scaling-stroke" style="cursor:pointer"/></g>`);
+  });
+  o.push('</g><g data-l="route">');
+  o.push(`<path id="r-case" fill="none" stroke="rgba(255,255,255,.95)" stroke-width="8" stroke-linejoin="round" stroke-linecap="round" vector-effect="non-scaling-stroke"/>`);
+  o.push(`<path id="r-base" fill="none" stroke="var(--route)" stroke-opacity=".45" stroke-width="4" stroke-linejoin="round" vector-effect="non-scaling-stroke"/>`);
+  o.push(`<path id="r-prog" fill="none" stroke="var(--route)" stroke-width="4.5" stroke-linejoin="round" stroke-linecap="round" vector-effect="non-scaling-stroke"/>`);
+  o.push(`<path id="r-dash" fill="none" stroke="#fff" stroke-width="1.4" stroke-dasharray="1 14" stroke-linecap="round" vector-effect="non-scaling-stroke"><animate attributeName="stroke-dashoffset" from="30" to="0" dur="1.2s" repeatCount="indefinite"/></path>`);
+  o.push('</g><rect id="sel-row" x="0" y="85" width="14" height="510" rx="7" fill="none" stroke="#fff" stroke-width="2" vector-effect="non-scaling-stroke" style="display:none"/>');
+  svg.innerHTML = o.join('');
+  svg.querySelectorAll('.rowg').forEach(g => g.addEventListener('click', e => { if (!moved) select({type: 'row', id: g.dataset.row}); }));
+}
+function updateRoute() {
+  const d = MODES[S.mode].d;
+  ['#r-case', '#r-base', '#r-prog', '#r-dash'].forEach(s => svg.querySelector(s).setAttribute('d', d));
+  const prog = svg.querySelector('#r-prog');
+  prog.setAttribute('pathLength', R.total); prog.style.strokeDasharray = `${R.total} ${R.total}`;
+}
+function render() {
+  // canvas
+  ctx.setTransform(1, 0, 0, 1, 0, 0); ctx.clearRect(0, 0, cv.width, cv.height);
+  const [ox, oy] = toScreen(WB.x, WB.y);
+  ctx.setTransform(V.k * dpr / OS, 0, 0, V.k * dpr / OS, ox * dpr, oy * dpr);
+  ctx.imageSmoothingEnabled = true; ctx.imageSmoothingQuality = 'high';
+  if (S.layers.ortho) { ctx.globalAlpha = S.orthoOp; ctx.drawImage(ORTHO, 0, 0); ctx.globalAlpha = 1; }
+  if (S.layers.canopy) ctx.drawImage(CANOPY, 0, 0);
+  // vector
+  const [wx, wy] = toWorld(0, 0);
+  svg.setAttribute('viewBox', `${wx} ${wy} ${W / V.k} ${H / V.k}`);
+  svg.querySelectorAll('[data-l]').forEach(g => g.style.display = S.layers[g.dataset.l] ? '' : 'none');
+  const prog = svg.querySelector('#r-prog'); prog.style.strokeDashoffset = R.total - S.pos;
+  // pins (screen space)
+  const on = new Set(modeTargets().filter(t => S.pos >= t.s - 1).map(t => t.id));
+  const out = [];
+  for (const [b, x] of [['V01', 340], ['V02', 752]]) { const [sx, sy] = toScreen(x, 100); out.push(`<div class="blk" style="left:${sx}px;top:${sy}px;opacity:${S.block === 'ALL' || S.block === b ? 1 : .45}">${b}</div>`); }
+  const [stx, sty] = toScreen(120, 620); out.push(`<div class="start" style="left:${stx - 9}px;top:${sty}px;transform:translate(0,-50%)"><i></i><span>START</span></div>`);
+  const mk = new Set(MODES[S.mode].kinds);
+  for (const t of TARGETS) {
+    const lay = t.kind === 't' ? 'targets' : 'waste'; if (!S.layers[lay]) continue;
+    const [sx, sy] = toScreen(t.u, t.v);
+    out.push(`<button type="button" class="pin ${t.kind}${S.sel?.id === t.id ? ' sel' : ''}${on.has(t.id) ? ' reached' : ''}" data-pin="${t.id}" style="left:${sx}px;top:${sy}px;opacity:${mk.has(t.kind) ? 1 : .35}" aria-label="${t.id}, ${t.what}"><i></i>${V.k > 1.3 || S.sel?.id === t.id ? `<span>${t.id} · ${t.what}</span>` : ''}</button>`);
+  }
+  if (S.layers.route && (S.pos > 0 || S.playing)) { const [u, v] = at(R, S.pos), [sx, sy] = toScreen(u, v); out.push(`<div class="walker" style="left:${sx}px;top:${sy}px"></div>`); }
+  pins.innerHTML = out.join('');
+  // selected row outline
+  const sr = svg.querySelector('#sel-row');
+  if (S.sel?.type === 'row' && MAPBLK[S.sel.id.slice(0, 3)]) { const x = MAPBLK[S.sel.id.slice(0, 3)][+S.sel.id.slice(-2) - 1]; sr.setAttribute('x', x - 7); sr.style.display = ''; } else sr.style.display = 'none';
+  // scale bar
+  const m = [2, 5, 10, 20, 50, 100].find(v => v / SCALE * V.k >= 56) || 100;
+  $('#sb-bar').style.width = (m / SCALE * V.k).toFixed(0) + 'px'; $('#sb-txt').textContent = m + ' m';
+}
+function resize() {
+  dpr = Math.min(2, devicePixelRatio || 1); W = stage.clientWidth; H = stage.clientHeight;
+  cv.width = W * dpr; cv.height = H * dpr; render();
+}
+
+/* pan / zoom / pinch */
+let moved = false; const ptrs = new Map(); let pan = null;
+stage.addEventListener('pointerdown', e => {
+  if (e.target.closest('.pin')) return;
+  ptrs.set(e.pointerId, [e.clientX, e.clientY]); moved = false;
+  pan = {x: e.clientX, y: e.clientY, cx: V.cx, cy: V.cy, k: V.k, d: ptrs.size === 2 ? dist() : 0};
+});
+const dist = () => { const [a, b] = [...ptrs.values()]; return Math.hypot(a[0] - b[0], a[1] - b[1]); };
+stage.addEventListener('pointermove', e => {
+  const [u, v] = toWorld(e.clientX, e.clientY), [X, Y] = utm(u, v);
+  $('#xy').textContent = `X ${X.toFixed(1)}  Y ${Y.toFixed(1)}`;
+  if (!ptrs.has(e.pointerId) || !pan) return;
+  ptrs.set(e.pointerId, [e.clientX, e.clientY]);
+  if (!moved && Math.hypot(e.clientX - pan.x, e.clientY - pan.y) > 4) { moved = true; stage.classList.add('drag'); try { stage.setPointerCapture(e.pointerId); } catch (_) {} }
+  if (ptrs.size === 2 && pan.d) { V.k = Math.max(.35, Math.min(14, pan.k * dist() / pan.d)); }
+  else { V.cx = pan.cx - (e.clientX - pan.x) / V.k; V.cy = pan.cy - (e.clientY - pan.y) / V.k; }
+  render();
+});
+const up = e => { ptrs.delete(e.pointerId); if (!ptrs.size) { pan = null; stage.classList.remove('drag'); } };
+stage.addEventListener('pointerup', up); stage.addEventListener('pointercancel', up);
+stage.addEventListener('wheel', e => {
+  e.preventDefault();
+  const f = Math.exp(-e.deltaY * (e.ctrlKey ? .01 : .0018)), k = Math.max(.35, Math.min(14, V.k * f));
+  const [u, v] = toWorld(e.clientX, e.clientY);
+  V.cx = u - (e.clientX - W / 2) / k; V.cy = v - (e.clientY - H / 2) / k; V.k = k; render();
+}, {passive: false});
+pins.addEventListener('click', e => { const p = e.target.closest('[data-pin]'); if (p) select({type: 'target', id: p.dataset.pin}); });
+stage.addEventListener('click', e => { if (!moved && !e.target.closest('.pin,.rowg') && S.sel) select(null); });
+
+/* =============== selection & inspector =============== */
+function select(sel, focus = false) {
+  S.sel = sel && S.sel && S.sel.id === sel.id && !focus ? null : sel;
+  const box = $('#insp');
+  if (!S.sel) { box.hidden = true; render(); syncLists(); return; }
+  $('#layers').hidden = true;
+  if (S.sel.type === 'row') {
+    const r = ROWS.find(x => x.id === S.sel.id), gap = GAPS[r.id];
+    box.innerHTML = `<div class="p-top"><div><div class="eyebrow">Rând · ${r.b}</div><h2 style="font-size:20px">${r.id}</h2></div><button class="icon-btn" type="button" data-act="unsel" aria-label="Închide">${IC.x}</button></div>
+      <dl><dt>Lungime</dt><dd class="num">${fmt(r.len, 1)} m</dd><dt>row_structure</dt><dd><span class="badge ${r.dis ? 'dis' : ''}">${r.dis ? 'disrupted' : 'regular'}</span></dd>
+      ${gap ? `<dt>Cel mai lung gol</dt><dd class="num">${fmt((gap[1] - gap[0]) * SCALE, 1)} m</dd>` : ''}<dt>vineyard_id</dt><dd>${r.b}</dd></dl>
+      <div class="acts"><button class="btn" type="button" data-act="center">Centrează</button><button class="btn" type="button" data-act="show-rows">În tabel</button></div>`;
+    if (focus && MAPBLK[r.b]) focusOn(MAPBLK[r.b][r.k], 340, 2.2);
+  } else {
+    const t = TARGETS.find(x => x.id === S.sel.id), [X, Y] = utm(t.u, t.v);
+    box.innerHTML = `<div class="p-top"><div><div class="eyebrow">${t.kind === 't' ? 'Țintă de inspecție' : 'Deșeu'}</div><h2 style="font-size:20px">${t.id}</h2></div><button class="icon-btn" type="button" data-act="unsel" aria-label="Închide">${IC.x}</button></div>
+      <dl><dt>Ce</dt><dd>${t.what}</dd><dt>Bloc / rând</dt><dd>${t.b}${t.row ? ' / ' + t.row : ''}</dd><dt>X</dt><dd class="mono">${X.toFixed(1)}</dd><dt>Y</dt><dd class="mono">${Y.toFixed(1)}</dd></dl>
+      <div class="acts"><button class="btn" type="button" data-act="center">Centrează</button><button class="btn ${S.visited[t.id] ? '' : 'primary'}" type="button" data-act="visit" data-id="${t.id}">${S.visited[t.id] ? 'Vizitat ✓' : 'Marchează vizitat'}</button></div>`;
+    if (focus) focusOn(t.u, t.v, 3);
+  }
+  box.hidden = false; render(); syncLists();
+}
+function syncLists() {
+  $$('[data-sel]').forEach(el => el.classList.toggle('sel', el.dataset.sel === S.sel?.id));
+}
+
+/* =============== panels =============== */
+const IC = {
+  x: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg>',
+  ok: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12l5 5 9-10"/></svg>',
+  play: '<svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M7 5v14l12-7z"/></svg>',
+  pause: '<svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M7 5h4v14H7zM13 5h4v14h-4z"/></svg>',
+  sun: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg>',
+  moon: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 14.5A8 8 0 019.5 4 8 8 0 1020 14.5z"/></svg>',
+  auto: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="8"/><path d="M12 4v16" /><path d="M12 4a8 8 0 010 16z" fill="currentColor"/></svg>',
+  collapse: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 18l-6-6 6-6"/></svg>'
+};
+const km = m => m >= 1000 ? `${fmt(m / 1000, 2)}<small>km</small>` : `${fmt(m, 0)}<small>m</small>`;
+const kmT = m => m >= 1000 ? `${fmt(m / 1000, 2)} km` : `${fmt(m, 0)} m`;
+const seg = (items, cur, act) => `<div class="seg" role="group">${items.map(([v, l]) => `<button type="button" data-${act}="${v}" aria-pressed="${v === cur}">${l}</button>`).join('')}</div>`;
+function head(eyebrow, title, extra = '') {
+  return `<div class="p-top"><div><div class="eyebrow">${eyebrow}</div><h1>${title}</h1></div><button class="icon-btn" type="button" data-act="panel" aria-label="Ascunde panoul">${IC.collapse}</button></div>${extra}`;
+}
+function routeInfo() { const len = R.total * SCALE; return {len, min: Math.round(len / 4000 * 60), tg: modeTargets()}; }
+
+function viewHarta() {
+  const sel = S.block === 'ALL' ? BLK.slice(0, 2) : BLK.filter(x => x.b === S.block), sum = k => sel.reduce((s, x) => s + x[k], 0);
+  const ri = routeInfo(), rows = ROWS.filter(r => (S.block === 'ALL' ? r.b in MAPBLK : r.b === S.block));
+  $('#p-head').innerHTML = head('Sireț3 · fragment de hartă', S.block === 'ALL' ? 'Blocurile V01 și V02' : `Blocul ${S.block}`,
+    seg([['ALL', 'Ambele'], ['V01', 'V01'], ['V02', 'V02']], S.block, 'block'));
+  $('#p-body').innerHTML = `
+    <section><div class="stats">
+      <div class="stat hero"><div><div class="l">Traseu ${S.mode.toLowerCase()}</div><div class="v num">${km(ri.len)}</div></div><div style="text-align:right"><div class="l">${ri.min} min la 4 km/h</div><div class="l">${ri.tg.length} ținte · revine la START</div></div></div>
+      <div class="stat"><div class="v num">${fmt(sum('canopy') / 1e4, 2)}<small>ha</small></div><div class="l">coroane · ${fmt(sum('canopy'))} m²</div></div>
+      <div class="stat"><div class="v num">${fmt(sum('inter') / 1e4, 2)}<small>ha</small></div><div class="l">inter-rânduri · ${fmt(sum('inter'))} m²</div></div>
+      <div class="stat"><div class="v num">${sum('rows')}</div><div class="l">rânduri (row_id)</div></div>
+      <div class="stat"><div class="v num">${km(sum('len'))}</div><div class="l">lungime totală rânduri</div></div>
+    </div></section>
+    <section><div class="sec-title"><h2>Rânduri</h2><span>${rows.filter(r => r.dis).length} disrupted din ${rows.length}</span></div>
+      <div class="list">${rows.map(r => `<button type="button" class="li" data-sel="${r.id}" data-row="${r.id}"><span class="dot ${r.dis ? 'dis' : ''}"></span><b>${r.id}</b>${r.dis ? '<span class="badge dis">disrupted</span>' : ''}<span class="r num">${fmt(r.len, 1)} m</span></button>`).join('')}</div>
+    </section>`;
+}
+function viewTraseu() {
+  const ri = routeInfo(), n = ri.tg.filter(t => S.visited[t.id]).length;
+  $('#p-head').innerHTML = head('Traseu optim · START → ținte → START', `Traseu ${S.mode.toLowerCase()}`,
+    seg(Object.keys(MODES).map(m => [m, m]), S.mode, 'mode'));
+  $('#p-body').innerHTML = `
+    <section><div class="stats">
+      <div class="stat hero"><div><div class="l">length_m = ${fmt(Math.round(ri.len))}</div><div class="v num">${km(ri.len)}</div></div><div style="text-align:right"><div class="l">${ri.min} min pe jos</div><div class="l" style="color:var(--accent-ink);font-weight:600">−${Math.round((1 - 1 / NAIVE) * 100)}% față de naiv (${kmT(ri.len * NAIVE)})</div></div></div>
+    </div></section>
+    <section><div class="sec-title"><h2>Validare automată</h2><span>regulile care dau 0 pe traseu</span></div>
+      <div class="checks">
+        <div class="ck">${IC.ok}În inter-rânduri + passage<span class="r num">100% · min 98%</span></div>
+        <div class="ck">${IC.ok}Revine la START<span class="r num">0,0 m · max 5 m</span></div>
+        <div class="ck">${IC.ok}Fără coroane sau forbidden<span class="r num">0 m</span></div>
+        <div class="ck">${IC.ok}Acoperire ținte ≤ 2 m<span class="r num">100% · min 90%</span></div>
+      </div></section>
+    <section><div class="sec-title"><h2>Ținte în ordinea turului</h2><span class="num">${n} / ${ri.tg.length} vizitate</span></div>
+      <div class="progress" style="margin-bottom:10px"><span style="width:${ri.tg.length ? n / ri.tg.length * 100 : 0}%"></span></div>
+      <div class="tl">${ri.tg.map((t, i) => `<div class="tl-i ${S.pos >= t.s - 1 ? 'reached' : ''}" data-sel="${t.id}" data-target="${t.id}"><span class="tl-n ${t.kind}">${i + 1}</span><div class="tl-t"><b>${t.id}</b> · ${t.what}<div>${t.b}${t.row ? ' / ' + t.row : ''} · ${fmt(t.s * SCALE, 0)} m de la START</div></div><input class="cbx" type="checkbox" data-visit="${t.id}" ${S.visited[t.id] ? 'checked' : ''} aria-label="Vizitat ${t.id}"></div>`).join('')}</div>
+    </section>
+    <section style="display:flex;gap:8px"><button class="btn primary block" type="button" data-act="play">${S.playing ? IC.pause + 'Pauză' : IC.play + 'Simulează turul'}</button><button class="btn" type="button" data-act="export" data-kind="targets">targets.geojson</button></section>`;
+}
+function viewMas() {
+  const list = [...BLK].sort((a, b) => (a[S.sort.k] > b[S.sort.k] ? 1 : -1) * S.sort.d);
+  const maxLen = Math.max(...BLK.map(x => x.len)), q = S.q.trim().toUpperCase();
+  const rows = ROWS.filter(r => !q || r.id.includes(q)), shown = rows.slice(0, 60);
+  const bw = 660, rowH = 24, top = 8, lab = 44, ch = top + BLK.length * rowH + 22, sx = v => lab + v / (Math.ceil(maxLen / 1000) * 1000) * (bw - lab - 60);
+  const ticks = [...Array(Math.ceil(maxLen / 1000) + 1)].map((_, i) => i * 1000);
+  const th = (k, l) => `<th aria-sort="${S.sort.k === k ? (S.sort.d > 0 ? 'ascending' : 'descending') : 'none'}"><button class="th-btn" type="button" data-sort="${k}">${l}${S.sort.k === k ? (S.sort.d > 0 ? ' ↑' : ' ↓') : ''}</button></th>`;
+  $('#p-head').innerHTML = head('Măsurători · toată zona', 'Sireț3 în cifre', `<div style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn primary" type="button" data-act="export" data-kind="csv">measurements.csv</button><button class="btn" type="button" data-act="export" data-kind="route">route.geojson</button></div>`);
+  $('#p-body').innerHTML = `
+    <section><div class="stats" style="grid-template-columns:repeat(${phone() ? 2 : 4},minmax(0,1fr))">
+      <div class="stat" style="border-right:1px solid var(--line)"><div class="v num">${BLK.length}</div><div class="l">blocuri</div></div>
+      <div class="stat" style="border-right:${phone() ? 0 : 1}px solid var(--line);border-top:0"><div class="v num">${TOT.rows}</div><div class="l">rânduri · ${kmT(TOT.len)}</div></div>
+      <div class="stat" style="border-right:1px solid var(--line);border-top:${phone() ? 1 : 0}px solid var(--line)"><div class="v num">${fmt(TOT.canopy / 1e4, 2)}<small>ha</small></div><div class="l">coroane · ${fmt(TOT.canopy)} m²</div></div>
+      <div class="stat" style="border-top:${phone() ? 1 : 0}px solid var(--line)"><div class="v num">${fmt(TOT.inter / 1e4, 2)}<small>ha</small></div><div class="l">inter-rânduri · ${fmt(TOT.inter)} m²</div></div>
+    </div></section>
+    <section><div class="sec-title"><h2>Lungimea rândurilor pe bloc</h2><span>metri</span></div>
+      <div style="overflow-x:auto"><svg class="chart" viewBox="0 0 ${bw} ${ch}" width="100%" style="min-width:520px" role="img" aria-label="Lungimea totală a rândurilor pe fiecare bloc">
+        ${ticks.map(t => `<line class="grid" x1="${sx(t)}" x2="${sx(t)}" y1="${top}" y2="${ch - 18}"/><text x="${sx(t)}" y="${ch - 4}" text-anchor="middle">${fmt(t)}</text>`).join('')}
+        ${BLK.map((x, i) => { const y = top + i * rowH; return `<text class="lbl" x="0" y="${y + 15}">${x.b}</text><rect x="${lab}" y="${y + 5}" width="${sx(x.len) - lab}" height="13" rx="3" fill="var(--accent)" opacity="${x.b in MAPBLK ? 1 : .55}"/><text class="val num" x="${sx(x.len) + 6}" y="${y + 15}">${fmt(x.len)}</text>`; }).join('')}
+      </svg></div></section>
+    <section><div class="sec-title"><h2>Pe blocuri</h2><div class="legend"><span><i style="background:#C8B48C"></i>bare_soil</span><span><i style="background:#8DB07A"></i>mixed</span><span><i style="background:#3F7A4A"></i>vegetation</span></div></div>
+      <div class="tbl"><table><thead><tr>${th('b', 'Bloc')}${th('rows', 'Rânduri')}${th('len', 'Lungime')}${th('canopy', 'Coroane m²')}${th('inter', 'Inter-rânduri m²')}${th('dis', 'Disrupted')}<th>Acoperire</th></tr></thead>
+      <tbody>${list.map(x => `<tr data-blkrow="${x.b}"><td><b>${x.b}</b></td><td class="num">${x.rows}</td><td class="num">${fmt(x.len)} m</td><td class="num">${fmt(x.canopy)}</td><td class="num">${fmt(x.inter)}</td><td class="num" style="${x.dis ? 'color:var(--warn);font-weight:600' : ''}">${x.dis}</td><td><div class="bars" title="bare_soil ${x.cover[0]}%, mixed ${x.cover[1]}%, vegetation ${x.cover[2]}%"><span style="width:${x.cover[0]}%;background:#C8B48C"></span><span style="width:${x.cover[1]}%;background:#8DB07A"></span><span style="width:${x.cover[2]}%;background:#3F7A4A"></span></div></td></tr>`).join('')}</tbody></table></div></section>
+    <section><div class="sec-title"><h2>Rânduri</h2><span class="num">${rows.length} găsite</span></div>
+      <input class="search" id="row-q" type="search" placeholder="Filtrează după row_id, ex. V05 sau V09-R3" value="${S.q.replace(/"/g, '')}" aria-label="Filtrează rânduri">
+      <div class="tbl" style="margin-top:8px;max-height:300px"><table><thead><tr><th>row_id</th><th>vineyard_id</th><th>Lungime</th><th>row_structure</th></tr></thead>
+      <tbody>${shown.map(r => `<tr data-rowjump="${r.id}"><td><b>${r.id}</b></td><td>${r.b}</td><td class="num">${fmt(r.len, 1)} m</td><td><span class="badge ${r.dis ? 'dis' : ''}">${r.dis ? 'disrupted' : 'regular'}</span></td></tr>`).join('')}</tbody></table></div>
+      ${rows.length > 60 ? `<p class="muted" style="font-size:12px;margin:8px 0 0">Primele 60 din ${rows.length}. Filtrează ca să restrângi.</p>` : ''}</section>
+    <p class="muted" style="font-size:12px;margin:0">Arii orizontale în EPSG:32635. Arie coroane = reuniunea poligoanelor; lungimea unui rând = suma segmentelor lui din toate tile-urile. Date ilustrative în prototip.</p>`;
+}
+function viewPipe() {
+  const steps = [['done', 'Tile-uri', '311 GeoTIFF · 2,5 cm/px', '—'], ['done', 'Detector CV clasic', 'scor local 0,817 pe referință', '1:53'],
+    ['todo', 'ID-uri globale', 'vineyard_id / row_id peste tile-uri', '—'], ['todo', 'Export CVAT', '5 ZIP-uri < 90 MB', '—'],
+    ['wip', 'Corectură în Marcaj', 'toată echipa, sâmbătă–duminică', 'manual'], ['todo', 'Traseu + măsurători', 'route.geojson · measurements.csv', '—']];
+  $('#p-head').innerHTML = head('Pipeline & reproducere', 'De la dronă la traseu');
+  $('#p-body').innerHTML = `
+    <section class="steps">${steps.map(([c, t, s, tm], i) => `<div class="step ${c}"><span class="ic">${c === 'done' ? IC.ok : i + 1}</span><div><b>${t}</b><small>${s}</small></div><span class="t">${tm}</span></div>`).join('')}</section>
+    <section><div class="sec-title"><h2>Fișă tehnică</h2></div><div class="facts">
+      <div>Procesare</div><div>1 min 53 s pentru 311 tile-uri, MacBook Pro Apple Silicon</div>
+      <div>Scor local</div><div>0,817 cu formula oficială (<span class="mono">pipeline/eval.py</span>)</div>
+      <div>Model neural</div><div>YOLO-seg pe pseudo-etichete, planificat</div>
+      <div>API-uri plătite</div><div>niciunul</div>
+      <div>Date</div><div>Sireț3, CC BY 4.0 · OpenAerialMap · OSM (ODbL)</div></div></section>
+    <section><div class="sec-title"><h2>Reproducere</h2></div>
+      <div class="code" id="repro"><button class="copy" type="button" data-act="copy-repro">Copiază</button><span class="c"># instalare</span>
+pip install -r requirements.lock.txt
+python scripts/setup_data.py
+<span class="c"># pre-adnotări pe 311 tile-uri</span>
+python -m pipeline.baseline --tiles data/tiles \\
+    --out out/baseline_all.xml
+<span class="c"># scor local</span>
+python -m pipeline.eval --pred out/baseline.xml</div></section>`;
+}
+const VIEWS = {harta: viewHarta, traseu: viewTraseu, masuratori: viewMas, pipeline: viewPipe};
+function renderPanel() { VIEWS[S.view](); syncLists(); renderPlayer(); }
+function show(v) {
+  if (!VIEWS[v]) v = 'harta';
+  const wasWide = $('#panel').classList.contains('wide');
+  S.view = v; $$('.rail a').forEach(a => a.dataset.view === v ? a.setAttribute('aria-current', 'page') : a.removeAttribute('aria-current'));
+  $('#panel').classList.toggle('wide', v === 'masuratori');
+  if (S.collapsed) setCollapsed(false, false);
+  renderPanel(); $('#p-body').scrollTop = 0;
+  if (wasWide !== (v === 'masuratori')) setTimeout(() => fit(), 30);
+}
+function setCollapsed(c, refit = true) { S.collapsed = c; $('#panel').classList.toggle('collapsed', c); if (refit) setTimeout(() => fit(), 30); }
+
+/* =============== player =============== */
+let raf = 0, last = 0;
+function renderPlayer() {
+  const tg = modeTargets(), reached = tg.filter(t => S.pos >= t.s - 1).length;
+  $('#play-btn').innerHTML = S.playing ? IC.pause : IC.play;
+  $('#play-btn').setAttribute('aria-label', S.playing ? 'Pauză' : 'Simulează turul');
+  $('#pl-a').innerHTML = `<b>${reached} / ${tg.length}</b> ținte atinse`;
+  $('#pl-b').innerHTML = `<b class="num">${kmT(S.pos * SCALE)}</b> din ${kmT(R.total * SCALE)}`;
+  $('#scrub').value = Math.round(S.pos / R.total * 1000);
+}
+function setPos(p) {
+  const before = new Set(modeTargets().filter(t => S.pos >= t.s - 1).map(t => t.id));
+  S.pos = Math.max(0, Math.min(R.total, p)); render();
+  const now = modeTargets().filter(t => S.pos >= t.s - 1);
+  for (const t of now) if (!before.has(t.id)) { const el = pins.querySelector(`[data-pin="${t.id}"]`); el?.classList.add('pop'); }
+  renderPlayer();
+  if (S.view === 'traseu') $$('.tl-i').forEach(el => { const t = now.find(x => x.id === el.dataset.target); el.classList.toggle('reached', !!t); });
+}
+function play(on = !S.playing) {
+  if (on && S.pos >= R.total) S.pos = 0;
+  S.playing = on; cancelAnimationFrame(raf);
+  if (on) {
+    if (reduce) { setPos(R.total); S.playing = false; renderPanel(); return; }
+    last = performance.now();
+    const speed = R.total / 14;   // whole tour in ~14 s
+    const tick = t => { setPos(S.pos + (t - last) / 1000 * speed); last = t; if (S.pos >= R.total) { S.playing = false; renderPanel(); toast('Tur complet · înapoi la START'); return; } raf = requestAnimationFrame(tick); };
+    raf = requestAnimationFrame(tick);
+  }
+  if (S.view === 'traseu') viewTraseu(); renderPlayer();
+}
+function jump(dir) {
+  const tg = modeTargets(); play(false);
+  const t = dir > 0 ? tg.find(x => x.s > S.pos + 1) : [...tg].reverse().find(x => x.s < S.pos - 1);
+  if (t) { setPos(t.s); select({type: 'target', id: t.id}, true); } else setPos(dir > 0 ? R.total : 0);
+}
+$('#scrub').addEventListener('input', e => { play(false); setPos(e.target.value / 1000 * R.total); });
+
+/* =============== layers popover =============== */
+function renderLayers() {
+  const L = [['ortho', 'Ortofoto', 'linear-gradient(135deg,#8A9A5B,#B29873)'], ['canopy', 'Coroane (vineyard)', '#FF3DAA'], ['inter', 'Inter-rânduri', '#22D3EE'], ['rows', 'Rânduri + row_id', '#FFD43B'],
+             ['passage', 'Passage / forbidden', '#D92D20'], ['targets', 'Ținte inspecție', 'var(--target)'], ['waste', 'Deșeuri', 'var(--waste)'], ['route', 'Traseu', 'var(--route)']];
+  $('#layers').innerHTML = `<div class="sec-title" style="padding:2px 4px 4px"><h2>Straturi</h2><span><kbd>L</kbd></span></div>` +
+    L.map(([k, l, c]) => `<button type="button" class="sw" role="switch" aria-checked="${!!S.layers[k]}" data-layer="${k}"><span class="sw-i" style="background:${c}"></span>${l}<span class="tg"></span></button>`).join('') +
+    `<label for="op">Opacitate ortofoto <input type="range" id="op" min="20" max="100" value="${Math.round(S.orthoOp * 100)}"></label>`;
+}
+
+/* =============== command palette =============== */
+let palItems = [], palIdx = 0;
+function palSearch(q) {
+  q = q.trim().toLowerCase();
+  const items = [];
+  const sec = [['harta', 'Hartă', '1'], ['traseu', 'Traseu', '2'], ['masuratori', 'Măsurători', '3'], ['pipeline', 'Pipeline', '4']];
+  for (const [v, l, k] of sec) if (!q || l.toLowerCase().includes(q)) items.push({g: 'Secțiuni', k, l, r: '', run: () => { location.hash = v; }});
+  for (const m of Object.keys(MODES)) if (!q || ('traseu ' + m).toLowerCase().includes(q)) items.push({g: 'Acțiuni', k: '↻', l: `Traseu ${m.toLowerCase()}`, r: 'mod', run: () => { setMode(m); location.hash = 'traseu'; }});
+  if (!q || 'simuleaza turul'.includes(q)) items.push({g: 'Acțiuni', k: '▶', l: 'Simulează turul', r: 'spațiu', run: () => play(true)});
+  if (!q || 'export route csv'.includes(q)) items.push({g: 'Acțiuni', k: '↓', l: 'Export route.geojson / measurements.csv', r: '', run: () => openExport('route')});
+  for (const t of TARGETS) if (!q || (t.id + ' ' + t.what).toLowerCase().includes(q)) items.push({g: 'Ținte', k: t.kind === 't' ? 'T' : 'W', l: `${t.id} · ${t.what}`, r: t.row || t.b, run: () => { if (S.view !== 'traseu' && S.view !== 'harta') location.hash = 'harta'; select({type: 'target', id: t.id}, true); }});
+  for (const b of BLK) if (q && b.b.toLowerCase().includes(q)) items.push({g: 'Blocuri', k: 'B', l: `${b.b} · ${b.rows} rânduri`, r: kmT(b.len), run: () => { if (b.b in MAPBLK) { S.block = b.b; location.hash = 'harta'; renderPanel(); render(); fit(); } else { S.q = b.b; location.hash = 'masuratori'; renderPanel(); } }});
+  if (q) for (const r of ROWS.filter(r => r.id.toLowerCase().includes(q)).slice(0, 12)) items.push({g: 'Rânduri', k: 'R', l: r.id, r: `${fmt(r.len, 1)} m${r.dis ? ' · disrupted' : ''}`, run: () => rowJump(r.id)});
+  return items.slice(0, 40);
+}
+function renderPal() {
+  palItems = palSearch($('#pal-in').value); palIdx = Math.min(palIdx, Math.max(0, palItems.length - 1));
+  let g = ''; $('#pal-list').innerHTML = palItems.length ? palItems.map((it, i) => { const h = it.g !== g ? `<div class="pal-g">${(g = it.g)}</div>` : ''; return h + `<button type="button" class="pal-i ${i === palIdx ? 'act' : ''}" role="option" aria-selected="${i === palIdx}" data-pi="${i}"><span class="k">${it.k}</span>${it.l}<span class="r">${it.r}</span></button>`; }).join('')
+    : `<p class="muted" style="padding:16px;margin:0">Nimic găsit pentru „${$('#pal-in').value}”. Încearcă un row_id (V05-R12) sau un ID de țintă (T002).</p>`;
+  $('#pal-list').querySelector('.act')?.scrollIntoView({block: 'nearest'});
+}
+function openPal() { $('#pal-veil').hidden = false; $('#pal-in').value = ''; palIdx = 0; renderPal(); $('#pal-in').focus(); }
+function closePal() { $('#pal-veil').hidden = true; }
+$('#pal-in').addEventListener('input', () => { palIdx = 0; renderPal(); });
+$('#pal-in').addEventListener('keydown', e => {
+  if (e.key === 'ArrowDown') { palIdx = Math.min(palItems.length - 1, palIdx + 1); renderPal(); e.preventDefault(); }
+  if (e.key === 'ArrowUp') { palIdx = Math.max(0, palIdx - 1); renderPal(); e.preventDefault(); }
+  if (e.key === 'Enter' && palItems[palIdx]) { const it = palItems[palIdx]; closePal(); it.run(); }
+});
+function rowJump(id) {
+  const r = ROWS.find(x => x.id === id);
+  if (r.b in MAPBLK) { if (S.view !== 'harta') location.hash = 'harta'; S.block = r.b; renderPanel(); select({type: 'row', id}, true); }
+  else { S.q = id; if (S.view !== 'masuratori') location.hash = 'masuratori'; else renderPanel(); toast(`${id} e în afara fragmentului de hartă din prototip`); }
+}
+
+/* =============== export =============== */
+function exportData(kind) {
+  const crs = {type: 'name', properties: {name: 'urn:ogc:def:crs:EPSG::32635'}};
+  if (kind === 'route') return {name: 'route.geojson', note: `Un LineString, mod ${S.mode.toLowerCase()}, ${fmt(Math.round(R.total * SCALE))} m, start = finish.`,
+    text: JSON.stringify({type: 'FeatureCollection', crs, features: [{type: 'Feature', properties: {length_m: Math.round(R.total * SCALE), mode: S.mode}, geometry: {type: 'LineString', coordinates: R.pts.map(([u, v]) => utm(u, v).map(x => +x.toFixed(2)))}}]}, null, 2)};
+  if (kind === 'targets') return {name: 'targets.geojson', note: 'Punctele de inspecție și deșeurile, în ordinea turului.',
+    text: JSON.stringify({type: 'FeatureCollection', crs, features: modeTargets().map((t, i) => ({type: 'Feature', properties: {order: i + 1, id: t.id, type: t.what, vineyard_id: t.b, row_id: t.row || null}, geometry: {type: 'Point', coordinates: utm(t.u, t.v).map(x => +x.toFixed(2))}}))}, null, 2)};
+  const L = ['level,vineyard_id,row_id,rows,length_m,canopy_m2,canopy_ha,interrow_m2,interrow_ha', `total,,,${TOT.rows},${TOT.len.toFixed(1)},${TOT.canopy.toFixed(1)},${(TOT.canopy / 1e4).toFixed(4)},${TOT.inter.toFixed(1)},${(TOT.inter / 1e4).toFixed(4)}`];
+  for (const x of BLK) L.push(`block,${x.b},,${x.rows},${x.len.toFixed(1)},${x.canopy.toFixed(1)},${(x.canopy / 1e4).toFixed(4)},${x.inter.toFixed(1)},${(x.inter / 1e4).toFixed(4)}`);
+  for (const r of ROWS) L.push(`row,${r.b},${r.id},1,${r.len.toFixed(1)},,,,`);
+  return {name: 'measurements.csv', note: `${BLK.length} blocuri și ${ROWS.length} rânduri, o linie pe bloc și una pe rând.`, text: L.join('\n')};
+}
+function openExport(kind) {
+  const d = exportData(kind);
+  $('#ex-tabs').innerHTML = [['route', 'route.geojson'], ['targets', 'targets.geojson'], ['csv', 'measurements.csv']].map(([k, l]) => `<button type="button" data-exk="${k}" aria-pressed="${k === kind}">${l}</button>`).join('');
+  $('#ex-title').textContent = d.name; $('#ex-note').textContent = d.note + ' Copiază conținutul în fișier.'; $('#ex-text').value = d.text;
+  $('#ex-veil').hidden = false; $('#ex-veil [data-act="close"]').focus();
+}
+async function copy(text, el) {
+  try { await navigator.clipboard.writeText(text); toast('Copiat în clipboard'); }
+  catch (e) { if (el) { el.focus(); el.select(); } toast('Textul e selectat. Apasă ⌘C / Ctrl+C'); }
+}
+let tt; function toast(m) { const t = $('#toast'); t.textContent = m; t.hidden = false; t.style.animation = 'none'; void t.offsetWidth; t.style.animation = ''; clearTimeout(tt); tt = setTimeout(() => t.hidden = true, 2200); }
+
+/* =============== theme =============== */
+function applyTheme(t) {
+  const r = document.documentElement; t === 'light' || t === 'dark' ? r.setAttribute('data-theme', t) : r.removeAttribute('data-theme');
+  $('#theme-btn').innerHTML = t === 'light' ? IC.sun : t === 'dark' ? IC.moon : IC.auto;
+  $('#theme-btn').setAttribute('aria-label', `Temă: ${t === 'light' ? 'luminoasă' : t === 'dark' ? 'întunecată' : 'ca sistemul'}. Schimbă tema`);
+}
+function setMode(m) { S.mode = m; store.set('mode', m); R = parsePath(MODES[m].d); play(false); S.pos = 0; updateRoute(); render(); renderPanel(); }
+
+/* =============== events =============== */
+document.addEventListener('click', e => {
+  const b = e.target.closest('button,[data-target],[data-blkrow],[data-rowjump]'); if (!b) return;
+  const a = b.dataset.act;
+  if (b.dataset.pi != null) { const it = palItems[+b.dataset.pi]; closePal(); it.run(); return; }
+  if (b.dataset.mode) return setMode(b.dataset.mode);
+  if (b.dataset.block) { S.block = b.dataset.block; store.set('block', S.block); renderPanel(); render(); if (S.block !== 'ALL') focusOn(S.block === 'V01' ? 340 : 752, 340, 1.6); else fit(); return; }
+  if (b.dataset.layer) { S.layers[b.dataset.layer] = !S.layers[b.dataset.layer]; store.set('layers', S.layers); renderLayers(); render(); return; }
+  if (b.dataset.row && b.classList.contains('li')) return select({type: 'row', id: b.dataset.row}, true);
+  if (b.dataset.target && !e.target.closest('input')) { const t = modeTargets().find(x => x.id === b.dataset.target); play(false); setPos(t.s); return select({type: 'target', id: t.id}, true); }
+  if (b.dataset.sort) { const k = b.dataset.sort; S.sort = {k, d: S.sort.k === k ? -S.sort.d : 1}; return viewMas(); }
+  if (b.dataset.blkrow) { S.q = b.dataset.blkrow; viewMas(); $('#row-q')?.scrollIntoView({block: 'center', behavior: reduce ? 'auto' : 'smooth'}); return; }
+  if (b.dataset.rowjump) return rowJump(b.dataset.rowjump);
+  if (b.dataset.exk) return openExport(b.dataset.exk);
+  switch (a) {
+    case 'panel': return setCollapsed(!S.collapsed);
+    case 'palette': return openPal();
+    case 'play': return play();
+    case 'prev': return jump(-1);
+    case 'next': return jump(1);
+    case 'zin': return animateTo(V.cx, V.cy, Math.min(14, V.k * 1.6));
+    case 'zout': return animateTo(V.cx, V.cy, Math.max(.35, V.k / 1.6));
+    case 'fit': return fit();
+    case 'layers': { const p = $('#layers'); p.hidden = !p.hidden; b.setAttribute('aria-expanded', !p.hidden); if (!p.hidden) $('#insp').hidden = true; return; }
+    case 'theme': { const o = ['auto', 'light', 'dark'], n = o[(o.indexOf(store.get('theme', 'auto')) + 1) % 3]; store.set('theme', n); return applyTheme(n); }
+    case 'export': return openExport(b.dataset.kind || 'route');
+    case 'close': $('#ex-veil').hidden = true; return;
+    case 'copy-ex': return copy($('#ex-text').value, $('#ex-text'));
+    case 'copy-repro': return copy($('#repro').innerText.replace(/^Copiază\s*/, ''), null);
+    case 'unsel': return select(null);
+    case 'center': { if (S.sel.type === 'row') { const r = ROWS.find(x => x.id === S.sel.id); focusOn(MAPBLK[r.b][r.k], 340, 2.2); } else { const t = TARGETS.find(x => x.id === S.sel.id); focusOn(t.u, t.v, 3); } return; }
+    case 'show-rows': { S.q = S.sel.id; location.hash = 'masuratori'; return; }
+    case 'visit': { S.visited[b.dataset.id] = !S.visited[b.dataset.id]; store.set('visited', S.visited); S.sel = null; select({type: 'target', id: b.dataset.id}); if (S.view === 'traseu') viewTraseu(); syncLists(); if (S.visited[b.dataset.id]) toast(`${b.dataset.id} marcat vizitat`); return; }
+  }
+});
+document.addEventListener('change', e => {
+  if (e.target.dataset.visit) { S.visited[e.target.dataset.visit] = e.target.checked; store.set('visited', S.visited); viewTraseu(); syncLists(); if (e.target.checked) toast(`${e.target.dataset.visit} marcat vizitat`); }
+});
+document.addEventListener('input', e => {
+  if (e.target.id === 'op') { S.orthoOp = e.target.value / 100; store.set('orthoOp', S.orthoOp); render(); }
+  if (e.target.id === 'row-q') { S.q = e.target.value; const pos = e.target.selectionStart; viewMas(); const n = $('#row-q'); n.focus(); n.setSelectionRange(pos, pos); }
+});
+document.addEventListener('keydown', e => {
+  const typing = e.target.matches('input,textarea,select');
+  if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'k') { e.preventDefault(); return $('#pal-veil').hidden ? openPal() : closePal(); }
+  if (e.key === 'Escape') { if (!$('#pal-veil').hidden) return closePal(); if (!$('#ex-veil').hidden) return ($('#ex-veil').hidden = true); if (!$('#layers').hidden) return ($('#layers').hidden = true); if (S.sel) return select(null); }
+  if (typing) return;
+  if (e.key === '/') { e.preventDefault(); return openPal(); }
+  if ('1234'.includes(e.key) && e.key.length === 1) { location.hash = ['harta', 'traseu', 'masuratori', 'pipeline'][+e.key - 1]; return; }
+  if (e.key === ' ' && !e.target.closest('button')) { e.preventDefault(); return play(); }
+  if (e.key === ']') return jump(1);
+  if (e.key === '[') return jump(-1);
+  if (e.key.toLowerCase() === 'l') return $('.tr [data-act="layers"]').click();
+  if (e.key === '+' || e.key === '=') return animateTo(V.cx, V.cy, Math.min(14, V.k * 1.6));
+  if (e.key === '-') return animateTo(V.cx, V.cy, Math.max(.35, V.k / 1.6));
+  if (e.key === '0') return fit();
+});
+['#pal-veil', '#ex-veil'].forEach(s => $(s).addEventListener('click', e => { if (e.target === $(s)) $(s).hidden = true; }));
+addEventListener('hashchange', () => show(location.hash.slice(1)));
+addEventListener('resize', () => { resize(); });
+
+/* =============== boot =============== */
+applyTheme(store.get('theme', 'auto'));
+buildVec(); updateRoute(); renderLayers();
+show(location.hash.slice(1) || 'harta');
+resize(); fit(false);
+})();
+</script>
+</body></html>

@@ -1,5 +1,7 @@
 # CLAUDE.md — vineyard-ai (DeepTech GigaHack 2026 · Marcaj Vineyard AI Field Challenge)
 
+> Status, rezultate, plan rămas și decizii: vezi `HANDOFF.md` (actualizează-l când se schimbă ceva important).
+
 ## Mission
 Build an end-to-end app that turns the Sireț3 UAV orthomosaic (311 GeoTIFF tiles) into an annotated vineyard
 map + measurements + an optimised walking route. **Follow the official rules exactly and optimise every
@@ -7,7 +9,9 @@ decision for maximum score.** Official PDFs are in `../03_docs/` — they overri
 (the "Visual Journey" PDF is only illustrative).
 
 **Deadline: Sunday 27 Sept 2026, 15:00 (Chișinău)** — repo + all Marcaj jobs submitted.
-**Pre-annotations can be imported into Marcaj ONLY ONCE, before Publish (target: Sat 12:00).**
+**Pre-annotations can be imported into Marcaj ONLY ONCE, before Publish (official target: Sat ~14:00; internal 12:00).**
+Dry run first: upload the example ZIP (05_examples), check the import, then Remove all.
+Route graph = interrow_area ∪ passage, avoiding vineyard canopies ∪ forbidden (official onboarding).
 
 ## Scoring (85% automatic, hidden subset of the 311 tiles)
 | Weight | What | Metric |
