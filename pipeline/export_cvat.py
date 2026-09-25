@@ -98,10 +98,16 @@ def main() -> None:
     ap.add_argument("--out", default=str(C.OUT / "upload"))
     ap.add_argument("--tiles", default=str(C.TILES))
     ap.add_argument("--max-mb", type=float, default=60.0)
+    ap.add_argument("--only", default="", help="comma-separated tile names: one test ZIP with just these "
+                                               "(for the Marcaj dry run), e.g. the two example tiles")
     a = ap.parse_args()
     tiles_dir, out = Path(a.tiles), Path(a.out)
     parts = json.loads((C.DATA / "parts.json").read_text())
     ann = read_cvat(a.inp)
+    if a.only:
+        only = [n.strip() for n in a.only.split(",") if n.strip()]
+        parts = {"test_" + "_".join(n[7:16] for n in only): only}
+        ann = {n: ann.get(n, []) for n in only}
     errors = validate(ann, parts, tiles_dir)
     if errors:
         print(f"{len(errors)} validation errors, nothing written:")
