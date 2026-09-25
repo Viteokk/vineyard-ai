@@ -175,6 +175,11 @@ def _init_worker(g, nodes, reach):
     _G.update(g=g, nodes=np.asarray(nodes), reach=reach)
 
 
+def _leg_job(args):
+    src, dst, limit = args
+    return leg(_G["g"], src, dst, limit)
+
+
 def _row(src):
     d = dijkstra(_G["g"], directed=True, indices=src, limit=_G["reach"] * COST_CORE)[_G["nodes"]]
     return src, d
@@ -292,15 +297,22 @@ def main() -> None:
         print(f"  {int((~reach).sum())} stops not connected to START -> skipped")
     Dw = np.where(np.isfinite(D), D, 1e7)
 
-    # solve, measure the outside share per leg, drop the worst stops while over budget
+    # solve, measure the outside share per leg, drop the worst stops while over budget.
+    # Leg paths are cached per (u, v): between iterations most consecutive pairs stay the same.
     active = [i for i in range(1, len(nodes)) if reach[i]]
     tlimit = a.time
+    leg_cache = {}
+    ctx = mp.get_context("fork") if hasattr(os, "fork") else mp.get_context()
+    pool = ctx.Pool(a.workers, initializer=_init_worker, initargs=(g, nodes, REACH_M))
     for it in range(15):
         sub = [0] + active
         order = [sub[i] for i in solve_tsp(Dw[np.ix_(sub, sub)], tlimit)] + [0]
+        pairs = [(u, v) for u, v in zip(order, order[1:]) if (u, v) not in leg_cache]
+        for (u, v), seq in zip(pairs, pool.imap(_leg_job, [(nodes[u], nodes[v], Dw[u, v] + 1) for u, v in pairs], chunksize=16)):
+            leg_cache[(u, v)] = seq
         legs, cells = [], []
         for u, v in zip(order, order[1:]):
-            seq = leg(g, nodes[u], nodes[v], Dw[u, v] + 1)
+            seq = leg_cache[(u, v)]
             path = [nodes[u]] + seq
             step = np.hypot(*(rc[path[1:]] - rc[path[:-1]]).T) * RES if len(path) > 1 else np.zeros(0)
             outside = float(step[(is_out[path[1:]] | is_out[path[:-1]])].sum()) if len(path) > 1 else 0.0
@@ -313,15 +325,16 @@ def main() -> None:
               f"  ({time.time() - t0:.0f}s)")
         if share <= a.max_outside or not active:
             break
-        # outside metres attributable to each stop = its incoming + outgoing legs; drop the worst 10 %
+        # outside metres attributable to each stop = its incoming + outgoing legs; drop the worst 15 %
         attr = {}
         for u, v, _, o in legs:
             attr[v] = attr.get(v, 0.0) + o
             attr[u] = attr.get(u, 0.0) + o
         attr.pop(0, None)
-        worst = sorted(active, key=lambda i: -attr.get(i, 0.0))[:max(3, len(active) // 10)]
+        worst = sorted(active, key=lambda i: -attr.get(i, 0.0))[:max(3, int(len(active) * 0.15))]
         active = [i for i in active if i not in set(worst)]
-        tlimit = min(a.time, 20)
+        tlimit = min(a.time, 10)
+    pool.close()
 
     path_cells = [nodes[order[0]]] + [c for seq in cells for c in seq]
     xy = grid.to_xy(rc[path_cells, 0], rc[path_cells, 1])

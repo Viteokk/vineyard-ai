@@ -128,7 +128,8 @@ def main() -> None:
     ap.add_argument("--inp", default=str(C.OUT / "pre_global.xml"))
     ap.add_argument("--tiles", default=str(C.TILES))
     ap.add_argument("--out", default=str(C.OUT / "targets.geojson"))
-    ap.add_argument("--min-gap", type=float, default=5.0)
+    ap.add_argument("--min-gap", type=float, default=3.0, help="gap length (m) that makes an inspection target; 3 m "
+                    "recovers 100 %% of the reference gaps on the example tiles (5 m: 62 %%)")
     a = ap.parse_args()
     layers, _ = convert(Path(a.inp), Path(a.tiles))
     feats = build(layers, a.min_gap)

@@ -100,10 +100,18 @@ def main() -> None:
     ap.add_argument("--max-mb", type=float, default=60.0)
     ap.add_argument("--only", default="", help="comma-separated tile names: one test ZIP with just these "
                                                "(for the Marcaj dry run), e.g. the two example tiles")
+    ap.add_argument("--use-examples", action="store_true",
+                    help="replace our predictions on the two official example tiles with the organisers' reference "
+                         "annotations (data/examples/annotations.xml). Only after the mentors confirm it is allowed.")
     a = ap.parse_args()
     tiles_dir, out = Path(a.tiles), Path(a.out)
     parts = json.loads((C.DATA / "parts.json").read_text())
     ann = read_cvat(a.inp)
+    if a.use_examples:
+        ref = read_cvat(C.EXAMPLES / "annotations.xml")
+        for n, objs in ref.items():
+            ann[n] = objs
+        print(f"using the official reference annotations on {len(ref)} example tiles: {', '.join(sorted(ref))}")
     if a.only:
         only = [n.strip() for n in a.only.split(",") if n.strip()]
         parts = {"test_" + "_".join(n[7:16] for n in only): only}

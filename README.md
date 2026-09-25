@@ -49,6 +49,21 @@ then `python -m pipeline.run --from targets --inp out/marcaj_global.xml`.
 Local scoring on the two official example tiles (same formulas as the challenge): `python -m pipeline.eval --pred out/baseline.xml`
 → partial score 0.817 for the classical detector (canopy 0.587, axes 0.961, attributes 0.970, grouping 1.0, counts 0.98).
 
+## Run on your own survey
+
+The pipeline is not tied to Sireț3. For another vineyard flight:
+
+1. Tiles: georeferenced RGB GeoTIFFs (any size, ~2–4 cm/px works best), EPSG:32635 or any metric CRS with the
+   georeference in the TIFF tags (`ModelTiepoint` + `ModelPixelScale`, read by `pipeline/tiles.py`). Put them in
+   `data/tiles/` named `siret3_rRRR_cCCC.tif` (row / column of a regular grid) or adapt `NAME_RE` in `pipeline/tiles.py`.
+2. Route inputs in `data/route/`: `start.geojson` (Point), `passages.geojson` (walkable roads / paths, MultiPolygon),
+   `forbidden.geojson` (no-go areas), `study_area.geojson` — same CRS as the tiles.
+3. `python -m pipeline.run --all` → `route.geojson`, `route_waste.geojson`, `measurements.csv`, `out/upload/*.zip`
+   (CVAT 1.1 for a Marcaj / CVAT correction pass), `web/` ready to serve. Detector parameters (row spacing band, canopy
+   thresholds) are in `pipeline/baseline.py` (`class P`); check them on 1–2 annotated tiles with `pipeline/eval.py`.
+4. Docker: `docker build -t vineyard-ai .` then
+   `docker run --rm -v /path/to/package:/raw -v $(pwd)/out:/app/out -v $(pwd)/web:/app/web vineyard-ai sh -c "python scripts/setup_data.py && python -m pipeline.run --all"`.
+
 ## Processing time and hardware
 
 Measured on a MacBook Pro (Apple M4 Pro, 24 GB), macOS 27, Python 3.12, no GPU used for the submitted pipeline:
