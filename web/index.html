@@ -53,6 +53,8 @@ kbd{font-family:var(--mono);font-size:11px;padding:1px 6px;border-radius:6px;bor
 .start-ic{display:flex;align-items:center;gap:6px;white-space:nowrap}
 .start-ic i{width:18px;height:18px;border-radius:50%;background:#101713;box-shadow:0 0 0 4px #fff;flex-shrink:0}
 .start-ic span{font:700 11px/1 'Geist',sans-serif;letter-spacing:.06em;color:#fff;background:#101713;padding:4px 7px;border-radius:6px}
+.md-label{font:700 12px/1.2 'Geist',sans-serif;color:#fff;background:#B91C1C;padding:4px 8px;border-radius:6px;white-space:nowrap;box-shadow:0 2px 8px rgba(0,0,0,.35)}
+.md-raion{font:600 11px/1 'Geist',sans-serif;color:#E5E7EB;text-shadow:0 1px 2px #000;white-space:nowrap}
 .start-ic.custom i{background:#10B981}.start-ic.custom span{background:#047857}
 
 /* chrome */
@@ -298,6 +300,7 @@ input[type=range]{accent-color:var(--accent);width:100%}
   <button type="button" data-act="zin" aria-label="Mărește"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg></button>
   <button type="button" data-act="zout" aria-label="Micșorează"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M5 12h14"/></svg></button>
   <button type="button" data-act="ruler" aria-pressed="false" aria-label="Riglă: măsoară o distanță"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 17L17 3l4 4L7 21z"/><path d="M7 13l2 2M10 10l2 2M13 7l2 2"/></svg></button>
+  <button type="button" data-act="md-fit" aria-label="Toată Moldova" title="Toată Moldova"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c3 3.5 3 14.5 0 18M12 3c-3 3.5-3 14.5 0 18"/></svg></button>
   <button type="button" data-act="fit" aria-label="Toată zona"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/></svg></button>
 </div>
 <div class="readout glass"><span class="sb"><i id="sb-bar"></i><span id="sb-txt"></span></span><span class="mono" id="xy">EPSG:32635</span></div>
@@ -404,7 +407,7 @@ Object.values(SRC).forEach(indexSource);
 /* ============ state ============ */
 const S = {
   view: 'harta', src: store.get('src', SRC.pred ? 'pred' : 'ref'), sel: null, q: '', collapsed: false,
-  layers: Object.assign({ortho: true, canopy: true, rows: true, inter: true, passage: true, forbidden: true, study: true, grid: false, route_blue: true, route_red: true, targets: true, wcand: true, bstat: false, cmp: false, cad: false}, store.get('layers', {})),
+  layers: Object.assign({ortho: true, canopy: true, rows: true, inter: true, passage: true, forbidden: true, study: true, grid: false, route_blue: true, route_red: true, targets: true, wcand: true, bstat: false, cmp: false, cad: false, md: true}, store.get('layers', {})),
   op: store.get('op', 1), role: store.get('role', null), speed: store.get('speed', 4), hours: store.get('hours', 6),
   minGap: store.get('mingap', 5), price: store.get('price', 15)
 };
@@ -415,9 +418,10 @@ const cur = () => SRC[S.src];
 const CRS = L.extend({}, L.CRS.Simple, {transformation: new L.Transformation(1, -EXT[0], -1, EXT[3])});
 const ll = (x, y) => L.latLng(y, x);
 const bnds = b => L.latLngBounds(ll(b[0], b[1]), ll(b[2], b[3]));
-const map = L.map('map', {crs: CRS, zoomControl: false, attributionControl: false, minZoom: -3, maxZoom: 6.5, zoomSnap: 0.25, zoomDelta: 0.5, wheelPxPerZoomLevel: 100, preferCanvas: true, maxBounds: bnds([EXT[0] - 400, EXT[1] - 400, EXT[2] + 400, EXT[3] + 400])});
+const map = L.map('map', {crs: CRS, zoomControl: false, attributionControl: false, minZoom: -10, maxZoom: 6.5, zoomSnap: 0.25, zoomDelta: 0.5, wheelPxPerZoomLevel: 100, preferCanvas: true, maxBounds: bnds([EXT[0] - 400, EXT[1] - 400, EXT[2] + 400, EXT[3] + 400])});
 map.setView(ll((EXT[0] + EXT[2]) / 2, (EXT[1] + EXT[3]) / 2), 0);   // layers need a view before being added
 const R = L.canvas({padding: 0.4, tolerance: 5});
+map.createPane('md').style.zIndex = 300;        // Moldova context under the imagery
 map.createPane('imgs').style.zIndex = 350;      // imagery always under the vector canvas, whatever the order it is added in
 const ortho = L.layerGroup(IDX.chunks.map(c => L.imageOverlay(c.img, bnds(c.bounds), {pane: 'imgs', className: 'ortho', opacity: S.op}))).addTo(map);
 const hires = L.layerGroup((IDX.hires || []).map(h => L.imageOverlay(h.img, bnds(h.bounds), {pane: 'imgs', className: 'ortho', opacity: S.op})));
@@ -553,6 +557,7 @@ function applyLayers() {
   for (const [k, r] of Object.entries(ROUTES)) S.layers['route_' + k] ? r.layer.addTo(map) : map.removeLayer(r.layer);
   syncTargets();
   if (wcLayer) S.layers.wcand ? wcLayer.addTo(map) : map.removeLayer(wcLayer);
+  if (mdLayer) { S.layers.md !== false ? mdLayer.addTo(map) : map.removeLayer(mdLayer); syncMdLabel(); }
   if (cadLayer) { if (S.layers.cad) cadLayer.addTo(map); else map.removeLayer(cadLayer); }
   if (cmpLayer) { if (S.layers.cmp) { cmpLayer.addTo(map); cmpLayer.bringToBack(); } else map.removeLayer(cmpLayer); }
   if (bstatLayer) { if (S.layers.bstat) { bstatLayer.addTo(map); bstatLayer.bringToBack(); } else map.removeLayer(bstatLayer); }
@@ -566,10 +571,10 @@ function syncTargets() {                      // thousands of targets: only from
   if (!on && map.hasLayer(targetsLayer)) map.removeLayer(targetsLayer);
 }
 function scale() {
-  const pxm = Math.pow(2, map.getZoom()), m = [1, 2, 5, 10, 20, 50, 100, 200, 500, 1000].find(v => v * pxm >= 60) || 1000;
+  const pxm = Math.pow(2, map.getZoom()), m = [1, 2, 5, 10, 20, 50, 100, 200, 500, 1000, 2000, 5000, 10000, 20000, 50000, 100000].find(v => v * pxm >= 60) || 100000;
   $('#sb-bar').style.width = (m * pxm).toFixed(0) + 'px'; $('#sb-txt').textContent = m >= 1000 ? m / 1000 + ' km' : m + ' m';
 }
-map.on('moveend zoomend', () => { refreshAnnotations(); syncTargets(); scale(); });
+map.on('moveend zoomend', () => { refreshAnnotations(); syncTargets(); scale(); syncMdLabel(); });
 const tileAt = (x, y) => TILES.find(t => t.name && x >= t.bounds[0] && x < t.bounds[2] && y >= t.bounds[1] && y < t.bounds[3]);
 map.on('mousemove', e => { const x = e.latlng.lng, y = e.latlng.lat, t = tileAt(x, y); $('#xy').textContent = `X ${x.toFixed(1)}  Y ${y.toFixed(1)}${t ? '  ·  ' + short(t.name) : ''}`; });
 map.on('click', e => { if (CST.picking) return setCustomStart([e.latlng.lng, e.latlng.lat]); if (RULER.on) { RULER.pts.push([e.latlng.lng, e.latlng.lat]); return rulerRender(); } const t = tileAt(e.latlng.lng, e.latlng.lat); t ? select({type: 'tile', name: t.name}) : select(null); });
@@ -925,6 +930,25 @@ function viewCor() {
 
 /* ============ conformitate: registrul viticol (ONVV) + cereri AIPA vs dronă ============ */
 let CMP = null, cmpLayer = null, BFC = null, CAD = null, cadLayer = null;
+/* ============ Moldova: contur, raioane, satul zonei studiate ============ */
+let mdLayer = null, mdBounds = null;
+fetch('data/moldova.geojson').then(r => r.ok ? r.json() : null).then(fc => {
+  if (!fc) return;
+  const country = fc.features.filter(f => f.properties.kind === 'country'), raions = fc.features.filter(f => f.properties.kind === 'raion'), com = fc.features.filter(f => f.properties.kind === 'commune');
+  const studyRaion = raions.find(f => com.length && L.geoJSON(f, {coordsToLatLng: toLL}).getBounds().contains(L.geoJSON(com[0], {coordsToLatLng: toLL}).getBounds().getCenter()));
+  const parts = [
+    L.geoJSON({type: 'FeatureCollection', features: country}, {pane: 'md', coordsToLatLng: toLL, interactive: false, style: {color: '#E5E7EB', weight: 2.5, fillColor: '#3F4A43', fillOpacity: .55}}),
+    L.geoJSON({type: 'FeatureCollection', features: raions}, {pane: 'md', coordsToLatLng: toLL, style: f => f === studyRaion ? {color: '#FCA5A5', weight: 2, fillColor: '#EF4444', fillOpacity: .18} : {color: '#9CA3AF', weight: .8, fill: true, fillOpacity: 0},
+      onEachFeature: (f, l) => l.bindTooltip(f.properties.name, {sticky: true, direction: 'top'})}),
+    L.geoJSON({type: 'FeatureCollection', features: com}, {pane: 'md', coordsToLatLng: toLL, interactive: false, style: {color: '#FCA5A5', weight: 2.5, fillColor: '#EF4444', fillOpacity: .45}}),
+    L.rectangle(bnds(EXT), {renderer: R, color: '#EF4444', weight: 3, fill: false, interactive: false})];
+  const lab = L.marker(ll((EXT[0] + EXT[2]) / 2, EXT[3]), {icon: L.divIcon({className: '', html: `<div class="md-label">${com[0] ? com[0].properties.name.replace(/^.*sat\.\s*/, 'Sat ') : 'Zona studiată'} · zona zburată</div>`, iconSize: [220, 24], iconAnchor: [110, 34]}), interactive: false, keyboard: false});
+  mdLayer = L.layerGroup(parts); mdLayer.lab = lab;
+  mdBounds = parts[0].getBounds();
+  map.setMaxBounds(mdBounds.pad(0.15));
+  applyLayers(); renderLayers();
+}).catch(() => {});
+function syncMdLabel() { if (!mdLayer) return; const on = S.layers.md && map.getZoom() < 0.5; if (on && !map.hasLayer(mdLayer.lab)) mdLayer.lab.addTo(map); if (!on && map.hasLayer(mdLayer.lab)) map.removeLayer(mdLayer.lab); }
 /* ============ căutare după număr cadastral (local + cadastrul național ASP, WFS public cu CORS) ============ */
 const D4026 = '+proj=tmerc +lat_0=0 +lon_0=28.4 +k=0.99994 +x_0=200000 +y_0=-5000000 +ellps=GRS80 +towgs84=0,0,0,0,0,0,0 +units=m +no_defs';   // MOLDREF99 / Moldova TM
 const CAD_WFS = 'https://geodata.gov.md/geoserver/cadastru_data/wfs?service=WFS&version=2.0.0&request=GetFeature&typeNames=cadastru_data%3Aterenuri&outputFormat=application%2Fjson';
@@ -1288,6 +1312,7 @@ function renderLayers() {
   for (const [k, r] of Object.entries(ROUTES)) L1.push(['route_' + k, `Traseu ${r.name.toLowerCase()} (${r.sub})`, r.color]);
   if (targetsLayer) L1.push(['targets', 'Ținte (goluri, deșeuri)', '#2563EB']);
   if (wcLayer) L1.push(['wcand', 'Candidați deșeuri (model AI + clasic, neconfirmați)', 'linear-gradient(90deg,#EAB308,#F97316)']);
+  if (mdLayer) L1.push(['md', 'Moldova: contur, raioane, satul zonei', '#EF4444']);
   if (cadLayer) L1.push(['cad', 'Parcele cadastrale (ASP)', '#38BDF8']);
   if (cmpLayer) L1.push(['cmp', 'Conformitate RVV / AIPA', 'linear-gradient(90deg,#EF4444,#F59E0B,#22C55E,#9CA3AF)']);
   if (bstatLayer) L1.push(['bstat', 'Starea blocurilor (roșu / galben / verde)', 'linear-gradient(90deg,#EF4444,#F59E0B,#22C55E)']);
@@ -1386,6 +1411,7 @@ document.addEventListener('click', e => {
     case 'zin': return map.zoomIn(0.75);
     case 'zout': return map.zoomOut(0.75);
     case 'fit': return fitAll();
+    case 'md-fit': return mdBounds ? fitBounds(mdBounds, 0) : toast('Harta Moldovei se încarcă');
     case 'goto-start': return startLL && map.flyTo(startLL, 3.5, {duration: .6});
     case 'layers': { const p = $('#layers'); $('#legend').hidden = true; p.hidden = !p.hidden; b.setAttribute('aria-expanded', !p.hidden); if (!p.hidden) $('#insp').hidden = true; return; }
     case 'theme': { const o = ['auto', 'light', 'dark'], n = o[(o.indexOf(store.get('theme', 'auto')) + 1) % 3]; store.set('theme', n); return applyTheme(n); }
