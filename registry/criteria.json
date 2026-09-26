@@ -1,127 +1,144 @@
 {
-  "_about": "Criterii pentru modulul Conformitate & compensatii. AIPA: masura SP_2.5 'Investitii in exploatatii din sectorul viticol' (HG 491/2023, plata postinvestitie). Benzile pe densitate sunt cele din regimul anterior (HG 455/2017: 15/30/35/40 mii lei/ha) - sumele de baza din HG 491/2023 nu au fost verificate; majorarea IGP +20 mii lei/ha e din fisa de calcul AIPA (nov. 2025). Lista de soiuri IGP e DEMONSTRATIVA: de confirmat cu caietul de sarcini IGP Codru (ONVV).",
-  "vine_spacing_m": 1.2,
-  "igp": {
-    "zone": "Codru",
-    "note": "Sireti (r. Straseni) - aria IGP Codru. Delimitarea ariilor IGP: Ordinul MAIA nr. 12/2016 (pe raioane); contururi GIS oficiale nepublicate.",
-    "sources": [
-      "https://wineofmoldova.com/ro/regiuni-vitivinicole/",
-      "https://maia.gov.md/ro/content/legisla%C8%9Bia-na%C8%9Bional%C4%83-%C3%AEn-sectorul-viticol-%C8%99i-al-produselor-alcoolice"
-    ]
+ "_about": "Criterii pentru modulul Conformitate & compensatii. AIPA: masura SP_2.5 'Investitii in exploatatii din sectorul viticol' (HG 491/2023, plata postinvestitie). Benzile pe densitate sunt cele din regimul anterior (HG 455/2017: 15/30/35/40 mii lei/ha) - sumele de baza din HG 491/2023 nu au fost verificate; majorarea IGP +20 mii lei/ha e din fisa de calcul AIPA (nov. 2025). Lista de soiuri IGP e DEMONSTRATIVA: de confirmat cu caietul de sarcini IGP Codru (ONVV).",
+ "vine_spacing_m": 1.2,
+ "igp": {
+  "zone": "Codru",
+  "note": "Sireti (r. Straseni) - aria IGP Codru. Delimitarea ariilor IGP: Ordinul MAIA nr. 12/2016 (pe raioane); contururi GIS oficiale nepublicate.",
+  "sources": [
+   "https://wineofmoldova.com/ro/regiuni-vitivinicole/",
+   "https://maia.gov.md/ro/content/legisla%C8%9Bia-na%C8%9Bional%C4%83-%C3%AEn-sectorul-viticol-%C8%99i-al-produselor-alcoolice"
+  ]
+ },
+ "varieties": {
+  "Feteasca Neagra": {
+   "autohton": true,
+   "igp": true
   },
-  "varieties": {
-    "Feteasca Neagra": {
-      "autohton": true,
-      "igp": true
-    },
-    "Rara Neagra": {
-      "autohton": true,
-      "igp": true
-    },
-    "Feteasca Alba": {
-      "autohton": true,
-      "igp": true
-    },
-    "Feteasca Regala": {
-      "autohton": true,
-      "igp": true
-    },
-    "Viorica": {
-      "autohton": true,
-      "igp": true
-    },
-    "Cabernet Sauvignon": {
-      "autohton": false,
-      "igp": true
-    },
-    "Merlot": {
-      "autohton": false,
-      "igp": true
-    },
-    "Pinot Noir": {
-      "autohton": false,
-      "igp": true
-    },
-    "Chardonnay": {
-      "autohton": false,
-      "igp": true
-    },
-    "Sauvignon Blanc": {
-      "autohton": false,
-      "igp": true
-    },
-    "Aligote": {
-      "autohton": false,
-      "igp": true
-    },
-    "Muscat Ottonel": {
-      "autohton": false,
-      "igp": true
-    },
-    "Isabella": {
-      "autohton": false,
-      "igp": false,
-      "note": "hibrid producator direct - neadmis pentru vin cu IGP"
-    },
-    "Lidia": {
-      "autohton": false,
-      "igp": false,
-      "note": "hibrid producator direct - neadmis pentru vin cu IGP"
-    }
+  "Rara Neagra": {
+   "autohton": true,
+   "igp": true
   },
-  "aipa": {
-    "measure": "SP_2.5 Investitii in exploatatii din sectorul viticol - infiintarea plantatiilor (struguri pentru vin)",
-    "min_area_ha": 0.5,
-    "density_bands": [
-      {
-        "min": 0,
-        "max": 3000,
-        "lei_per_ha": 15000
-      },
-      {
-        "min": 3001,
-        "max": 3500,
-        "lei_per_ha": 30000
-      },
-      {
-        "min": 3501,
-        "max": 4000,
-        "lei_per_ha": 35000
-      },
-      {
-        "min": 4001,
-        "max": 99999,
-        "lei_per_ha": 40000
-      }
-    ],
-    "bonus_lei_per_ha": {
-      "igp": 20000
-    },
-    "reception_doc": "Actul de receptie a plantatiei in primul an de vegetatie (prindere >= 90 %)",
-    "sources": [
-      "https://aipa.gov.md/masura-sp-2-5-investitii-in-exploatatii-din-sectorul-viticol/",
-      "https://maia.gov.md/ro/content/legisla%C8%9Bia-na%C8%9Bional%C4%83-%C3%AEn-domeniul-subven%C8%9Bion%C4%83rii-agriculturii-%C8%99i-mediului-rural"
-    ],
-    "density_bands_source": "https://agrobiznes.md/cum-poti-obtine-subventii-pentru-defrisarea-si-sau-infiintarea-unei-plantatii-viticole.html",
-    "bonus_source": "https://aipa.gov.md/masura-sp-2-5-investitii-in-exploatatii-din-sectorul-viticol/",
-    "reception_min_take": 0.9,
-    "legal": [
-      "Legea 71/2023 privind subventionarea in agricultura si mediul rural",
-      "HG 491/2023 (investitii FNDAMR)",
-      "Legea 57/2006 a viei si vinului",
-      "HG 292/2017 (Registrul vitivinicol)"
-    ]
+  "Feteasca Alba": {
+   "autohton": true,
+   "igp": true
   },
-  "registry": {
-    "name": "Registrul vitivinicol (SIA RVV, rvv.gov.md) - ONVV; inregistrare obligatorie > 0,15 ha (Legea 57/2006 art. 21(1))",
-    "min_parcel_ha": 0.15,
-    "source": "https://www.maia.gov.md/ro/content/1611",
-    "public_check": "https://rvv.gov.md/publicpart/check.jsf"
+  "Feteasca Regala": {
+   "autohton": true,
+   "igp": true
   },
-  "tolerances": {
-    "area_pass": 0.1,
-    "area_warn": 0.2,
-    "gaps_pass": 0.1,
-    "gaps_warn": 0.25
+  "Viorica": {
+   "autohton": true,
+   "igp": true
+  },
+  "Cabernet Sauvignon": {
+   "autohton": false,
+   "igp": true
+  },
+  "Merlot": {
+   "autohton": false,
+   "igp": true
+  },
+  "Pinot Noir": {
+   "autohton": false,
+   "igp": true
+  },
+  "Chardonnay": {
+   "autohton": false,
+   "igp": true
+  },
+  "Sauvignon Blanc": {
+   "autohton": false,
+   "igp": true
+  },
+  "Aligote": {
+   "autohton": false,
+   "igp": true
+  },
+  "Muscat Ottonel": {
+   "autohton": false,
+   "igp": true
+  },
+  "Isabella": {
+   "autohton": false,
+   "igp": false,
+   "note": "hibrid producator direct - neadmis pentru vin cu IGP"
+  },
+  "Lidia": {
+   "autohton": false,
+   "igp": false,
+   "note": "hibrid producator direct - neadmis pentru vin cu IGP"
   }
+ },
+ "aipa": {
+  "measure": "SP_2.5 Investitii in exploatatii din sectorul viticol - infiintarea plantatiilor (struguri pentru vin)",
+  "min_area_ha": 0.5,
+  "density_bands": [
+   {
+    "min": 0,
+    "max": 3000,
+    "lei_per_ha": 15000
+   },
+   {
+    "min": 3001,
+    "max": 3500,
+    "lei_per_ha": 30000
+   },
+   {
+    "min": 3501,
+    "max": 4000,
+    "lei_per_ha": 35000
+   },
+   {
+    "min": 4001,
+    "max": 99999,
+    "lei_per_ha": 40000
+   }
+  ],
+  "bonus_lei_per_ha": {
+   "igp": 20000
+  },
+  "reception_doc": "Actul de receptie a plantatiei in primul an de vegetatie (prindere >= 90 %)",
+  "sources": [
+   "https://aipa.gov.md/masura-sp-2-5-investitii-in-exploatatii-din-sectorul-viticol/",
+   "https://maia.gov.md/ro/content/legisla%C8%9Bia-na%C8%9Bional%C4%83-%C3%AEn-domeniul-subven%C8%9Bion%C4%83rii-agriculturii-%C8%99i-mediului-rural"
+  ],
+  "density_bands_source": "https://agrobiznes.md/cum-poti-obtine-subventii-pentru-defrisarea-si-sau-infiintarea-unei-plantatii-viticole.html",
+  "bonus_source": "https://aipa.gov.md/masura-sp-2-5-investitii-in-exploatatii-din-sectorul-viticol/",
+  "reception_min_take": 0.9,
+  "legal": [
+   "Legea 71/2023 privind subventionarea in agricultura si mediul rural",
+   "HG 491/2023 (investitii FNDAMR)",
+   "Legea 57/2006 a viei si vinului",
+   "HG 292/2017 (Registrul vitivinicol)"
+  ]
+ },
+ "registry": {
+  "name": "Registrul vitivinicol (SIA RVV, rvv.gov.md) - ONVV; inregistrare obligatorie > 0,15 ha (Legea 57/2006 art. 21(1))",
+  "min_parcel_ha": 0.15,
+  "source": "https://www.maia.gov.md/ro/content/1611",
+  "public_check": "https://rvv.gov.md/publicpart/check.jsf"
+ },
+ "tolerances": {
+  "area_pass": 0.1,
+  "area_warn": 0.2,
+  "gaps_pass": 0.1,
+  "gaps_warn": 0.25
+ },
+ "mismatch": {
+  "_about": "Praguri pentru US-3: posibile plantări neautorizate / registru de actualizat (drone vs registru DEMO).",
+  "min_rows": 3,
+  "min_area_ha": 0.15,
+  "a_min_ha": 0.05,
+  "a_min_share": 0.1,
+  "b_max_cover": 0.1,
+  "labels": {
+   "A": "Posibilă plantare neautorizată",
+   "B": "Posibil defrișată / abandonată (registru de actualizat)"
+  },
+  "legal": {
+   "A": "Reg. (UE) 1308/2013 art. 62 și 71: plantarea viței de vie pentru vin se face doar cu autorizație, iar plantările neautorizate se defrișează. În Republica Moldova: Legea 57/2006 a viei și vinului, art. 21(1) — parcelele viticole > 0,15 ha se înregistrează în Registrul vitivinicol.",
+   "B": "Reg. delegat (UE) 2018/273 art. 7 și art. 37(3): registrul viticol conține suprafețele plantate, defrișate și abandonate și se corectează după verificare; viță abandonată = necultivată regulat de peste 5 ani viticoli (art. 2)."
+  },
+  "confidence": "Semnal, nu verdict: rândurile și conturul blocurilor vin din pre-adnotări AI (corectate parțial în Marcaj), iar parcelele și registrul sunt DEMO. Doar controlul pe teren confirmă."
+ }
 }

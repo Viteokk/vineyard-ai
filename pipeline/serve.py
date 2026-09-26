@@ -5,7 +5,9 @@
   POST /api/analyze       body = one GeoTIFF (header X-Filename; ?canopy=classical|model)
                           -> classical detector + the AI model on that tile -> GeoJSON layers in the tile's CRS,
                              a preview image with its bounds, counts / lengths / areas and the processing time
-  POST /api/route         {"mode": "inspector"|"farmer", "min_gap": 3.0, "time": 20, "start": [x, y], "zone": GeoJSON geometry}
+  POST /api/route         {"mode": "inspector"|"farmer", "min_gap": 3.0, "time": 20, "start": [x, y], "zone": GeoJSON geometry,
+                           "points": [{"id": "A01", "x": .., "y": ..}, ...]}   (points: route ONLY through these, e.g.
+                           register mismatches; the result is checked with pipeline.validate)
                           (start and zone optional: a custom START, and only the targets inside the zone)
                           -> {"job": id}: pipeline.route on the targets that pass the filters (cached distances)
   GET  /api/job/<id>      {"state": "running"|"done"|"error", "log": [...], "route": ..., "targets": ..., "seconds"}
@@ -108,12 +110,17 @@ def analyze(data: bytes, name: str, canopy: str) -> dict:
             "seconds": {"classical": round(t_classic, 1), "model": round(t_model, 1), "total": round(time.time() - t0, 1)}}
 
 
-def run_route(job: dict, mode: str, min_gap: float, tlimit: int, start=None, zone=None) -> None:
+def run_route(job: dict, mode: str, min_gap: float, tlimit: int, start=None, zone=None, points=None) -> None:
     d = LIVE / job["id"]
     d.mkdir(parents=True, exist_ok=True)
     feats = json.loads((C.OUT / "targets.geojson").read_text())["features"]
     keep = [f for f in feats if f["properties"]["type"] in TYPES[mode]
             and (f["properties"]["type"] == "waste" or f["properties"].get("gap_m", 0) >= min_gap)]
+    if points:                                   # only the given visit points (never written to route.geojson)
+        keep = [{"type": "Feature", "geometry": {"type": "Point", "coordinates": [float(p["x"]), float(p["y"])]},
+                 "properties": {"type": "gap", "gap_m": 99.0, "id": str(p["id"]), "x": float(p["x"]), "y": float(p["y"]),
+                                "kind": "visit", "reachable": True}} for p in points]
+        min_gap = 0.0
     if zone:
         from shapely.geometry import Point, shape
         z = shape(zone).buffer(0)
@@ -137,8 +144,15 @@ def run_route(job: dict, mode: str, min_gap: float, tlimit: int, start=None, zon
     if p.returncode != 0:
         job["state"] = "error"
         return
+    check = None
+    if points and (C.OUT / "pre_global.xml").exists():          # official rules: <= 2 % outside, back at START
+        v = subprocess.run([sys.executable, "-m", "pipeline.validate", "--route", str(d / "route.geojson"), "--inp", str(C.OUT / "pre_global.xml"),
+                            "--targets", str(d / "targets_in.geojson"), "--json", str(d / "check.json")], cwd=C.ROOT, capture_output=True, text=True)
+        job["log"] += [ln for ln in v.stdout.splitlines() if ln.strip()][-5:]
+        if (d / "check.json").exists():
+            check = json.loads((d / "check.json").read_text())
     job.update(state="done", route=json.loads((d / "route.geojson").read_text()),
-               targets=json.loads((d / "targets.geojson").read_text()))
+               targets=json.loads((d / "targets.geojson").read_text()), check=check)
 
 
 def compliance(data: bytes, name: str) -> dict:
@@ -201,7 +215,7 @@ class Handler(SimpleHTTPRequestHandler):
                 job = {"id": uuid.uuid4().hex[:8], "state": "running", "log": [], "t0": time.time(), "mode": mode}
                 JOBS[job["id"]] = job
                 threading.Thread(target=run_route, args=(job, mode, float(q.get("min_gap", 3.0)),
-                                                          int(q.get("time", 20)), q.get("start"), q.get("zone")), daemon=True).start()
+                                                          int(q.get("time", 20)), q.get("start"), q.get("zone"), q.get("points")), daemon=True).start()
                 return self.send_json({"job": job["id"]})
         except Exception as e:                    # noqa: BLE001 - report to the page, keep serving
             return self.send_json({"error": str(e)}, 400)

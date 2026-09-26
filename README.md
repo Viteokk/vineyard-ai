@@ -156,6 +156,20 @@ Tests: `python -m unittest tests.test_register` (halves sum to the block within 
 status, scenarios present, registry linked). Real integration (ONVV RVV, ASP cadastre, AIPA) would be a data exchange
 through MConnect; not implemented.
 
+### Possible unauthorised plantings / register to update (DEMO)
+`python -m pipeline.register_mismatch` → `web/data/register_mismatch.geojson`, `out/register_mismatch.csv` (< 1 s).
+Compares where vines are (detected blocks) with where they are registered (DEMO register), Reg. (EU) 1308/2013
+art. 62–72 and Reg. (EU) 2018/273 art. 7, 37. Only real vineyards count (≥ 3 rows and ≥ 0.15 ha, the register
+threshold); smaller ones are listed as below threshold, never flagged. **Type A** “possible unauthorised planting”:
+part of a vineyard not covered by a planted, authorised parcel (≥ 0.05 ha or ≥ 10 % of the block). **Type B**
+“possible grubbed-up / abandoned”: parcel registered as planted with < 10 % covered by detected vines. Thresholds,
+wording and legal texts live in `registry/criteria.json` → `mismatch`; every item is a signal, not a verdict, with a
+visit point snapped to the nearest inter-row / passage. In the web map (Conformitate): red / orange layer, list sorted
+by area, “+ vizită”; on the laptop (`python -m pipeline.serve`) the route through the chosen places is computed and
+checked with `pipeline.validate` (example: 2 places, 1.24 km, 0.14 % outside, valid); on GitHub Pages the visit list
+downloads as GPX. `route.geojson` is never changed. Tests: `python -m unittest tests.test_register_mismatch`
+(all deliberate DEMO mismatches found, nothing below 0.15 ha flagged).
+
 ### Compliance: vineyard register (ONVV), cadastre, AIPA subsidies
 Tab „Conformitate” (role *Inspector*): per block, what the drone measured (planted area, density, gaps) against the
 Registrul vitivinicol entry and the AIPA request (demo records, clearly labelled), plus the **real public cadastral parcels**
