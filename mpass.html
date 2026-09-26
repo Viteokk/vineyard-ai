@@ -1,0 +1,73 @@
+<!doctype html>
+<html lang="ro">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Autorizare MPass simulată</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&family=Geist+Mono:wght@400;500&display=swap">
+<style>
+:root{color-scheme:light;--bg:#F3F5F4;--card:#FFFFFF;--ink:#15201A;--muted:#5C6A62;--line:#DCE2DE;--accent:#0046AE;--warn:#8A5A00;--warn-bg:#FFF6DB}
+*{box-sizing:border-box}
+body{margin:0;min-height:100vh;background:var(--bg);color:var(--ink);font:16px/1.5 'Geist',system-ui,sans-serif;display:flex;flex-direction:column;align-items:center;padding-inline:16px;padding-block:32px}
+.demo{width:min(560px,100%);background:var(--warn-bg);color:var(--warn);border:1px solid #F0D98A;border-radius:12px;padding:10px 14px;font-size:14px;font-weight:500;margin-bottom:16px}
+main{width:min(560px,100%);background:var(--card);border:1px solid var(--line);border-radius:18px;padding:26px;display:flex;flex-direction:column;gap:18px}
+h1{font-size:22px;margin:0}
+.muted{color:var(--muted);font-size:14px;margin:0}
+dl{display:grid;grid-template-columns:auto 1fr;gap:6px 14px;margin:0;font-size:14px}
+dt{color:var(--muted)}dd{margin:0;font-family:'Geist Mono',monospace;font-size:13px}
+.ids{display:flex;flex-direction:column;gap:10px;border:0;padding:0;margin:0}
+.id{display:flex;gap:12px;align-items:center;border:1.5px solid var(--line);border-radius:12px;padding:12px 14px;cursor:pointer}
+.id:has(input:checked){border-color:var(--accent);background:#EEF3FB}
+.id input{accent-color:var(--accent);width:18px;height:18px}
+.id b{display:block}.id small{color:var(--muted)}
+.acts{display:flex;gap:10px;flex-wrap:wrap}
+button,.cancel{min-height:48px;border-radius:12px;font:600 15px 'Geist',sans-serif;padding:0 20px;cursor:pointer}
+button{background:var(--accent);color:#fff;border:0;flex:1}
+.cancel{display:inline-flex;align-items:center;border:1px solid var(--line);background:#fff;color:var(--ink);text-decoration:none}
+button:focus-visible,.cancel:focus-visible,.id:has(input:focus-visible){outline:3px solid #FFD200;outline-offset:2px}
+ol{margin:0;padding-left:20px;font-size:14px;color:var(--muted);display:flex;flex-direction:column;gap:4px}
+.done{display:none;text-align:center;padding:30px 0}
+.done.on{display:block}
+</style>
+</head>
+<body>
+<div class="demo" role="note">Simulare pentru demo. Aceasta nu este pagina MPass și nu cere nicio parolă. Integrarea reală cere înregistrarea Field Planner ca furnizor de servicii la Agenția de Guvernare Electronică.</div>
+<main id="box">
+  <div><h1>Autorizare prin MPass</h1><p class="muted">Field Planner cere acces la identitatea ta.</p></div>
+  <dl>
+    <dt>Furnizor de servicii</dt><dd>Field Planner (vineyard-ai)</dd>
+    <dt>Date cerute</dt><dd>IDNP, nume, organizație, rol</dd>
+    <dt>Revenire la</dt><dd id="ret"></dd>
+    <dt>Cerere</dt><dd id="req"></dd>
+  </dl>
+  <fieldset class="ids">
+    <legend class="muted" style="margin-bottom:8px">Identitate de test</legend>
+    <label class="id"><input type="radio" name="who" value="inspector" checked><span><b>Ion Popescu</b><small>Inspector · AIPA, subdiviziunea Strășeni · IDNP fictiv</small></span></label>
+    <label class="id"><input type="radio" name="who" value="fermier"><span><b>Maria Rusu</b><small>Administrator · Vie Sireți SRL (fictiv) · IDNP fictiv</small></span></label>
+  </fieldset>
+  <div class="acts"><button type="button" id="ok">Autorizează</button><a class="cancel" href="login.html">Anulează</a></div>
+  <details><summary class="muted">Cum arată fluxul real</summary>
+    <ol style="margin-top:8px">
+      <li>Field Planner trimite o cerere de autentificare SAML 2.0 către MPass.</li>
+      <li>Utilizatorul se autentifică în MPass (semnătură mobilă, buletin electronic).</li>
+      <li>MPass trimite un răspuns semnat la adresa de revenire a Field Planner.</li>
+      <li>Serverul Field Planner verifică semnătura și dă rolul din lista de inspectori sau de administratori.</li>
+    </ol></details>
+</main>
+<main class="done" id="done"><h1>Autorizat</h1><p class="muted">Se revine în Field Planner…</p></main>
+<script>
+const q = new URLSearchParams(location.search), ret = q.get('return') || 'app.html';
+const req = 'DEMO-' + Math.random().toString(36).slice(2, 10).toUpperCase();
+document.getElementById('ret').textContent = new URL(ret, location.href).pathname;
+document.getElementById('req').textContent = req;
+const WHO = {inspector: {name: 'Ion Popescu', org: 'AIPA Strășeni'}, fermier: {name: 'Maria Rusu', org: 'Vie Sireți SRL'}};
+document.getElementById('ok').addEventListener('click', () => {
+  const role = document.querySelector('input[name=who]:checked').value;
+  document.getElementById('box').style.display = 'none'; document.getElementById('done').classList.add('on');
+  const code = btoa(String.fromCharCode(...new TextEncoder().encode(JSON.stringify({role, ...WHO[role], req})))).replace(/=+$/, '');
+  setTimeout(() => { location.href = 'auth.html?code=' + encodeURIComponent(code) + '&return=' + encodeURIComponent(ret); }, 900);
+});
+</script>
+</body>
+</html>

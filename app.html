@@ -808,7 +808,7 @@ const USER_IC = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" str
 function roleBtn() { $('#role-btn').innerHTML = `${USER_IC}<span>${SESSION?.name ? SESSION.name + ' · ' : ''}${S.role ? ROLES[S.role].short : 'Alege rolul'}</span>`; applyRoleNav(); }
 function openRole() {
   $('#role-title').textContent = SESSION ? `Conectat: ${SESSION.name || 'utilizator demo'}` : 'Cine folosește harta?';
-  $('#role-sess').innerHTML = SESSION ? `<div class="callout"><b>${ROLES[S.role]?.name || ''}${SESSION.org ? ' · ' + SESSION.org : ''}</b><p class="note">Sesiune demo în acest browser. Tab-urile afișate sunt cele ale rolului.</p><div><button class="btn primary" type="button" data-act="logout">Ieșire</button></div></div>` : `<div class="callout"><p class="note">Ai și o <a href="login.html">pagină de intrare</a> pe roluri.</p></div>`;
+  $('#role-sess').innerHTML = SESSION ? `<div class="callout"><b>${SESSION.name ? SESSION.name + ' · ' : ''}${ROLES[S.role]?.name || ''}${SESSION.org ? ' · ' + SESSION.org : ''}</b><p class="note">${SESSION.via === 'mpass-demo' ? 'Intrat prin MPass (simulat). ' : ''}Sesiune demo în acest browser. Tab-urile afișate sunt cele ale rolului.</p><div><button class="btn primary" type="button" data-act="logout">Ieșire</button></div></div>` : `<div class="callout"><p class="note">Ai și o <a href="login.html">pagină de intrare</a> pe roluri.</p></div>`;
   $('#role-list').innerHTML = Object.entries(ROLES).map(([k, r]) => `<button type="button" class="role-card" data-role="${k}" aria-pressed="${S.role === k}"><span class="ic" style="background:${r.color}"></span><b>${r.name}</b><span class="note">${r.sub}</span><span class="sees">${r.sees}</span></button>`).join('');
   $('#role-veil').hidden = false;
 }
