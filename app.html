@@ -168,6 +168,7 @@ body:has(.panel.wide:not(.collapsed)) .cmd{display:none}
 .pop{position:fixed;right:16px;top:70px;width:290px;border-radius:18px;padding:14px;z-index:1001;display:flex;flex-direction:column;gap:2px;max-height:calc(100vh - 100px);overflow:auto}
 .sw{display:flex;align-items:center;gap:10px;min-height:38px;font-size:13px;padding:0 4px;border-radius:10px;width:100%;text-align:left}
 .sw:hover{background:var(--hover)}
+.sw-all{border-bottom:1px solid var(--line);border-radius:10px 10px 0 0;margin-bottom:4px;padding-bottom:6px}
 .sw .sw-i{width:12px;height:12px;border-radius:4px;flex-shrink:0}
 .sw .tg{margin-left:auto;width:32px;height:20px;border-radius:999px;background:var(--press);position:relative;transition:background .15s;flex-shrink:0}
 .sw .tg::after{content:"";position:absolute;left:2px;top:2px;width:16px;height:16px;border-radius:50%;background:#fff;box-shadow:0 1px 2px rgba(0,0,0,.25);transition:transform .15s}
@@ -244,6 +245,13 @@ input[type=range]{accent-color:var(--accent);width:100%}
 .chip.partial{background:rgba(59,130,246,.15);color:#2563EB}.chip.deseu,.chip.deseu_top{background:rgba(147,51,234,.15);color:#9333EA}
 .chip.lipsa{background:rgba(34,197,94,.16);color:#15803D}
 .zmodes{display:flex;gap:6px;flex-wrap:wrap}
+.pl .sec-title h2{display:flex;align-items:center;gap:8px}
+.pl-n{width:22px;height:22px;border-radius:50%;display:inline-grid;place-items:center;font:700 12px/1 'Geist',sans-serif;background:var(--hover);color:var(--muted);flex-shrink:0}
+.pl-n.ok{background:var(--accent);color:var(--on-accent)}.pl-n svg{width:13px;height:13px}
+.pl-opt{cursor:pointer;gap:10px}.pl-opt input{accent-color:var(--accent);width:16px;height:16px}.pl-opt select{font:inherit;border:1px solid var(--line);border-radius:6px;background:var(--solid);color:var(--ink);padding:1px 4px}
+.pl-prog{display:flex;flex-direction:column;gap:6px;font-size:13px;color:var(--muted)}.pl-prog div{height:6px;border-radius:3px;background:var(--hover);overflow:hidden}.pl-prog i{display:block;height:100%;background:var(--accent);transition:width .3s}
+.linkish{border:0;background:none;padding:0;color:var(--accent-ink);font:inherit;text-decoration:underline;cursor:pointer}
+.pl-more{border-top:1px solid var(--line);padding-top:12px}.pl-more summary{cursor:pointer;font-weight:600;font-size:14px}
 .zmodes .btn[aria-pressed="true"]{background:var(--accent);color:var(--on-accent);border-color:transparent}
 .demo-band{border:1px dashed var(--warn);background:var(--warn-soft);color:var(--ink);border-radius:12px;padding:8px 12px;font-size:12px}
 .cmp-tbl{width:100%;border-collapse:collapse;font-size:13px}
@@ -294,7 +302,7 @@ input[type=range]{accent-color:var(--accent);width:100%}
   <a href="#traseu" data-view="traseu"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="6" cy="19" r="2"/><circle cx="18" cy="5" r="2"/><path d="M8 19h6a4 4 0 000-8h-4a4 4 0 010-8h6"/></svg><span class="tip">Traseu <kbd>2</kbd></span><span class="sr">Traseu</span></a>
   <a href="#masuratori" data-view="masuratori"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 20V10M10 20V4M16 20v-7M21 20H3"/></svg><span class="tip">Măsurători <kbd>3</kbd></span><span class="sr">Măsurători</span></a>
   <a href="#pipeline" data-view="pipeline"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="6" height="6" rx="1.5"/><rect x="15" y="14" width="6" height="6" rx="1.5"/><path d="M9 7h4a2 2 0 012 2v5"/></svg><span class="tip">Pipeline <kbd>4</kbd></span><span class="sr">Pipeline</span></a>
-  <a href="#zona" data-view="zona"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 7l5-3 6 3 5-3v13l-5 3-6-3-5 3z" stroke-dasharray="3 2"/><path d="M9 4v13M15 7v13"/></svg><span class="tip">Zonă <kbd>7</kbd></span><span class="sr">Zonă</span></a>
+  <a href="#zona" data-view="zona"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 7l5-3 6 3 5-3v13l-5 3-6-3-5 3z" stroke-dasharray="3 2"/><path d="M9 4v13M15 7v13"/></svg><span class="tip">Planifică <kbd>7</kbd></span><span class="sr">Planifică: zonă, START, traseu</span></a>
   <a href="#corectura" data-view="corectura"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 11l3 3 8-8"/><path d="M20 12v6a2 2 0 01-2 2H6a2 2 0 01-2-2V6a2 2 0 012-2h9"/></svg><span class="tip">Corectură Marcaj <kbd>6</kbd></span><span class="sr">Corectură Marcaj</span></a>
   <a href="#conformitate" data-view="conformitate"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l8 3v6c0 4.5-3.4 8.3-8 9-4.6-.7-8-4.5-8-9V6l8-3z"/><path d="M8.5 12l2.5 2.5 4.5-5"/></svg><span class="tip">Conformitate <kbd>5</kbd></span><span class="sr">Conformitate</span></a>
   <div class="sp"></div>
@@ -1089,29 +1097,112 @@ function printZone() {
     <div class="sign"><div>Întocmit (nume, semnătură)</div><div>Verificat</div><div>Data</div></div>`;
   try { window.print(); } catch (e) { toast('Tipărirea nu e disponibilă aici'); }
 }
+/* ============ Planifică: zonă + START + ținte -> traseu calculat în browser (web/router.js, aceleași reguli ca pipeline/route.py) ============ */
+const PL = {gaps: true, minGap: store.get('pl_gap', 3), waste: true, wcand: S.role === 'fermier', strict: false, busy: null, pct: 0, worker: null};
+const ringsOf = g => !g ? [] : g.type === 'Polygon' ? [g.coordinates] : g.type === 'MultiPolygon' ? g.coordinates : [];
+const bbHit = (a, b) => !(a[2] < b[0] || a[0] > b[2] || a[3] < b[1] || a[1] > b[3]);
+function ringBB(r) { let a = [Infinity, Infinity, -Infinity, -Infinity]; for (const [x, y] of r) a = [Math.min(a[0], x), Math.min(a[1], y), Math.max(a[2], x), Math.max(a[3], y)]; return a; }
+function polysIn(fc, bb) { const out = []; for (const f of fc?.features || []) for (const p of ringsOf(f.geometry)) if (p[0] && bbHit(ringBB(p[0]), bb)) out.push(p); return out; }
+function planTargets() {
+  if (!ZN.geom) return [];
+  const g = ZN.geom, out = [];
+  if (PL.gaps) for (const t of TG) if (t.type !== 'waste' && (t.gap_m || 0) >= PL.minGap && inGeom(t.x, t.y, g)) out.push({id: t.id, x: t.x, y: t.y, type: 'gap', gap_m: t.gap_m, vineyard_id: t.vineyard_id, row_id: t.row_id});
+  if (PL.waste) for (const t of TG) if (t.type === 'waste' && inGeom(t.x, t.y, g)) out.push({id: t.id, x: t.x, y: t.y, type: 'waste', vineyard_id: t.vineyard_id});
+  if (PL.wcand) for (const f of EXTRA.wcand?.features || []) { const b = f.properties.box; if (!b) continue; const x = (b[0] + b[2]) / 2, y = (b[1] + b[3]) / 2;
+    if (inGeom(x, y, g)) out.push({id: 'W' + String(f.properties.rank).padStart(3, '0'), x, y, type: 'waste', candidate: true, score: f.properties.score, vineyard_id: f.properties.vineyard_id}); }
+  return out;
+}
+function planCounts() {
+  if (!ZN.geom) return {gaps: 0, waste: 0, wcand: 0};
+  const g = ZN.geom; let gaps = 0, waste = 0, wcand = 0;
+  for (const t of TG) if (inGeom(t.x, t.y, g)) { if (t.type === 'waste') waste++; else if ((t.gap_m || 0) >= PL.minGap) gaps++; }
+  for (const f of EXTRA.wcand?.features || []) { const b = f.properties.box; if (b && inGeom((b[0] + b[2]) / 2, (b[1] + b[3]) / 2, g)) wcand++; }
+  return {gaps, waste, wcand};
+}
+const officialStart = () => EXTRA.start?.features?.[0]?.geometry.coordinates;
+function planRoute() {
+  if (PL.busy) return;
+  if (!ZN.geom) return toast('Alege întâi zona de lucru (pasul 1)');
+  const st = CST.xy || officialStart(); if (!st) return toast('Lipsește punctul de start');
+  const targets = planTargets(); if (!targets.length) return toast('Nicio țintă în zonă cu setările de la pasul 3');
+  const src = SRC.pred || cur(), zb = gBBox(ZN.geom), pad = 30;
+  const bb = [Math.min(zb[0], st[0]) - pad, Math.min(zb[1], st[1]) - pad, Math.max(zb[2], st[0]) + pad, Math.max(zb[3], st[1]) + pad];
+  const area = (bb[2] - bb[0]) * (bb[3] - bb[1]), res = area <= 4.5e6 * 0.25 ? 0.5 : 0;     // 0.5 m like pipeline/route.py; up to ~110 ha of bounding box
+  if (!res) return toast('Zona împreună cu drumul de la START e prea mare pentru calculul în browser: alege o zonă mai mică sau un START mai aproape');
+  const allowed = [], canopies = [];
+  for (const t of src.tiles) { if (!TB[t] || !bbHit(TB[t], bb)) continue; const g = src.by[t];
+    for (const f of g.inter) allowed.push(...ringsOf(f.geometry));
+    for (const r of g.can) canopies.push([r]); }
+  allowed.push(...polysIn(EXTRA.passages, bb));
+  const region = [...polysIn(EXTRA.study, bb), ...polysIn(BFC || null, bb)];
+  PL.busy = 'Pornesc…'; PL.pct = 0; renderPanel();
+  try { PL.worker?.terminate(); PL.worker = new Worker('router.js?v=4'); } catch (e) { PL.busy = null; renderPanel(); return toast('Browserul nu permite calculul în fundal'); }
+  PL.worker.onmessage = ({data: m}) => {
+    if (m.progress) { PL.busy = m.progress; PL.pct = m.pct; if (S.view === 'zona') { const el = $('#pl-prog'); if (el) { el.querySelector('span').textContent = m.progress; el.querySelector('i').style.width = m.pct + '%'; } else renderPanel(); } return; }
+    PL.busy = null; PL.worker.terminate(); PL.worker = null;
+    if (!m.ok) { renderPanel(); return toast(m.error); }
+    const r = m.result, vis = new Set(r.visited);
+    if (!r.coords.length || r.length_m < 1) { renderPanel(); return toast(r.dropped.length ? 'Cu „Strict” nu rămâne nicio țintă: chiar drumul de la START până la zonă trece de 2 % în afara inter-rândurilor. Debifează „Strict” sau alege START-ul mai aproape.' : 'Nicio țintă din zonă nu se poate atinge pe inter-rânduri și pasaje.'); }
+    let order = 0; const seen = new Set();
+    for (const [x, y] of r.coords) for (const t of targets) if (vis.has(t.id) && !seen.has(t.id) && Math.hypot(t.x - x, t.y - y) <= 2.5) { seen.add(t.id); t.order = ++order; }
+    const mode = S.role === 'fermier' ? 'farmer' : 'inspector';
+    const fc = {type: 'FeatureCollection', crs: {type: 'name', properties: {name: 'urn:ogc:def:crs:EPSG::32635'}}, features: [{type: 'Feature', geometry: {type: 'LineString', coordinates: r.coords},
+      properties: {length_m: Math.round(r.length_m * 10) / 10, mode, zone: ZN.label, targets_total: r.targets_total, targets_visited: r.visited.length, outside_share: +r.outside_share.toFixed(4),
+        custom_start: !!CST.xy, start: st, computed: 'browser', grid_m: r.res, minutes_at_4kmh: +(r.length_m / 4000 * 60).toFixed(1)}}]};
+    const tg = {type: 'FeatureCollection', features: targets.map(t => ({type: 'Feature', geometry: {type: 'Point', coordinates: [t.x, t.y]}, properties: {...t, visited: vis.has(t.id), reachable: !r.unreachable.includes(t.id)}}))};
+    const what = [PL.gaps && `goluri ≥ ${PL.minGap} m`, PL.waste && 'deșeuri', PL.wcand && 'candidați AI'].filter(Boolean).join(' + ');
+    addLiveRoute(fc, tg, mode, PL.minGap, 'Zonă', `${what}${CST.xy ? ' · START ales' : ''}`);
+    ROUTES.live.file = 'route_zona.geojson';
+    ROUTES.live.ck = {valid: r.outside_share <= 0.02, outside_share: r.outside_share, start_m: 0, end_m: 0, canopy_m: 0, forbidden_m: 0, targets: r.targets_total, visited: r.visited.length};
+    ROUTES.live.info = {snap: r.snap_m, unreachable: r.unreachable.length, dropped: r.dropped.length, ms: r.ms, res: r.res, strict: PL.strict};
+    renderPanel();
+  };
+  PL.worker.onerror = e => { PL.busy = null; renderPanel(); toast('Calculul a eșuat: ' + (e.message || 'eroare')); };
+  PL.worker.postMessage({bbox: bb, res, allowed, canopies, forbidden: polysIn(EXTRA.forbidden, bb), region, targets, start: st, startRadius: CST.xy ? 80 : 20, visit: 2, ...(PL.strict ? {maxOutside: 0.017} : {})});
+}
+function gpsStart() {
+  if (!navigator.geolocation || !UTM) return toast('Locația nu e disponibilă în acest browser');
+  toast('Caut locația…');
+  navigator.geolocation.getCurrentPosition(pos => {
+    const [x, y] = fromWGS(pos.coords.longitude, pos.coords.latitude);
+    if (x < EXT[0] - 1000 || x > EXT[2] + 1000 || y < EXT[1] - 1000 || y > EXT[3] + 1000) return toast('Ești în afara zonei zburate: alege START-ul pe hartă');
+    setCustomStart([x, y]); map.setView(ll(x, y), Math.max(map.getZoom(), 2));
+  }, () => toast('Nu am primit locația (permisiune refuzată?)'), {enableHighAccuracy: true, timeout: 15000});
+}
 function viewZona() {
-  const st = ZN.stats, m = ZN.mode;
-  $('#p-head').innerHTML = head('Zonă · selectează, calculează, exportă', ZN.geom ? ZN.label : 'Alege o zonă');
+  const st = ZN.stats, m = ZN.mode, cnt = planCounts(), off = officialStart();
+  $('#p-head').innerHTML = head('Planifică lucrul', ZN.geom ? ZN.label : 'zonă · punct de start · traseu');
   const btn = (k, l) => `<button class="btn sm" type="button" data-zmode="${k}" aria-pressed="${m === k}">${l}</button>`;
-  $('#p-body').innerHTML = `<section><div class="sec-title"><h2>1. Desenează</h2></div><div class="zmodes">${btn('rect', 'Dreptunghi')}${btn('poly', 'Poligon')}${m === 'poly' ? '<button class="btn sm primary" type="button" data-act="z-finish">Termină poligonul</button>' : ''}</div></section>
-    <section><div class="sec-title"><h2>2. Selectează</h2><span class="note">Shift+click adaugă</span></div><div class="zmodes">${btn('blocks', 'Blocuri')}${btn('tiles', 'Tile-uri')}${btn('parcel', 'Parcelă (click)')}</div></section>
-    <section><div class="sec-title"><h2>3. Număr cadastral</h2><span class="note">toată Moldova · ASP</span></div>
-      <div style="display:flex;gap:8px;flex-wrap:wrap"><input class="search" id="zcad-q" type="search" inputmode="numeric" placeholder="ex. 80371140153" aria-label="Număr cadastral" style="flex:1;min-width:150px"><button class="btn primary" type="button" data-act="z-cad">Folosește ca zonă</button></div></section>
-    ${st ? `<section><div class="sec-title"><h2>${ZN.label}</h2><span class="num">${fmt(st.area / 1e4, 3)} ha</span></div>
-      <div class="stats">
+  const step = (n, t, ok, extra = '') => `<div class="sec-title"><h2><span class="pl-n ${ok ? 'ok' : ''}">${ok ? IC.ok : n}</span>${t}</h2>${extra}</div>`;
+  const nT = (PL.gaps ? cnt.gaps : 0) + (PL.waste ? cnt.waste : 0) + (PL.wcand ? cnt.wcand : 0);
+  const rz = ROUTES.live && ROUTES.live.file === 'route_zona.geojson' ? ROUTES.live : null;
+  $('#p-body').innerHTML = `<section class="pl">${step(1, 'Zona de lucru', !!ZN.geom, ZN.geom ? `<span class="num">${fmt(st.area / 1e4, 2)} ha</span>` : '')}
+      <div style="display:flex;gap:8px;flex-wrap:wrap"><input class="search" id="zcad-q" type="search" inputmode="numeric" placeholder="Nr. cadastral, ex. 80371140153" aria-label="Număr cadastral" style="flex:1;min-width:170px"><button class="btn primary" type="button" data-act="z-cad">Caută</button></div>
+      <div class="zmodes" style="margin-top:8px"><span class="note" style="align-self:center">sau pe hartă:</span>${btn('rect', 'Dreptunghi')}${btn('poly', 'Poligon')}${m === 'poly' ? '<button class="btn sm primary" type="button" data-act="z-finish">Termină</button>' : ''}${btn('blocks', 'Blocuri')}${btn('parcel', 'Parcelă')}</div>
+      ${ZN.geom ? `<p class="note" style="margin-top:8px"><b>${ZN.label}</b> · ${fmt(st.rowIds.size)} rânduri · ${fmt(st.gaps)} goluri · ${fmt(st.waste)} deșeuri · ${fmt(st.parcels.length)} parcele <button class="linkish" type="button" data-act="z-clear">schimbă</button></p>` : ''}</section>
+    <section class="pl">${step(2, 'Punct de pornire', true, `<span class="badge" style="${CST.xy ? 'background:rgba(16,185,129,.15);color:#047857' : 'background:var(--hover);color:var(--muted)'}">${CST.xy ? 'ales' : 'oficial'}</span>`)}
+      <p class="note">${CST.xy ? `Ales: <span class="mono">${CST.xy[0].toFixed(1)}, ${CST.xy[1].toFixed(1)}</span> · traseul pornește din cel mai apropiat inter-rând sau drum (max. 80 m).` : `START-ul organizatorilor: <span class="mono">${off ? off[0].toFixed(1) + ', ' + off[1].toFixed(1) : '—'}</span>.`}</p>
+      <div class="zmodes"><button class="btn sm ${CST.picking ? 'primary' : ''}" type="button" data-act="cst-pick">${CST.picking ? 'Apasă pe hartă…' : 'Alege pe hartă'}</button><button class="btn sm" type="button" data-act="pl-gps">Locația mea (GPS)</button>${CST.xy ? '<button class="btn sm" type="button" data-act="cst-clear">START oficial</button>' : ''}</div></section>
+    <section class="pl">${step(3, 'Ce vizitezi', nT > 0, `<span class="num">${fmt(nT)} ținte</span>`)}
+      <div class="list" style="gap:2px">
+        <label class="li pl-opt"><input type="checkbox" id="pl-gaps" ${PL.gaps ? 'checked' : ''}><span>Goluri în rânduri ≥ <select id="pl-gap" aria-label="Gol minim">${[3, 5, 8, 10].map(g => `<option value="${g}" ${g === PL.minGap ? 'selected' : ''}>${g} m</option>`).join('')}</select></span><span class="r num">${ZN.geom ? fmt(cnt.gaps) : '—'}</span></label>
+        <label class="li pl-opt"><input type="checkbox" id="pl-waste" ${PL.waste ? 'checked' : ''}><span>Deșeuri adnotate</span><span class="r num">${ZN.geom ? fmt(cnt.waste) : '—'}</span></label>
+        <label class="li pl-opt"><input type="checkbox" id="pl-wcand" ${PL.wcand ? 'checked' : ''}><span>Posibile deșeuri găsite de AI <small class="note">de confirmat</small></span><span class="r num">${ZN.geom ? fmt(cnt.wcand) : '—'}</span></label>
+        <label class="li pl-opt"><input type="checkbox" id="pl-strict" ${PL.strict ? 'checked' : ''}><span>Strict: max. 2 % în afara inter-rândurilor <small class="note">regula concursului; sare țintele care o încalcă</small></span></label></div></section>
+    <section class="pl">${step(4, 'Traseul', !!rz)}
+      ${PL.busy ? `<div class="pl-prog" id="pl-prog" role="status"><span>${PL.busy}</span><div><i style="width:${PL.pct}%"></i></div></div>`
+        : `<button class="btn primary" type="button" data-act="pl-run" style="width:100%" ${!ZN.geom || !nT ? 'disabled' : ''}>${rz ? 'Recalculează traseul' : 'Calculează traseul'}</button>
+           <p class="note" style="margin-top:6px">${!ZN.geom ? 'Alege întâi zona.' : !nT ? 'Nicio țintă cu setările alese.' : 'Se calculează aici, în browser: doar pe inter-rânduri și pasaje, fără coroane și zone interzise, START → ținte → START.'}</p>`}
+      ${rz ? `${routeCard(rz)}<div class="zmodes"><button class="btn sm" type="button" data-act="gpx" data-route="live">Descarcă GPX</button><button class="btn sm" type="button" data-act="pl-geojson">GeoJSON</button><a class="btn sm" href="#traseu">Navighează în Traseu</a></div>
+        ${rz.info ? `<p class="note">${rz.info.unreachable ? `${fmt(rz.info.unreachable)} ținte nu se pot atinge pe inter-rânduri și pasaje. ` : ''}${rz.info.dropped ? `${fmt(rz.info.dropped)} ținte sărite: drumul până la ele ar trece de limita de 2 % în afara inter-rândurilor. ` : ''}${rz.ck.outside_share > 0.02 && !rz.info.strict ? `${fmt(rz.ck.outside_share * 100, 1)} % din traseu trece pe capete de rând și prin golurile din rânduri (fără coroane): bun pentru teren; pentru regula de 2 % a concursului bifează „Strict”. ` : ''}START lipit de grilă la ${fmt(rz.info.snap, 1)} m · grilă ${fmt(rz.info.res, 1)} m · ${fmt(rz.info.ms / 1000, 1)} s.</p>` : ''}` : ''}</section>
+    ${st ? `<details class="pl-more"><summary>Detalii și export pentru zonă</summary>
+      <div class="stats" style="margin-top:8px">
         <div class="stat"><div class="v num">${fmt(st.rowIds.size)}</div><div class="l">rânduri · ${kmT(st.rowLen)} · ${fmt(st.disrupted)} disrupted</div></div>
         <div class="stat"><div class="v num">${fmt(st.can)}</div><div class="l">coroane · ${fmt(st.canArea, 0)} m²</div></div>
         <div class="stat"><div class="v num">${fmt(st.interArea / 1e4, 3)}<small>ha</small></div><div class="l">inter-rânduri</div></div>
-        <div class="stat"><div class="v num">${fmt(st.gaps)}</div><div class="l">goluri · ~${fmt(st.missing)} butuci lipsă</div></div>
-        <div class="stat"><div class="v num">${fmt(st.waste)}</div><div class="l">deșeuri pe traseu</div></div>
-        <div class="stat"><div class="v num">${fmt(st.parcels.length)}</div><div class="l">parcele cadastrale</div></div></div>
+        <div class="stat"><div class="v num">${fmt(st.gaps)}</div><div class="l">goluri · ~${fmt(st.missing)} butuci lipsă</div></div></div>
       ${st.vids.size ? `<div class="list" style="margin-top:8px">${[...st.vids].sort().map(v => { const c = CMP?.by[v]; return `<button type="button" class="li" data-cmp="${v}"><span class="dot" style="background:${c ? CMC[c.status] : '#9CA3AF'}"></span><b>${v}</b><span class="r">${c ? CMN[c.status] : ''}${BR?.by[v] ? ' · ~' + fmt(BR.by[v].missing_vines) + ' butuci lipsă în bloc' : ''}</span></button>`; }).join('')}</div>` : '<p class="note">Nicio viță detectată în zonă.</p>'}
-      <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:10px">
-        ${LIVE ? `<button class="btn primary" type="button" data-act="z-route" ${JOB || !st.gaps && !st.waste ? 'disabled' : ''}>${JOB ? 'Se calculează…' : 'Traseu prin zonă'}</button>` : ''}
-        <button class="btn" type="button" data-act="z-geojson">Export GeoJSON</button><button class="btn" type="button" data-act="z-csv">Export CSV</button><button class="btn" type="button" data-act="z-print">Raport</button>
-        <button class="btn" type="button" data-act="z-link">Copiază linkul</button><button class="btn" type="button" data-act="z-clear">Șterge zona</button></div>
-      ${LIVE ? `<p class="note">${JOB ? `<span class="mono">${JOB.last || ''}</span>` : `Traseul trece doar pe la golurile și deșeurile din zonă, din ${CST.xy ? 'START-ul ales' : 'START-ul oficial'} și înapoi (1–3 min).`}</p>` : '<p class="note">Traseul prin zonă se calculează în modul live (pe laptop: python -m pipeline.serve).</p>'}</section>`
-      : '<p class="note">Alege un mod mai sus, apoi apasă pe hartă. Aceeași zonă dă măsurătorile, blocurile cu starea lor, parcelele cadastrale, exportul, raportul și (pe laptop) traseul doar prin ea.</p>'}`;
+      <div class="zmodes" style="margin-top:10px"><button class="btn sm" type="button" data-act="z-geojson">Zonă GeoJSON</button><button class="btn sm" type="button" data-act="z-csv">Măsurători CSV</button><button class="btn sm" type="button" data-act="z-print">Raport</button><button class="btn sm" type="button" data-act="z-link">Copiază linkul</button>${btn('tiles', 'Alege tile-uri')}</div></details>` : ''}`;
 }
 
 /* ============ corectură Marcaj: plan pe task-uri ============ */
@@ -1530,7 +1621,9 @@ function renderLayers() {
   if (cadLayer) L1.push(['cad', 'Parcele cadastrale (ASP)', '#38BDF8']);
   if (cmpLayer) L1.push(['cmp', 'Conformitate RVV / AIPA', 'linear-gradient(90deg,#EF4444,#F59E0B,#22C55E,#9CA3AF)']);
   if (bstatLayer) L1.push(['bstat', 'Starea blocurilor (roșu / galben / verde)', 'linear-gradient(90deg,#EF4444,#F59E0B,#22C55E)']);
+  const allOn = L1.every(([k]) => S.layers[k]);
   $('#layers').innerHTML = `<div class="sec-title" style="padding:2px 4px 4px"><h2>Straturi</h2><span><kbd>L</kbd></span></div>` +
+    `<button type="button" class="sw sw-all" role="switch" aria-checked="${allOn}" data-layers-all="${L1.map(([k]) => k).join(',')}"><b>${allOn ? 'Ascunde tot' : 'Arată tot'}</b><span class="note" style="margin-left:4px">${L1.filter(([k]) => S.layers[k]).length} / ${L1.length}</span><span class="tg"></span></button>` +
     L1.map(([k, l, c]) => `<button type="button" class="sw" role="switch" aria-checked="${!!S.layers[k]}" data-layer="${k}"><span class="sw-i" style="background:${c};border:1px solid var(--line)"></span>${l}<span class="tg"></span></button>`).join('') +
     `<label for="op">Opacitate ortofoto<input type="range" id="op" min="15" max="100" value="${Math.round(S.op * 100)}"></label>
      <p class="note" style="padding:8px 4px 0">La zoom mic, fiecare tile e colorat după câte coroane s-au detectat. Mărește ca să vezi rândurile, apoi inter-rândurile și coroanele. Pe tile-urile de referință imaginea trece la 2,5 cm/px.</p>`;
@@ -1540,7 +1633,7 @@ function renderLayers() {
 let palItems = [], palIdx = 0;
 function palSearch(q) {
   q = q.trim().toLowerCase(); const it = [];
-  for (const [v, l, k] of [['harta', 'Hartă', '1'], ['traseu', 'Traseu', '2'], ['masuratori', 'Măsurători', '3'], ['pipeline', 'Pipeline', '4'], ['conformitate', 'Conformitate ONVV / AIPA', '5'], ['corectura', 'Corectură Marcaj', '6'], ['zona', 'Zonă: selectează și calculează', '7']]) if (!q || l.toLowerCase().includes(q)) it.push({g: 'Secțiuni', k, l, run: () => { location.hash = v; }});
+  for (const [v, l, k] of [['harta', 'Hartă', '1'], ['traseu', 'Traseu', '2'], ['masuratori', 'Măsurători', '3'], ['pipeline', 'Pipeline', '4'], ['conformitate', 'Conformitate ONVV / AIPA', '5'], ['corectura', 'Corectură Marcaj', '6'], ['zona', 'Planifică: zonă, START, traseu', '7']]) if (!q || l.toLowerCase().includes(q)) it.push({g: 'Secțiuni', k, l, run: () => { location.hash = v; }});
   for (const [k, s] of Object.entries(SRC)) if (!q || s.name.toLowerCase().includes(q)) it.push({g: 'Sursă date', k: '◧', l: s.name, r: s.sub, run: () => setSrc(k)});
   if (WC.length && (!q || 'candidați deșeuri deseuri'.includes(q))) it.push({g: 'Locuri', k: 'D', l: 'Candidați deșeuri', r: `${WC.length} din checklist`, run: () => wcGo((WC.find(x => !WCV[x.rank]) || WC[0]).rank)});
   if (!q || 'start'.includes(q)) it.push({g: 'Locuri', k: 'S', l: 'START', r: 'punctul de plecare', run: () => startLL && map.flyTo(startLL, 3)});
@@ -1608,6 +1701,7 @@ document.addEventListener('click', e => {
   if (b.dataset.pi != null) { const x = palItems[+b.dataset.pi]; closePal(); return x.run(); }
   if (b.dataset.src) return setSrc(b.dataset.src);
   if (b.dataset.lang) { store.set('lang', b.dataset.lang); return renderLegend(); }
+  if (b.dataset.layersAll) { const ks = b.dataset.layersAll.split(','), on = !ks.every(k => S.layers[k]); for (const k of ks) S.layers[k] = on || k === 'ortho'; store.set('layers3', S.layers); renderLayers(); return applyLayers(); }
   if (b.dataset.layer) { S.layers[b.dataset.layer] = !S.layers[b.dataset.layer]; store.set('layers3', S.layers); renderLayers(); return applyLayers(); }
   if (b.dataset.tile) return goTile(b.dataset.tile);
   if (b.dataset.target) { const t = TG.find(x => x.id === b.dataset.target); if (t) { map.flyTo(ll(t.x, t.y), 3.5, {duration: .6}); select({type: 'target', t}); } return; }
@@ -1669,7 +1763,9 @@ document.addEventListener('click', e => {
     case 'z-csv': { const t = zoneCsv(); if (downloadText('zona.csv', t, 'text/csv')) toast('zona.csv descărcat'); else copy(t, null); return; }
     case 'z-print': return printZone();
     case 'z-link': return copy(location.href.split('#')[0] + '#zona=' + ZN.key, null);
-    case 'z-route': return JOB ? null : liveRoute(ZN.geom);
+    case 'z-route': case 'pl-run': return planRoute();
+    case 'pl-gps': return gpsStart();
+    case 'pl-geojson': { const r = ROUTES.live; if (r && downloadText('route_zona.geojson', JSON.stringify(r.fc), 'application/geo+json')) toast('route_zona.geojson descărcat'); return; }
     case 'cad-search': return cadSearch($('#cad-q')?.value);
     case 'cmp-on': { S.layers.cmp = true; store.set('layers3', S.layers); applyLayers(); renderLayers(); return renderPanel(); }
     case 'cmp-csv': { const t = cmpCsv(); if (downloadText('conformitate.csv', t, 'text/csv')) toast('conformitate.csv descărcat'); else copy(t, null); return; }
@@ -1696,6 +1792,8 @@ document.addEventListener('input', e => {
   if (e.target.id === 'tile-q' || e.target.id === 'row-q') { S.q = e.target.value; const id = e.target.id, pos = e.target.selectionStart; renderPanel(); const n = $('#' + id); n.focus(); n.setSelectionRange(pos, pos); }
 });
 document.addEventListener('change', e => {
+  if (e.target.id === 'pl-gaps' || e.target.id === 'pl-waste' || e.target.id === 'pl-wcand' || e.target.id === 'pl-strict') { PL[e.target.id.slice(3)] = e.target.checked; return renderPanel(); }
+  if (e.target.id === 'pl-gap') { PL.minGap = +e.target.value; store.set('pl_gap', PL.minGap); return renderPanel(); }
   const id = e.target.id, v = +e.target.value;
   if (id === 'tif-in') { const f = e.target.files[0]; e.target.value = ''; return analyzeFile(f); }
   if (id === 'csv-in') { const f = e.target.files[0]; e.target.value = ''; return uploadRegistry(f); }
