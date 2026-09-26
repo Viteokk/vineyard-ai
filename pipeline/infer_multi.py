@@ -19,7 +19,8 @@ import time
 from pathlib import Path
 
 import numpy as np
-from shapely.geometry import LineString, Polygon, box
+from shapely.geometry import LineString, MultiPoint, Point, Polygon, box
+from shapely.ops import unary_union, voronoi_diagram
 from shapely.strtree import STRtree
 from shapely.validation import make_valid
 
@@ -33,6 +34,8 @@ RES = C.PX
 SIZE = 2048
 CROP = 640
 WASTE_MIN_M, WASTE_MAX_M = 0.1, 10.0
+HYBRID_CLOSE_M = 0.2       # hybrid canopies: gap closed between pieces of one vine
+HYBRID_KEEP_M2 = 0.3       # hybrid canopies: extra pieces of a cell kept only above this area
 
 
 def predict(model, img: np.ndarray, conf: float, device: str, imgsz: int = 640) -> dict[int, list]:
@@ -90,6 +93,48 @@ def canopies_on_rows(polys, rows: list[LineString], band_m: float) -> list[Polyg
     return keep
 
 
+def hybrid_canopies(classic: list[Polygon], model_polys: list[Polygon], rows: list[LineString], band_m: float,
+                    w: int, h: int) -> list[Polygon]:
+    """Classical canopy outline, split into individual vines where the model sees them.
+
+    Per row: the classical canopy area inside the row band is cut by the Voronoi cells of the model's canopy
+    centres on that row (the model separates neighbouring vines better, the classical band matches the reference
+    outline better). Rows without model canopies and classical area outside every band stay as they were."""
+    if not classic or not model_polys or not rows:
+        return classic
+    U = unary_union([p if p.is_valid else make_valid(p) for p in classic])
+    band = band_m / RES
+    cents = [p.centroid for p in model_polys]
+    out, used = [], []
+    frame = box(-10, -10, w + 10, h + 10)
+    for r in rows:
+        zone = r.buffer(band, cap_style=2)
+        area = U.intersection(zone)
+        if area.is_empty:
+            continue
+        pts = [c for c in cents if zone.contains(c)]
+        used.append(zone)
+        if len(pts) < 2:
+            out += [g for g in getattr(area, "geoms", [area]) if g.geom_type == "Polygon"]
+            continue
+        cells = voronoi_diagram(MultiPoint(pts), envelope=frame)
+        for cell in cells.geoms:
+            piece = area.intersection(cell)
+            parts = [g for g in getattr(piece, "geoms", [piece]) if g.geom_type == "Polygon" and not g.is_empty]
+            if len(parts) > 1:           # leaves of one vine split by small gaps: close them into one outline
+                k = HYBRID_CLOSE_M / RES
+                merged = piece.buffer(k, join_style="round").buffer(-k, join_style="round").intersection(cell)
+                parts = [g for g in getattr(merged, "geoms", [merged]) if g.geom_type == "Polygon" and not g.is_empty]
+            if not parts:
+                continue
+            parts.sort(key=lambda g: -g.area)
+            out.append(parts[0])
+            out += [g for g in parts[1:] if g.area * RES * RES >= HYBRID_KEEP_M2]
+    rest = U.difference(unary_union(used)) if used else U
+    out += [g for g in getattr(rest, "geoms", [rest]) if g.geom_type == "Polygon"]
+    return [g for g in out if g.area * RES * RES >= 0.05]
+
+
 def waste_boxes(polys, conf_waste: float, w: int, h: int) -> list[tuple[list[float], float]]:
     out = []
     for p, sc in polys:
@@ -104,16 +149,25 @@ def waste_boxes(polys, conf_waste: float, w: int, h: int) -> list[tuple[list[flo
 
 
 def tile_objects(model, img, base_objs: list[dict], canopy: str, conf: float, conf_waste: float, device: str,
-                 band_m: float = 0.45, conf_review: float = 0.15) -> tuple[list[dict], list[tuple[list[float], float]]]:
+                 band_m: float = 0.45, conf_review: float = 0.15, grow_m: float = 0.0) -> tuple[list[dict], list[tuple[list[float], float]]]:
     """Merged objects for one tile (waste >= conf_waste) + every waste box >= conf_review with its score (web map)."""
     h, w = img.shape[:2]
     pred = predict(model, img, min(conf, conf_waste, conf_review), device)
-    objs = [o for o in base_objs if not (canopy == "model" and o["label"] == "vineyard")]
+    objs = [o for o in base_objs if not (canopy in ("model", "hybrid") and o["label"] == "vineyard")]
     rows = [LineString(o["points"]) for o in base_objs if o["label"] == "row"]
     vid = next((o["attrs"].get("vineyard_id", "") for o in base_objs if o["label"] == "row"), "")
+    if canopy == "hybrid" and rows:
+        can = [(p, s) for p, s in dedup(pred.get(0, [])) if s >= conf]
+        classic = [Polygon(o["points"]) for o in base_objs if o["label"] == "vineyard" and len(o["points"]) >= 3]
+        for p in hybrid_canopies(classic, canopies_on_rows(can, rows, band_m), rows, band_m, w, h):
+            pts = np.clip(np.asarray(p.simplify(0.7).exterior.coords)[:-1], 0, SIZE)
+            if len(pts) >= 3:
+                objs.append({"label": "vineyard", "type": "polygon", "points": pts.tolist(), "attrs": {"vineyard_id": vid}})
     if canopy == "model" and rows:
         can = [(p, s) for p, s in dedup(pred.get(0, [])) if s >= conf]
         for p in canopies_on_rows(can, rows, band_m):
+            if grow_m > 0:            # the reference outlines are traced loosely around the leaves
+                p = p.buffer(grow_m / RES, join_style="round", resolution=4)
             pts = np.clip(np.asarray(p.simplify(1.0).exterior.coords)[:-1], 0, SIZE)
             if len(pts) >= 3:
                 objs.append({"label": "vineyard", "type": "polygon", "points": pts.tolist(), "attrs": {"vineyard_id": vid}})
@@ -132,9 +186,11 @@ def main() -> None:
     ap.add_argument("--base", default=str(C.OUT / "baseline_all.xml"), help="classical xml (rows / inter-rows / canopies)")
     ap.add_argument("--tiles", default=str(C.TILES))
     ap.add_argument("--out", default=str(C.OUT / "multi_all.xml"))
-    ap.add_argument("--canopy", choices=["classical", "model"], default="classical")
+    ap.add_argument("--canopy", choices=["classical", "model", "hybrid"], default="classical",
+                    help="hybrid: classical outline split into vines at the model's canopy centres")
     ap.add_argument("--conf", type=float, default=0.25, help="canopy score threshold")
     ap.add_argument("--conf-waste", type=float, default=0.5, help="waste score threshold (a false box costs a miss)")
+    ap.add_argument("--grow", type=float, default=0.0, help="grow model canopies by this many metres")
     ap.add_argument("--conf-review", type=float, default=0.15, help="lower threshold for the boxes listed in --scores")
     ap.add_argument("--scores", default=str(C.OUT / "waste_model.json"), help="all waste boxes with scores (web / review)")
     ap.add_argument("--device", default="mps")
@@ -149,7 +205,7 @@ def main() -> None:
     for k, pth in enumerate(paths):
         t = open_tile(pth)
         objs, boxes = tile_objects(model, t.read(), base.get(pth.name, []), a.canopy, a.conf, a.conf_waste, a.device,
-                                    conf_review=a.conf_review)
+                                    conf_review=a.conf_review, grow_m=a.grow)
         out[pth.name] = objs
         for (x0, y0, x1, y1), sc in boxes:
             (ux0, uy1), (ux1, uy0) = t.px_to_utm([[x0, y0], [x1, y1]])
