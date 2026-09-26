@@ -699,7 +699,23 @@ function paramsCard() {
       <p class="note">${JOB ? `<span class="mono">${JOB.last || 'pornesc'}</span>` : `pipeline/route.py rulează pe laptop pe ${farmer ? 'deșeuri' : `țintele cu gol ≥ ${S.minGap} m`}; distanțele sunt în cache, durează 1–3 minute.`}</p>`
       : `<p class="note">Timpii și zilele se recalculează imediat.${VARS && !farmer ? ` Pragul de gol schimbă traseul: variantele ≥ ${Object.keys(VARS).join(', ')} m sunt calculate dinainte.` : ''} Orice alt calcul (alt prag, alt start, un tile nou) rulează de pe laptop: <span class="mono">python -m pipeline.serve</span>, apoi <span class="mono">http://127.0.0.1:8000</span>.</p>`}</section>`;
 }
-let LIVE = null, JOB = null, VARS = null, BR = null, bstatLayer = null;
+let LIVE = null, JOB = null, VARS = null, BR = null, bstatLayer = null, TOURS = null;
+fetch('data/tours/index.json').then(r => r.ok ? r.json() : null).then(j => { TOURS = j; if (j && S.view === 'traseu') renderPanel(); }).catch(() => {});
+async function showTour(k) {
+  const t = TOURS?.tours.find(x => x.day === k); if (!t) return;
+  try {
+    const [fc, tg] = await Promise.all([fetch(t.route).then(r => r.json()), fetch(t.targets).then(r => r.json())]);
+    addLiveRoute(fc, tg, 'inspector', null, `Ziua ${k}`, `tura ${k} din ${TOURS.days}, START → START`);
+    ROUTES.live.file = t.route.split('/').pop(); renderPanel();
+  } catch (e) { toast('Nu pot încărca tura'); }
+}
+function toursCard() {
+  if (!TOURS || S.role === 'fermier') return '';
+  const T = TOURS, pct = T.targets_visited / Math.max(1, T.targets_full_tour) * 100;
+  return `<section><div class="sec-title"><h2>Ture pe zile</h2><span class="num">${T.days} × ≤ ${fmt(T.hours)} h la ${fmt(T.speed_kmh)} km/h</span></div>
+    <div class="list">${T.tours.map(t => `<button type="button" class="li" data-tour="${t.day}"><span class="dot" style="background:#10B981"></span><b>Ziua ${t.day}</b><span class="r num">${fmt(t.length_m / 1000, 1)} km · ${Math.floor(t.minutes / 60)} h ${String(t.minutes % 60).padStart(2, '0')} · ${fmt(t.targets_visited)} ținte</span></button>`).join('')}</div>
+    <p class="note">Fiecare tură pleacă și se întoarce la START și respectă aceleași reguli ca traseul complet. Împreună ating ${fmt(T.targets_visited)} din ${fmt(T.targets_full_tour)} ținte ale turului complet (${fmt(pct)} %). Apasă o zi ca s-o vezi pe hartă și s-o descarci ca GPX.</p></section>`;
+}
 const BSC = {red: '#EF4444', yellow: '#F59E0B', green: '#22C55E'}, BSN = {red: 'roșu', yellow: 'galben', green: 'verde'};
 Promise.all([fetch('data/blocks_report.json').then(r => r.ok ? r.json() : null), fetch('data/blocks_status.geojson').then(r => r.ok ? r.json() : null)]).then(([rep, fc]) => {
   if (!rep) return;
@@ -758,10 +774,10 @@ async function liveRoute() {
     setTimeout(poll, 2000);
   } catch (e) { JOB = null; toast('Nu pot porni recalcularea: ' + e.message); renderPanel(); }
 }
-function addLiveRoute(fc, tg, mode, gap, name = 'Personalizat') {
+function addLiveRoute(fc, tg, mode, gap, name = 'Personalizat', sub = null) {
   if (ROUTES.live) map.removeLayer(ROUTES.live.layer);
   const p = fc.features[0].properties, line = geo(fc, {color: '#10B981', weight: 3.5});
-  ROUTES.live = {fc, tg, ck: null, key: 'live', p, len: p.length_m || 0, name, sub: `${mode === 'farmer' ? 'fermier' : 'inspector'}, gol ≥ ${gap} m`,
+  ROUTES.live = {fc, tg, ck: null, key: 'live', p, len: p.length_m || 0, name, sub: sub || `${mode === 'farmer' ? 'fermier' : 'inspector'}, gol ≥ ${gap} m`,
     color: '#10B981', file: 'route_live.geojson', layer: L.layerGroup([geo(fc, {color: '#FFFFFF', weight: 7, opacity: .9}), line])};
   S.layers.route_live = true; applyLayers(); renderLayers(); renderPanel();
   map.fitBounds(line.getBounds(), {padding: [40, 40]});
@@ -803,7 +819,7 @@ function viewTraseu() {
   const sc = EXTRA.start?.features?.[0]?.geometry.coordinates;
   $('#p-head').innerHTML = head('Două trasee · START → ținte → START', 'Inspector (albastru) și fermier (roșu)');
   const order = S.role === 'fermier' ? ['red', 'blue'] : ['blue', 'red'];
-  $('#p-body').innerHTML = `${roleCard()}${paramsCard()}${S.role === 'fermier' || S.role === 'inspector' ? blocksCard() : ''}${ROUTES.live ? routeCard(ROUTES.live) : ''}
+  $('#p-body').innerHTML = `${roleCard()}${paramsCard()}${ROUTES.live ? routeCard(ROUTES.live) : ''}${toursCard()}${S.role === 'fermier' || S.role === 'inspector' ? blocksCard() : ''}
     ${order.map(k => ROUTES[k] ? routeCard(ROUTES[k]) : missingCard(EXTRA.routes[k])).join('')}
     ${UTM && TG.some(t => t.order) ? `<section><div class="sec-title"><h2>Navigare pe teren</h2><span class="num">${fmt(Object.keys(NAV.done).length)} verificate</span></div>
       <div style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn primary" type="button" data-act="nav-start">${NAV.watch ? 'Navigarea rulează' : 'Pornește navigarea'}</button><button class="btn" type="button" data-act="nav-reset">Resetează bifele</button></div>
@@ -1008,6 +1024,7 @@ document.addEventListener('click', e => {
   if (b.dataset.exk) return openExport(b.dataset.exk);
   if (b.dataset.role) return setRole(b.dataset.role);
   if (b.dataset.block) return goBlock(b.dataset.block);
+  if (b.dataset.tour) return showTour(+b.dataset.tour);
   switch (b.dataset.act) {
     case 'panel': return collapsePanel(!S.collapsed);
     case 'palette': return openPal();
