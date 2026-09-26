@@ -213,6 +213,25 @@ input[type=range]{accent-color:var(--accent);width:100%}
 .leg{display:grid;grid-template-columns:28px 1fr;gap:8px 10px;align-items:start;font-size:13px}
 .leg i{display:block;width:26px;height:12px;border-radius:3px;margin-top:3px}
 .leg small{display:block;color:var(--muted);font-size:12px;line-height:1.35}
+.demo-band{border:1px dashed var(--warn);background:var(--warn-soft);color:var(--ink);border-radius:12px;padding:8px 12px;font-size:12px}
+.cmp-tbl{width:100%;border-collapse:collapse;font-size:13px}
+.cmp-tbl th,.cmp-tbl td{text-align:left;padding:5px 6px;border-bottom:1px solid var(--line);vertical-align:top}
+.cmp-tbl th{font-weight:600;color:var(--muted);font-size:12px}
+.chk{display:grid;grid-template-columns:18px 1fr;gap:2px 8px;font-size:13px;padding:5px 0;border-bottom:1px solid var(--line)}
+.chk small{grid-column:2;color:var(--muted);font-size:12px}
+.chk .i{font-weight:700;text-align:center}
+.chk.pass .i{color:var(--accent)}.chk.warn .i{color:#D97706}.chk.fail .i{color:var(--warn)}.chk.info .i{color:var(--faint)}
+#pv{display:none}
+@media print{
+  @page{size:A4;margin:14mm}
+  body{background:#fff!important;color:#000!important;overflow:visible!important;height:auto!important}
+  body > *:not(#pv){display:none!important}
+  #pv{display:block!important;font:11pt/1.4 'Geist',system-ui,sans-serif;color:#000}
+  #pv h1{font-size:16pt;margin:0 0 4pt}#pv h2{font-size:12pt;margin:12pt 0 4pt}
+  #pv table{width:100%;border-collapse:collapse}#pv th,#pv td{border:1px solid #999;padding:3pt 5pt;text-align:left;vertical-align:top;font-size:10pt}
+  #pv .meta{color:#444;font-size:9.5pt}#pv .sign{margin-top:28pt;display:flex;justify-content:space-between;gap:24pt}
+  #pv .sign div{flex:1;border-top:1px solid #000;padding-top:4pt;font-size:9.5pt}
+}
 .me{width:16px;height:16px;border-radius:50%;background:#2563EB;box-shadow:0 0 0 3px #fff,0 0 0 8px rgba(37,99,235,.3)}
 @media (max-width:820px){.nav,.panel:not(.collapsed) ~ .nav{left:12px;right:12px;width:auto;transform:none;top:auto;bottom:calc(84px + env(safe-area-inset-bottom,0px))}}
 .toast{position:fixed;left:50%;top:72px;transform:translateX(-50%);z-index:3000;background:var(--ink);color:var(--bg);font-weight:600;padding:10px 16px;border-radius:12px;box-shadow:var(--shadow)}
@@ -239,6 +258,7 @@ input[type=range]{accent-color:var(--accent);width:100%}
   <a href="#traseu" data-view="traseu"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="6" cy="19" r="2"/><circle cx="18" cy="5" r="2"/><path d="M8 19h6a4 4 0 000-8h-4a4 4 0 010-8h6"/></svg><span class="tip">Traseu <kbd>2</kbd></span><span class="sr">Traseu</span></a>
   <a href="#masuratori" data-view="masuratori"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 20V10M10 20V4M16 20v-7M21 20H3"/></svg><span class="tip">Măsurători <kbd>3</kbd></span><span class="sr">Măsurători</span></a>
   <a href="#pipeline" data-view="pipeline"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="6" height="6" rx="1.5"/><rect x="15" y="14" width="6" height="6" rx="1.5"/><path d="M9 7h4a2 2 0 012 2v5"/></svg><span class="tip">Pipeline <kbd>4</kbd></span><span class="sr">Pipeline</span></a>
+  <a href="#conformitate" data-view="conformitate"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l8 3v6c0 4.5-3.4 8.3-8 9-4.6-.7-8-4.5-8-9V6l8-3z"/><path d="M8.5 12l2.5 2.5 4.5-5"/></svg><span class="tip">Conformitate <kbd>5</kbd></span><span class="sr">Conformitate</span></a>
   <div class="sp"></div>
   <button type="button" data-act="palette" class="only-phone" aria-label="Caută tile, rând, bloc"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg></button>
   <button type="button" data-act="panel" aria-label="Ascunde sau arată panoul"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="3"/><path d="M9 4v16"/></svg></button>
@@ -296,6 +316,8 @@ input[type=range]{accent-color:var(--accent);width:100%}
   </div>
 </div>
 <input type="file" id="tif-in" accept=".tif,.tiff,image/tiff" hidden>
+<input type="file" id="csv-in" accept=".csv,text/csv" hidden>
+<div id="pv" aria-hidden="true"></div>
 <div class="nav glass" id="nav" hidden aria-live="polite"></div>
 <div class="toast" id="toast" role="status" hidden></div>
 
@@ -370,7 +392,7 @@ Object.values(SRC).forEach(indexSource);
 /* ============ state ============ */
 const S = {
   view: 'harta', src: store.get('src', SRC.pred ? 'pred' : 'ref'), sel: null, q: '', collapsed: false,
-  layers: Object.assign({ortho: true, canopy: true, rows: true, inter: true, passage: true, forbidden: true, study: true, grid: false, route_blue: true, route_red: true, targets: true, wcand: true, bstat: false}, store.get('layers', {})),
+  layers: Object.assign({ortho: true, canopy: true, rows: true, inter: true, passage: true, forbidden: true, study: true, grid: false, route_blue: true, route_red: true, targets: true, wcand: true, bstat: false, cmp: false, cad: false}, store.get('layers', {})),
   op: store.get('op', 1), role: store.get('role', null), speed: store.get('speed', 4), hours: store.get('hours', 6),
   minGap: store.get('mingap', 5), price: store.get('price', 15)
 };
@@ -519,6 +541,8 @@ function applyLayers() {
   for (const [k, r] of Object.entries(ROUTES)) S.layers['route_' + k] ? r.layer.addTo(map) : map.removeLayer(r.layer);
   syncTargets();
   if (wcLayer) S.layers.wcand ? wcLayer.addTo(map) : map.removeLayer(wcLayer);
+  if (cadLayer) { if (S.layers.cad) cadLayer.addTo(map); else map.removeLayer(cadLayer); }
+  if (cmpLayer) { if (S.layers.cmp) { cmpLayer.addTo(map); cmpLayer.bringToBack(); } else map.removeLayer(cmpLayer); }
   if (bstatLayer) { if (S.layers.bstat) { bstatLayer.addTo(map); bstatLayer.bringToBack(); } else map.removeLayer(bstatLayer); }
   ortho.eachLayer(l => l.setOpacity(S.op)); hires.eachLayer(l => l.setOpacity(S.op));
   refreshAnnotations();
@@ -577,6 +601,22 @@ function select(sel) {
       ${t.order ? `<div class="acts"><button class="btn primary" type="button" data-act="nav-here" data-id="${t.id}">Navighează de aici</button></div>` : ''}`;
     if (NAV.picking) navStartFrom(t, 'ales pe hartă');
     hi = L.circleMarker(ll(t.x, t.y), {renderer: R, radius: 11, color: '#FFFFFF', weight: 3, fill: false}).addTo(map);
+  } else if (sel.type === 'parcel') {
+    const p = sel.p;
+    html = `<div class="p-top"><div><div class="eyebrow">Parcelă cadastrală · ASP</div><h2 style="font-size:19px">${p.cod}</h2></div>${close}</div>
+      <dl><dt>Mod de folosință</dt><dd>${p.landuse || '—'}</dd><dt>Suprafață (cadastru)</dt><dd class="num">${p.aria_decl || '—'} · ${fmt(p.parcel_ha, 3)} ha geometrie</dd>
+        <dt>Vie detectată</dt><dd class="num">${fmt(p.vine_ha, 3)} ha (${fmt(p.vine_share * 100)} %)</dd><dt>Blocuri</dt><dd>${p.blocks.join(', ') || '—'}</dd></dl>
+      ${p.flags.includes('rvv') ? '<p class="note">Peste 0,15 ha de vie: înregistrarea în Registrul vitivinicol e obligatorie (Legea 57/2006, art. 21).</p>' : ''}
+      ${p.flags.includes('landuse') ? `<p class="note" style="color:var(--warn)">Vie detectată pe un teren înregistrat „${p.landuse}”: de verificat modul de folosință.</p>` : ''}
+      <div class="acts"><a class="btn" href="https://rvv.gov.md/publicpart/check.jsf" target="_blank" rel="noopener">Caută în RVV</a><button class="btn" type="button" data-act="copy-cod" data-id="${p.cod}">Copiază nr. cadastral</button></div>
+      <p class="note">${CAD?.source || ''}. Căutarea publică RVV acceptă numărul cadastral.</p>`;
+    if (sel.layer) hi = L.geoJSON(sel.layer.feature, {renderer: R, coordsToLatLng: toLL, style: {color: '#FFFFFF', weight: 3, fill: false}, interactive: false}).addTo(map);
+  } else if (sel.type === 'cmp') {
+    const b = sel.b;
+    html = `<div class="p-top"><div><div class="eyebrow">Conformitate · <span style="color:${CMC[b.status]}">${CMN[b.status]}</span>${b.demo ? ' · registru demo' : ''}</div><h2 style="font-size:19px">${b.vineyard_id}${b.registry ? ` · ${b.registry.rvv_code}` : ''}</h2></div>${close}</div>
+      ${cmpCard(b)}
+      <div class="acts"><button class="btn primary" type="button" data-act="pv">Proces-verbal</button><button class="btn" type="button" data-act="share" data-id="${b.vineyard_id}">Copiază linkul</button></div>`;
+    if (sel.layer) hi = L.geoJSON(sel.layer.feature, {renderer: R, coordsToLatLng: toLL, style: {color: '#FFFFFF', weight: 3, fill: false}, interactive: false}).addTo(map);
   } else if (sel.type === 'block') {
     const b = sel.b, ha = blockHa(b), rows = b.disrupted_row_ids;
     html = `<div class="p-top"><div><div class="eyebrow">Bloc · stare ${BSN[b.status]}</div><h2 style="font-size:19px">${b.vineyard_id}</h2></div>${close}</div>
@@ -680,7 +720,9 @@ const LEG = {
     ['#10B981', 'Traseu personalizat / zi', 'Recalculat cu alți parametri sau o tură de o zi.'],
     ['#9333EA', 'Țintă deșeu', 'Deșeu adnotat; traseul trece la ≤ 2 m de el.'],
     ['#F97316', 'Candidat deșeu', 'Pată găsită automat, neconfirmată: se verifică în Marcaj.'],
-    ['linear-gradient(90deg,#EF4444,#F59E0B,#22C55E)', 'Starea blocului', 'Roșu > 30 % rânduri disrupted, galben 10–30 %, verde < 10 %.']]},
+    ['linear-gradient(90deg,#EF4444,#F59E0B,#22C55E)', 'Starea blocului', 'Roșu > 30 % rânduri disrupted, galben 10–30 %, verde < 10 %.'],
+    ['#38BDF8', 'Parcelă cadastrală', 'Din cadastrul ASP (geodata.gov.md). Albastru: > 0,15 ha vie (RVV obligatoriu); mov: vie pe teren pentru construcții.'],
+    ['linear-gradient(90deg,#EF4444,#F59E0B,#22C55E,#9CA3AF)', 'Conformitate RVV / AIPA', 'Roșu neconform, galben de verificat, verde conform cu registrul și cererea, gri sub 0,15 ha.']]},
   en: {title: 'Legend', items: [
     ['#FF3DAA', 'Canopy (vineyard)', 'One vine seen from above; canopy area = union of the polygons.'],
     ['#FFD43B', 'Regular row', 'Row axis (row_id) with continuous planting.'],
@@ -696,7 +738,9 @@ const LEG = {
     ['#10B981', 'Custom / day route', 'Recomputed with other parameters, or one field day.'],
     ['#9333EA', 'Waste target', 'Annotated waste; the route passes within 2 m.'],
     ['#F97316', 'Waste candidate', 'Spot found automatically, not confirmed: checked in Marcaj.'],
-    ['linear-gradient(90deg,#EF4444,#F59E0B,#22C55E)', 'Block status', 'Red > 30 % disrupted rows, yellow 10–30 %, green < 10 %.']]}};
+    ['linear-gradient(90deg,#EF4444,#F59E0B,#22C55E)', 'Block status', 'Red > 30 % disrupted rows, yellow 10–30 %, green < 10 %.'],
+    ['#38BDF8', 'Cadastral parcel', 'From the ASP cadastre (geodata.gov.md). Blue: > 0.15 ha of vines (vineyard register mandatory); purple: vines on building land.'],
+    ['linear-gradient(90deg,#EF4444,#F59E0B,#22C55E,#9CA3AF)', 'Registry / subsidy compliance', 'Red non-compliant, yellow to check, green matches the register and the request, grey under 0.15 ha.']]}};
 function renderLegend() {
   const lang = store.get('lang', 'ro'), L2 = LEG[lang];
   $('#legend').innerHTML = `<div class="sec-title" style="padding:2px 4px 8px"><h2>${L2.title}</h2>${seg([['ro', 'RO'], ['en', 'EN']], lang, 'lang')}</div>
@@ -725,12 +769,12 @@ function rulerRender() {
 
 /* ============ roles ============ */
 const ROLES = {
-  inspector: {name: 'Inspector de stat', short: 'Inspector', color: '#2563EB', view: 'traseu', sub: 'Audit pentru subvenții: goluri în rânduri, butuci lipsă, suprafețe declarate.',
-    sees: 'Traseul albastru, țintele de inspecție, blocurile și ariile.', layers: {route_blue: true, route_red: false, targets: true, wcand: false, bstat: true}},
+  inspector: {name: 'Inspector de stat', short: 'Inspector', color: '#2563EB', view: 'conformitate', sub: 'Audit pentru subvenții: registrul viticol (ONVV) și cererile AIPA comparate cu ce vede drona.',
+    sees: 'Traseul albastru, țintele de inspecție, blocurile și ariile.', layers: {route_blue: true, route_red: false, targets: true, wcand: false, bstat: false, cmp: true, cad: true}},
   fermier: {name: 'Fermier / administrator', short: 'Fermier', color: '#DC2626', view: 'traseu', sub: 'Deșeuri de strâns, butuci de replantat, costuri pe an.',
     sees: 'Traseul roșu, deșeurile, butucii lipsă și costurile.', layers: {route_blue: false, route_red: true, targets: true, wcand: true, bstat: true}},
   agronom: {name: 'Agronom / analist', short: 'Agronom', color: '#1D7A4B', view: 'harta', sub: 'Toată harta: coroane, rânduri, inter-rânduri, măsurători, pipeline.',
-    sees: 'Toate straturile, ambele trasee, analiza unui tile nou.', layers: {route_blue: true, route_red: true, targets: true, wcand: true, bstat: false}}};
+    sees: 'Toate straturile, ambele trasee, analiza unui tile nou.', layers: {route_blue: true, route_red: true, targets: true, wcand: true, bstat: false, cmp: false, cad: false}}};
 const USER_IC = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0116 0"/></svg>';
 function roleBtn() { $('#role-btn').innerHTML = `${USER_IC}<span>${S.role ? ROLES[S.role].short : 'Alege rolul'}</span>`; }
 function openRole() {
@@ -800,12 +844,113 @@ function toursCard() {
 const BSC = {red: '#EF4444', yellow: '#F59E0B', green: '#22C55E'}, BSN = {red: 'roșu', yellow: 'galben', green: 'verde'};
 Promise.all([fetch('data/blocks_report.json').then(r => r.ok ? r.json() : null), fetch('data/blocks_status.geojson').then(r => r.ok ? r.json() : null)]).then(([rep, fc]) => {
   if (!rep) return;
-  BR = {...rep, by: Object.fromEntries(rep.blocks.map(b => [b.vineyard_id, b]))};
+  BR = {...rep, by: Object.fromEntries(rep.blocks.map(b => [b.vineyard_id, b]))}; BFC = fc || false;
   if (fc) bstatLayer = L.geoJSON(fc, {renderer: R, coordsToLatLng: toLL, style: f => ({color: BSC[f.properties.status], weight: 1.4, fillColor: BSC[f.properties.status], fillOpacity: .16}),
     onEachFeature: (f, l) => l.on('click', e => { L.DomEvent.stop(e); const b = BR.by[f.properties.vineyard_id]; if (b) select({type: 'block', b, layer: l}); })});
   applyLayers(); renderLayers(); renderPanel(); openPending();
 }).catch(() => {});
 const blockHa = b => (b.canopy_m2 + b.interrow_m2) / 1e4;
+
+/* ============ conformitate: registrul viticol (ONVV) + cereri AIPA vs dronă ============ */
+let CMP = null, cmpLayer = null, BFC = null, CAD = null, cadLayer = null;
+const CADC = f => f.properties.flags.includes('landuse') ? '#A855F7' : f.properties.flags.includes('rvv') ? '#38BDF8' : '#E5E7EB';
+fetch('data/cadastre.geojson').then(r => r.ok ? r.json() : null).then(fc => {
+  if (!fc) return; CAD = fc;
+  cadLayer = L.geoJSON(fc, {renderer: R, coordsToLatLng: toLL,
+    style: f => ({color: CADC(f), weight: f.properties.flags.length ? 1.6 : .7, opacity: .9, dashArray: f.properties.vine_ha ? null : '3 3', fillColor: CADC(f), fillOpacity: f.properties.flags.length ? .12 : 0}),
+    onEachFeature: (f, l) => l.on('click', e => { L.DomEvent.stop(e); select({type: 'parcel', p: f.properties, layer: l}); })});
+  applyLayers(); renderLayers(); if (S.view === 'conformitate') renderPanel();
+}).catch(() => {});
+const CMC = {neconform: '#EF4444', verificare: '#F59E0B', conform: '#22C55E', sub_prag: '#9CA3AF'};
+const CMN = {neconform: 'neconform', verificare: 'de verificat', conform: 'conform', sub_prag: 'sub prag (< 0,15 ha)'};
+const CKI = {pass: '✓', warn: '!', fail: '✕', info: 'i'};
+function setCmp(j) {
+  CMP = {...j, by: Object.fromEntries(j.blocks.map(b => [b.vineyard_id, b]))};
+  if (cmpLayer) map.removeLayer(cmpLayer);
+  if (BFC) cmpLayer = L.geoJSON(BFC, {renderer: R, coordsToLatLng: toLL,
+    style: f => { const c = CMC[CMP.by[f.properties.vineyard_id]?.status] || CMC.sub_prag; return {color: c, weight: 1.6, fillColor: c, fillOpacity: .2}; },
+    onEachFeature: (f, l) => l.on('click', e => { L.DomEvent.stop(e); const b = CMP.by[f.properties.vineyard_id]; if (b) select({type: 'cmp', b, layer: l}); })});
+  applyLayers(); renderLayers(); if (S.view === 'conformitate') renderPanel();
+}
+fetch('data/compliance.json').then(r => r.ok ? r.json() : null).then(j => { if (!j) return; const wait = (n = 0) => (BFC !== null || n > 40) ? setCmp(j) : setTimeout(() => wait(n + 1), 250); wait(); }).catch(() => {});
+function goCmp(vid) {
+  const b = CMP?.by[vid]; if (!b) return;
+  if (b.measured.bbox) fitBounds(bnds(b.measured.bbox), 4);
+  let lay = null; cmpLayer?.eachLayer(l => { if (l.feature.properties.vineyard_id === vid) lay = l; });
+  if (!S.layers.cmp) { S.layers.cmp = true; store.set('layers', S.layers); applyLayers(); renderLayers(); }
+  select({type: 'cmp', b, layer: lay});
+}
+const mainReason = b => (b.checks.find(c => c.status === 'fail') || b.checks.find(c => c.status === 'warn') || {}).label || '';
+const lei = v => `${fmt(v)} lei`;
+function cmpRows(b) {
+  const m = b.measured, r = b.registry || {};
+  const d = (v, f = x => x) => v == null || v === '' ? '<span class="muted">—</span>' : f(v);
+  return [['Suprafață', d(r.declared_area_ha, v => fmt(v, 2) + ' ha'), `${fmt(m.area_ha, 2)} ha`],
+    ['Densitate (butuci/ha)', d(r.declared_density, fmt), `${fmt(m.density_nominal)} nominal · ${fmt(m.density_effective)} efectiv`],
+    ['Distanță între rânduri', '<span class="muted">—</span>', `${fmt(m.row_spacing_m, 2)} m${m.spacing_measured ? '' : ' (mediana zonei)'}`],
+    ['Goluri / butuci lipsă', '<span class="muted">—</span>', `${fmt(m.gap_share * 100)} % · ~${fmt(m.missing_vines)}`],
+    ['Soi', d(r.variety), '<span class="muted">nu se vede din dronă</span>'],
+    ['Zona IGP', d(r.igp), CMP.criteria.igp.zone],
+    ['An plantare', d(r.planting_year), '<span class="muted">—</span>']];
+}
+function cmpCard(b) {
+  const e = b.eligibility, r = b.registry;
+  return `<table class="cmp-tbl"><thead><tr><th></th><th>Declarat ${r ? '(RVV / cerere)' : ''}</th><th>Măsurat (dronă)</th></tr></thead><tbody>
+      ${cmpRows(b).map(([k, a, m]) => `<tr><th>${k}</th><td>${a}</td><td>${m}</td></tr>`).join('')}</tbody></table>
+    <div style="margin-top:8px">${b.checks.map(c => `<div class="chk ${c.status}"><span class="i">${CKI[c.status]}</span><b>${c.label}</b><small>${c.detail}${c.rule ? ' · ' + c.rule : ''}${c.source ? ` · <a href="${c.source}" target="_blank" rel="noopener">sursă</a>` : ''}</small></div>`).join('')}</div>
+    ${e ? `<div class="callout" style="margin-top:8px"><b>Cerere AIPA: ${e.measure}</b><div class="stats"><div class="stat"><div class="v num">${lei(e.requested_lei)}</div><div class="l">cerut</div></div><div class="stat"><div class="v num" style="color:${e.difference_lei < 0 ? 'var(--warn)' : 'var(--accent)'}">${lei(e.eligible_lei)}</div><div class="l">eligibil după dronă (${e.difference_lei >= 0 ? '+' : ''}${fmt(e.difference_lei)})</div></div></div>
+      <p class="note">${fmt(e.eligible_area_ha, 2)} ha eligibile × ${fmt(e.lei_per_ha)} lei/ha (banda densității efective)${e.bonus_igp ? ` + ${fmt(e.bonus_igp)} lei/ha bonus IGP` : ''}. Se confirmă prin: ${e.reception_doc}.</p></div>` : ''}
+    ${b.cadastre?.length ? `<details style="margin-top:8px"><summary class="note">Parcele cadastrale (${fmt(b.cadastre.length)})</summary><table class="cmp-tbl"><thead><tr><th>Nr. cadastral</th><th>Folosință</th><th>Vie</th></tr></thead><tbody>${b.cadastre.slice(0, 30).map(x => `<tr><td class="mono">${x.cod}</td><td>${x.landuse}</td><td class="num">${fmt(x.vine_ha, 2)} / ${fmt(x.parcel_ha, 2)} ha</td></tr>`).join('')}</tbody></table></details>` : ''}
+    ${b.actions.length ? `<div class="list" style="gap:2px;font-size:13px;margin-top:8px">${b.actions.map(a => `<div class="li" style="cursor:default"><span class="dot" style="background:${CMC[b.status]}"></span>${a}</div>`).join('')}</div>` : ''}`;
+}
+function viewConf() {
+  $('#p-head').innerHTML = head('Conformitate · ONVV + AIPA', 'Registru vs dronă');
+  if (!CMP) { $('#p-body').innerHTML = `<p class="note">Se încarcă <span class="mono">data/compliance.json</span>…</p>`; return; }
+  const u = CMP.summary, visit = u.visit.map(v => CMP.by[v]).filter(Boolean), ok = CMP.blocks.filter(b => b.status === 'conform');
+  $('#p-body').innerHTML = `${u.demo_registry ? `<div class="demo-band"><b>DATE DEMONSTRATIVE.</b> Înregistrările RVV și cererile AIPA de aici sunt sintetice (${u.registry_source}); măsurătorile sunt reale, din dronă. În producție extrasul vine de la ONVV / AIPA${LIVE ? ' — încarcă-l mai jos ca CSV' : ''}.</div>` : `<div class="callout"><b>Registru încărcat:</b> ${u.registry_source}</div>`}
+    <div class="stats">${['neconform', 'verificare', 'conform', 'sub_prag'].map(k => `<div class="stat"><div class="v num" style="color:${CMC[k]}">${fmt(u.status[k])}</div><div class="l">${CMN[k]}</div></div>`).join('')}</div>
+    <div class="stats">
+      <div class="stat"><div class="v num">${fmt(u.registered)}</div><div class="l">blocuri în Registrul Vitivinicol</div></div>
+      <div class="stat"><div class="v num">${fmt(u.unregistered_ha, 2)}<small>ha</small></div><div class="l">plantate, neînregistrate (> 0,15 ha)</div></div>
+      <div class="stat"><div class="v num">${lei(u.requested_lei)}</div><div class="l">cerut în ${fmt(u.requests)} cereri AIPA</div></div>
+      <div class="stat"><div class="v num" style="color:${u.eligible_lei < u.requested_lei ? 'var(--warn)' : 'var(--accent)'}">${lei(u.eligible_lei)}</div><div class="l">eligibil după măsurătorile din dronă</div></div></div>
+    ${CAD ? (() => { const fs = CAD.features.map(f => f.properties); return `<div class="stats"><div class="stat"><div class="v num">${fmt(fs.filter(p => p.vine_ha > 0).length)}</div><div class="l">parcele cadastrale cu vie (din ${fmt(fs.length)})</div></div><div class="stat"><div class="v num">${fmt(fs.filter(p => p.flags.includes('rvv')).length)}</div><div class="l">cu > 0,15 ha vie: RVV obligatoriu</div></div><div class="stat"><div class="v num" style="color:#A855F7">${fmt(fs.filter(p => p.flags.includes('landuse')).length)}</div><div class="l">vie pe teren pentru construcții</div></div><div class="stat"><div class="v num">${fmt(fs.reduce((a, p) => a + p.vine_ha, 0), 1)}<small>ha</small></div><div class="l">vie pe parcele cadastrale</div></div></div>`; })() : ''}
+    <div style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn primary" type="button" data-act="cmp-route">Traseu de verificare (${fmt(visit.length)} blocuri)</button><button class="btn" type="button" data-act="cmp-csv">Export CSV</button>${LIVE ? '<button class="btn" type="button" data-act="cmp-upload">Încarcă extras RVV / AIPA (CSV)</button>' : ''}${S.layers.cmp ? '' : '<button class="btn" type="button" data-act="cmp-on">Colorează pe hartă</button>'}${cadLayer && !S.layers.cad ? '<button class="btn" type="button" data-act="cad-on">Arată cadastrul</button>' : ''}</div>
+    <section><div class="sec-title"><h2>De vizitat în teren</h2><span class="num">${fmt(visit.length)}</span></div>
+      <div class="list">${visit.map(b => `<button type="button" class="li" data-cmp="${b.vineyard_id}"><span class="dot" style="background:${CMC[b.status]}"></span><b>${b.vineyard_id}</b><span class="r">${mainReason(b)}${b.eligibility ? ' · AIPA ' + (b.eligibility.difference_lei >= 0 ? '+' : '') + fmt(b.eligibility.difference_lei) + ' lei' : ''}</span></button>`).join('')}</div></section>
+    ${ok.length ? `<section><div class="sec-title"><h2>Conforme</h2><span class="num">${fmt(ok.length)}</span></div><div class="list">${ok.map(b => `<button type="button" class="li" data-cmp="${b.vineyard_id}"><span class="dot" style="background:${CMC.conform}"></span><b>${b.vineyard_id}</b><span class="r">${fmt(b.measured.area_ha, 2)} ha · ${b.registry?.variety || ''}</span></button>`).join('')}</div></section>` : ''}
+    <p class="note">Măsurat: suprafața plantată = lungimea rândurilor × distanța mediană dintre ele (${fmt(u.row_spacing_median_m, 2)} m), densitatea = 10 000 / (distanță × ${fmt(u.vine_spacing_m, 1)} m), golurile din rânduri. ${fmt(u.status.sub_prag)} blocuri sub 0,15 ha nu au obligație de înregistrare. Criteriile (benzi AIPA, soiuri IGP, toleranțe) sunt în <span class="mono">registry/criteria.json</span>, fiecare cu sursa.</p>`;
+}
+function cmpCsv() {
+  const q = v => /[",;\n]/.test(String(v ?? '')) ? `"${String(v).replace(/"/g, '""')}"` : (v ?? '');
+  const head = ['vineyard_id', 'status', 'suprafata_masurata_ha', 'suprafata_declarata_ha', 'densitate_nominala', 'densitate_efectiva', 'densitate_declarata', 'goluri_pct', 'soi', 'cod_rvv', 'cerut_lei', 'eligibil_lei', 'verificari_esuate', 'actiuni', 'demo'];
+  return [head.join(','), ...CMP.blocks.map(b => { const r = b.registry || {}, m = b.measured, e = b.eligibility || {};
+    return [b.vineyard_id, b.status, m.area_ha, r.declared_area_ha, m.density_nominal, m.density_effective, r.declared_density, Math.round(m.gap_share * 100), r.variety, r.rvv_code, e.requested_lei, e.eligible_lei,
+      b.checks.filter(c => c.status === 'fail').map(c => c.id).join(' '), b.actions.join(' | '), b.demo ? 'da' : 'nu'].map(q).join(','); })].join('\n') + '\n';
+}
+function printPV(b) {
+  const esc = s => String(s ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;');
+  const r = b.registry || {}, e = b.eligibility, now = new Date().toLocaleDateString('ro-RO');
+  $('#pv').innerHTML = `<h1>Proces-verbal de control · bloc ${b.vineyard_id}</h1>
+    <div class="meta">Sireț3 (r. Strășeni), zona IGP ${esc(CMP.criteria.igp.zone)} · ortofoto UAV din 20 mai 2025, 2,5 cm/px, EPSG:32635 · întocmit ${now} cu vineyard-ai Field Planner${b.demo ? ' · <b>DATE DE REGISTRU DEMONSTRATIVE</b>' : ''}</div>
+    <h2>Rezultat: ${CMN[b.status].toUpperCase()}</h2>
+    <p>Cod RVV: ${esc(r.rvv_code || 'neînregistrat')} · Exploatant: ${esc(r.exploatant || '—')}</p>
+    <table><thead><tr><th></th><th>Declarat</th><th>Măsurat (dronă)</th></tr></thead><tbody>${cmpRows(b).map(([k, a, m]) => `<tr><th>${k}</th><td>${String(a).replace(/<[^>]+>/g, '')}</td><td>${String(m).replace(/<[^>]+>/g, '')}</td></tr>`).join('')}</tbody></table>
+    <h2>Verificări</h2><table><thead><tr><th>Criteriu</th><th>Rezultat</th><th>Detalii</th></tr></thead><tbody>${b.checks.map(c => `<tr><td>${esc(c.label)}</td><td>${{pass: 'conform', warn: 'de verificat', fail: 'neconform', info: 'informativ'}[c.status]}</td><td>${esc(c.detail)}${c.rule ? ' (' + esc(c.rule) + ')' : ''}</td></tr>`).join('')}</tbody></table>
+    ${e ? `<h2>Cerere AIPA</h2><p>${esc(e.measure)}: cerut ${fmt(e.requested_lei)} lei · eligibil după măsurători ${fmt(e.eligible_lei)} lei (${e.difference_lei >= 0 ? '+' : ''}${fmt(e.difference_lei)} lei) · ${fmt(e.eligible_area_ha, 2)} ha × ${fmt(e.lei_per_ha)} lei/ha${e.bonus_igp ? ' + bonus IGP ' + fmt(e.bonus_igp) + ' lei/ha' : ''}.</p>` : ''}
+    ${b.cadastre?.length ? `<h2>Parcele cadastrale</h2><table><thead><tr><th>Nr. cadastral</th><th>Mod de folosință</th><th>Vie detectată</th><th>Suprafață parcelă</th></tr></thead><tbody>${b.cadastre.map(x => `<tr><td>${x.cod}</td><td>${esc(x.landuse)}</td><td>${fmt(x.vine_ha, 3)} ha</td><td>${fmt(x.parcel_ha, 3)} ha</td></tr>`).join('')}</tbody></table>` : ''}
+    ${b.actions.length ? `<h2>Acțiuni</h2><ul>${b.actions.map(a => `<li>${esc(a)}</li>`).join('')}</ul>` : ''}
+    <div class="sign"><div>Inspector (nume, semnătură)</div><div>Exploatant (nume, semnătură)</div><div>Data vizitei în teren</div></div>`;
+  try { window.print(); } catch (err) { toast('Tipărirea nu e disponibilă aici'); }
+}
+async function uploadRegistry(f) {
+  if (!f) return;
+  try {
+    const j = await fetch('api/compliance', {method: 'POST', headers: {'Content-Type': 'text/csv', 'X-Filename': f.name}, body: await f.text()}).then(r => r.json());
+    if (j.error) throw new Error(j.error);
+    setCmp(j); toast(`${f.name}: ${fmt(j.summary.registered)} blocuri în registru · ${fmt(j.summary.visit.length)} de vizitat`);
+  } catch (e) { toast('Nu pot citi extrasul: ' + e.message); }
+}
 function goBlock(vid) {
   const b = BR?.by[vid]; if (!b) return toast(`${vid} nu e în raport`);
   if (b.bbox) fitBounds(bnds(b.bbox), 4);
@@ -957,7 +1102,7 @@ python -m pipeline.to_geojson --cvat data/examples/annotations.xml
 <span class="c"># pornește site-ul</span>
 python -m http.server -d web 8000</div></section>`;
 }
-const VIEWS = {harta: viewHarta, traseu: viewTraseu, masuratori: viewMas, pipeline: viewPipe};
+const VIEWS = {harta: viewHarta, traseu: viewTraseu, masuratori: viewMas, pipeline: viewPipe, conformitate: viewConf};
 function renderPanel() { VIEWS[S.view](); }
 function show(v) {
   if (ROLES[v]) return setRole(v);         // #inspector, #fermier, #agronom
@@ -1027,6 +1172,8 @@ function renderLayers() {
   for (const [k, r] of Object.entries(ROUTES)) L1.push(['route_' + k, `Traseu ${r.name.toLowerCase()} (${r.sub})`, r.color]);
   if (targetsLayer) L1.push(['targets', 'Ținte (goluri, deșeuri)', '#2563EB']);
   if (wcLayer) L1.push(['wcand', 'Candidați deșeuri (model AI + clasic, neconfirmați)', 'linear-gradient(90deg,#EAB308,#F97316)']);
+  if (cadLayer) L1.push(['cad', 'Parcele cadastrale (ASP)', '#38BDF8']);
+  if (cmpLayer) L1.push(['cmp', 'Conformitate RVV / AIPA', 'linear-gradient(90deg,#EF4444,#F59E0B,#22C55E,#9CA3AF)']);
   if (bstatLayer) L1.push(['bstat', 'Starea blocurilor (roșu / galben / verde)', 'linear-gradient(90deg,#EF4444,#F59E0B,#22C55E)']);
   $('#layers').innerHTML = `<div class="sec-title" style="padding:2px 4px 4px"><h2>Straturi</h2><span><kbd>L</kbd></span></div>` +
     L1.map(([k, l, c]) => `<button type="button" class="sw" role="switch" aria-checked="${!!S.layers[k]}" data-layer="${k}"><span class="sw-i" style="background:${c};border:1px solid var(--line)"></span>${l}<span class="tg"></span></button>`).join('') +
@@ -1038,7 +1185,7 @@ function renderLayers() {
 let palItems = [], palIdx = 0;
 function palSearch(q) {
   q = q.trim().toLowerCase(); const it = [];
-  for (const [v, l, k] of [['harta', 'Hartă', '1'], ['traseu', 'Traseu', '2'], ['masuratori', 'Măsurători', '3'], ['pipeline', 'Pipeline', '4']]) if (!q || l.toLowerCase().includes(q)) it.push({g: 'Secțiuni', k, l, run: () => { location.hash = v; }});
+  for (const [v, l, k] of [['harta', 'Hartă', '1'], ['traseu', 'Traseu', '2'], ['masuratori', 'Măsurători', '3'], ['pipeline', 'Pipeline', '4'], ['conformitate', 'Conformitate ONVV / AIPA', '5']]) if (!q || l.toLowerCase().includes(q)) it.push({g: 'Secțiuni', k, l, run: () => { location.hash = v; }});
   for (const [k, s] of Object.entries(SRC)) if (!q || s.name.toLowerCase().includes(q)) it.push({g: 'Sursă date', k: '◧', l: s.name, r: s.sub, run: () => setSrc(k)});
   if (WC.length && (!q || 'candidați deșeuri deseuri'.includes(q))) it.push({g: 'Locuri', k: 'D', l: 'Candidați deșeuri', r: `${WC.length} din checklist`, run: () => wcGo((WC.find(x => !WCV[x.rank]) || WC[0]).rank)});
   if (!q || 'start'.includes(q)) it.push({g: 'Locuri', k: 'S', l: 'START', r: 'punctul de plecare', run: () => startLL && map.flyTo(startLL, 3)});
@@ -1108,6 +1255,7 @@ document.addEventListener('click', e => {
   if (b.dataset.exk) return openExport(b.dataset.exk);
   if (b.dataset.role) return setRole(b.dataset.role);
   if (b.dataset.block) return goBlock(b.dataset.block);
+  if (b.dataset.cmp) return goCmp(b.dataset.cmp);
   if (b.dataset.tour) return showTour(+b.dataset.tour);
   switch (b.dataset.act) {
     case 'panel': return collapsePanel(!S.collapsed);
@@ -1138,6 +1286,14 @@ document.addEventListener('click', e => {
     case 'legend': { const p = $('#legend'); if (p.hidden) renderLegend(); p.hidden = !p.hidden; b.setAttribute('aria-expanded', !p.hidden); if (!p.hidden) { $('#layers').hidden = true; $('#insp').hidden = true; } return; }
     case 'ruler': return rulerToggle();
     case 'share': return shareLink(b.dataset.id);
+    case 'pv': return S.sel?.b && printPV(S.sel.b);
+    case 'cad-on': { S.layers.cad = true; store.set('layers', S.layers); applyLayers(); renderLayers(); return renderPanel(); }
+    case 'copy-cod': return copy(b.dataset.id, null);
+    case 'cmp-on': { S.layers.cmp = true; store.set('layers', S.layers); applyLayers(); renderLayers(); return renderPanel(); }
+    case 'cmp-csv': { const t = cmpCsv(); if (downloadText('conformitate.csv', t, 'text/csv')) toast('conformitate.csv descărcat'); else copy(t, null); return; }
+    case 'cmp-upload': return $('#csv-in').click();
+    case 'cmp-route': return (async () => { try { const [fc, tg] = await Promise.all([fetch('data/variants/route_compliance.geojson').then(r => r.json()), fetch('data/variants/targets_compliance.geojson').then(r => r.json())]);
+      addLiveRoute(fc, tg, 'inspector', null, 'Verificare conformitate', `${fmt(CMP.summary.visit.length)} blocuri de vizitat`); ROUTES.live.file = 'route_compliance.geojson'; renderPanel(); } catch (e) { toast('Traseul de verificare nu e calculat încă'); } })();
     case 'ruler-undo': { RULER.pts.pop(); return rulerRender(); }
     case 'zoom-block': return S.sel?.b?.bbox && fitBounds(bnds(S.sel.b.bbox), 5);
     case 'bstat-on': { S.layers.bstat = true; store.set('layers', S.layers); applyLayers(); renderLayers(); return renderPanel(); }
@@ -1160,6 +1316,7 @@ document.addEventListener('input', e => {
 document.addEventListener('change', e => {
   const id = e.target.id, v = +e.target.value;
   if (id === 'tif-in') { const f = e.target.files[0]; e.target.value = ''; return analyzeFile(f); }
+  if (id === 'csv-in') { const f = e.target.files[0]; e.target.value = ''; return uploadRegistry(f); }
   const P = {'p-speed': ['speed', 'speed', 1, 10], 'p-hours': ['hours', 'hours', 1, 16], 'p-gap': ['minGap', 'mingap', 1, 50], 'p-price': ['price', 'price', 0, 10000]}[id];
   if (!P || !(v >= P[2] && v <= P[3])) return;
   S[P[0]] = v; store.set(P[1], v); renderPanel();
@@ -1171,7 +1328,7 @@ document.addEventListener('keydown', e => {
   if (e.key === 'Escape') { if (RULER.on) return rulerToggle(); if (!$('#legend').hidden) return ($('#legend').hidden = true); if (!$('#role-veil').hidden) return ($('#role-veil').hidden = true); if (!$('#pal-veil').hidden) return closePal(); if (!$('#ex-veil').hidden) return ($('#ex-veil').hidden = true); if (!$('#layers').hidden) return ($('#layers').hidden = true); if (S.sel) return select(null); }
   if (typing) return;
   if (e.key === '/') { e.preventDefault(); return openPal(); }
-  if ('1234'.includes(e.key) && e.key.length === 1) location.hash = ['harta', 'traseu', 'masuratori', 'pipeline'][+e.key - 1];
+  if ('12345'.includes(e.key) && e.key.length === 1) location.hash = ['harta', 'traseu', 'masuratori', 'pipeline', 'conformitate'][+e.key - 1];
   if (e.key.toLowerCase() === 'l') $('.tr [data-act="layers"]').click();
   if (e.key === '0') fitAll();
 });
