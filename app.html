@@ -246,6 +246,8 @@ input[type=range]{accent-color:var(--accent);width:100%}
 .chip.lipsa{background:rgba(34,197,94,.16);color:#15803D}
 .zmodes{display:flex;gap:6px;flex-wrap:wrap}
 .pl{display:flex;flex-direction:column;gap:10px}
+.mm-li{display:flex;align-items:center;gap:6px;padding:0;cursor:default}.mm-go{flex:1;display:flex;align-items:center;gap:8px;min-height:40px;padding:0 6px;border:0;background:none;color:inherit;font:inherit;text-align:left;cursor:pointer;border-radius:8px;min-width:0}
+.mm-go:hover{background:var(--hover)}.mm-t{color:var(--muted);font-size:12px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:1;min-width:0}
 .pl h3{display:flex;align-items:center;gap:10px;margin:0;font-size:15px;font-weight:650}
 .pl-row{display:flex;gap:8px}.pl-row .search{flex:1;min-width:0}.pl-row .btn{flex:1}
 .pl-wide{width:100%;gap:8px}
@@ -609,7 +611,7 @@ function refreshAnnotations() {
   if (lay('ortho') && z >= HIRES_Z) { if (!map.hasLayer(hires)) hires.addTo(map); } else if (map.hasLayer(hires)) map.removeLayer(hires);
 }
 function PLAN_ANN() { return typeof PL !== 'undefined' && PL.ann; }
-const CALM = new Set(['canopy', 'rows', 'inter', 'grid', 'passage', 'targets', 'wcand', 'md', 'cad', 'cmp', 'bstat', 'route_blue', 'route_red']);
+const CALM = new Set(['canopy', 'rows', 'inter', 'grid', 'passage', 'targets', 'wcand', 'md', 'cad', 'cmp', 'bstat', 'mm', 'route_blue', 'route_red']);
 const lay = k => !!S.layers[k] && !(S.view === 'zona' && !PLAN_ANN() && CALM.has(k));   // Planifică: calm map unless asked
 function applyLayers() {
   lay('ortho') ? ortho.addTo(map) : map.removeLayer(ortho);
@@ -620,6 +622,7 @@ function applyLayers() {
   syncMd();
   if (cadLayer) { if (lay('cad')) cadLayer.addTo(map); else map.removeLayer(cadLayer); }
   if (cmpLayer) { if (lay('cmp')) { cmpLayer.addTo(map); cmpLayer.bringToBack(); } else map.removeLayer(cmpLayer); }
+  if (mmLayer) { if (lay('mm')) { mmLayer.addTo(map); mmLayer.bringToFront(); } else map.removeLayer(mmLayer); }
   if (bstatLayer) { if (lay('bstat')) { bstatLayer.addTo(map); bstatLayer.bringToBack(); } else map.removeLayer(bstatLayer); }
   ortho.eachLayer(l => l.setOpacity(S.op)); hires.eachLayer(l => l.setOpacity(S.op));
   refreshAnnotations();
@@ -689,6 +692,14 @@ function select(sel) {
       ${p.flags.includes('landuse') ? `<p class="note" style="color:var(--warn)">Vie detectată pe un teren înregistrat „${p.landuse}”: de verificat modul de folosință.</p>` : ''}
       <div class="acts"><a class="btn" href="https://rvv.gov.md/publicpart/check.jsf" target="_blank" rel="noopener">Caută în RVV</a><button class="btn" type="button" data-act="copy-cod" data-id="${p.cod}">Copiază nr.</button><button class="btn" type="button" data-act="share" data-id="C${p.cod}">Copiază linkul</button><button class="btn" type="button" data-act="z-parcel" data-id="${p.cod}">Folosește ca zonă</button></div>
       <p class="note">${CAD?.source || ''}. Căutarea publică RVV acceptă numărul cadastral.</p>`;
+    if (sel.layer) hi = L.geoJSON(sel.layer.feature, {renderer: R, coordsToLatLng: toLL, style: {color: '#FFFFFF', weight: 3, fill: false}, interactive: false}).addTo(map);
+  } else if (sel.type === 'mm') {
+    const p = sel.f.properties, inV = MMV.has(p.id);
+    html = `<div class="p-top"><div><div class="eyebrow" style="color:${MMC[p.type]}">${p.label} · DEMO</div><h2 style="font-size:19px">${p.id}${p.vineyard_id ? ' · ' + p.vineyard_id : ''}</h2></div>${close}</div>
+      <dl><dt>Suprafață</dt><dd class="num">${fmt(p.area_ha, 3)} ha · ${fmt(p.area_m2)} m²</dd><dt>${p.type === 'A' ? 'Din bloc' : 'Acoperită de vie'}</dt><dd class="num">${fmt(p.share_pct, 1)} %</dd>
+        <dt>Motiv</dt><dd>${p.reason}</dd><dt>Parcele</dt><dd class="mono">${p.cad_nr.join(', ') || '—'}</dd><dt>Punct de vizită</dt><dd class="mono">${p.visit[0].toFixed(1)}, ${p.visit[1].toFixed(1)}${p.visit_snap_m > 1 ? ` · ${fmt(p.visit_snap_m, 0)} m până la inter-rând/drum` : ''}</dd></dl>
+      <p class="note"><b>Baza legală.</b> ${p.legal}</p><p class="note"><b>Încredere.</b> ${p.confidence}</p>
+      <div class="acts"><button class="btn ${inV ? '' : 'primary'}" type="button" data-mmv="${p.id}">${inV ? 'Scoate din vizită' : 'Adaugă la vizită'}</button></div>`;
     if (sel.layer) hi = L.geoJSON(sel.layer.feature, {renderer: R, coordsToLatLng: toLL, style: {color: '#FFFFFF', weight: 3, fill: false}, interactive: false}).addTo(map);
   } else if (sel.type === 'cmp') {
     const b = sel.b;
@@ -1121,7 +1132,8 @@ function printZone() {
   try { window.print(); } catch (e) { toast('Tipărirea nu e disponibilă aici'); }
 }
 /* ============ Planifică: zonă + START + ținte -> traseu calculat în browser (web/router.js, aceleași reguli ca pipeline/route.py) ============ */
-const PL = {gaps: S.role !== 'fermier', minGap: store.get('pl_gap', 3), waste: true, wcand: S.role === 'fermier',   // inspection (gaps + waste) vs waste collection, as in the brief strict: false, ann: false, more: false, busy: null, pct: 0, worker: null};
+// Planifică defaults: inspector = inspection (gaps + waste), administrator = waste collection (as in the brief)
+const PL = {gaps: S.role !== 'fermier', minGap: store.get('pl_gap', 3), waste: true, wcand: S.role === 'fermier', strict: false, ann: false, more: false, busy: null, pct: 0, worker: null};
 const ringsOf = g => !g ? [] : g.type === 'Polygon' ? [g.coordinates] : g.type === 'MultiPolygon' ? g.coordinates : [];
 const bbHit = (a, b) => !(a[2] < b[0] || a[0] > b[2] || a[3] < b[1] || a[1] > b[3]);
 function ringBB(r) { let a = [Infinity, Infinity, -Infinity, -Infinity]; for (const [x, y] of r) a = [Math.min(a[0], x), Math.min(a[1], y), Math.max(a[2], x), Math.max(a[3], y)]; return a; }
@@ -1262,6 +1274,63 @@ function viewCor() {
 
 /* ============ conformitate: registrul viticol (ONVV) + cereri AIPA vs dronă ============ */
 let CMP = null, cmpLayer = null, BFC = null, CAD = null, cadLayer = null;
+/* US-3: possible unauthorised plantings / register to update (drone vs DEMO register) */
+let MMD = null, mmLayer = null;
+const MMC = {A: '#DC2626', B: '#F97316'};
+const MMV = new Set(store.get('mmvisit', []));
+fetch('data/register_mismatch.geojson').then(r => r.ok ? r.json() : null).then(j => {
+  if (!j) return; MMD = j;
+  mmLayer = L.geoJSON(j, {renderer: R, coordsToLatLng: toLL, style: f => ({color: MMC[f.properties.type], weight: 2.2, dashArray: f.properties.type === 'B' ? '6 4' : null, fillColor: MMC[f.properties.type], fillOpacity: .28}),
+    onEachFeature: (f, l) => l.on('click', e => { L.DomEvent.stop(e); if (ZN.mode) return zoneClick(e.latlng, e.originalEvent); select({type: 'mm', f, layer: l}); })});
+  applyLayers(); renderLayers(); if (S.view === 'conformitate') renderPanel();
+}).catch(() => {});
+function mmToggleVisit(id) { MMV.has(id) ? MMV.delete(id) : MMV.add(id); store.set('mmvisit', [...MMV]); renderPanel(); if (S.sel?.type === 'mm') select(S.sel); }
+function mmVisitPoints() { return (MMD?.features || []).filter(f => MMV.has(f.properties.id)).map(f => ({id: f.properties.id, x: f.properties.visit[0], y: f.properties.visit[1], label: f.properties.label})); }
+function mmGpx() {
+  const pts = mmVisitPoints(); if (!pts.length || !UTM) return null;
+  const esc = s => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;');
+  return ['<?xml version="1.0" encoding="UTF-8"?>', '<gpx version="1.1" creator="vineyard-ai Field Planner" xmlns="http://www.topografix.com/GPX/1/1">',
+    `<metadata><name>Vizită nepotriviri registru (DEMO)</name><time>${new Date().toISOString()}</time></metadata>`,
+    ...pts.map(p => { const [lon, lat] = toWGS(p.x, p.y); return `<wpt lat="${lat.toFixed(7)}" lon="${lon.toFixed(7)}"><name>${esc(p.id)}</name><desc>${esc(p.label)}</desc></wpt>`; }), '</gpx>'].join('\n');
+}
+async function mmRoute() {
+  const points = mmVisitPoints(); if (!points.length) return toast('Adaugă întâi locuri în lista de vizită');
+  if (!LIVE) return toast('Traseul prin locurile alese se calculează pe laptop (python -m pipeline.serve); aici descarcă punctele ca GPX');
+  try {
+    const r = await fetch('api/route', {method: 'POST', body: JSON.stringify({mode: 'inspector', points, time: 20, ...(CST.xy ? {start: CST.xy} : {})})}).then(r => r.json());
+    if (!r.job) throw new Error(r.error || 'fără răspuns');
+    JOB = {id: r.job, last: ''}; renderPanel();
+    const poll = async () => {
+      let j; try { j = await fetch('api/job/' + JOB.id, {cache: 'no-store'}).then(r => r.json()); } catch (e) { return setTimeout(poll, 3000); }
+      JOB.last = ((j.log || []).slice(-1)[0] || '').trim().slice(0, 90);
+      if (j.state === 'running') { if (S.view === 'conformitate') renderPanel(); return setTimeout(poll, 2500); }
+      JOB = null;
+      if (j.state !== 'done' || !j.route) { toast('Traseul nu s-a putut calcula'); return renderPanel(); }
+      addLiveRoute(j.route, j.targets, 'inspector', 0, 'Nepotriviri', `${points.length} locuri de verificat`);
+      ROUTES.live.file = 'route_nepotriviri.geojson'; if (j.check) ROUTES.live.ck = j.check; renderPanel();
+    };
+    setTimeout(poll, 1500);
+  } catch (e) { JOB = null; toast('Nu pot porni calculul: ' + e.message); renderPanel(); }
+}
+function mmCard() {
+  if (!MMD) return '';
+  const it = MMD.features.map(f => f.properties), nA = it.filter(p => p.type === 'A').length, nB = it.length - nA, sel = mmVisitPoints().length;
+  const rz = ROUTES.live && ROUTES.live.file === 'route_nepotriviri.geojson' ? ROUTES.live : null;
+  return `<section><div class="sec-title"><h2>Posibile nepotriviri dronă ↔ registru</h2><span class="badge" style="background:rgba(234,179,8,.16);color:#A16207">DEMO</span></div>
+    <div class="stats"><div class="stat"><div class="v num" style="color:${MMC.A}">${fmt(nA)}</div><div class="l">vie fără parcelă autorizată (tip A)</div></div>
+      <div class="stat"><div class="v num" style="color:${MMC.B}">${fmt(nB)}</div><div class="l">parcele „plantate” fără vie (tip B)</div></div></div>
+    <div class="list" style="margin-top:8px">${it.map(p => `<div class="li mm-li"><button type="button" class="mm-go" data-mm="${p.id}"><span class="dot" style="background:${MMC[p.type]}"></span><b>${p.id}</b><span class="mm-t">${p.reason}${p.vineyard_id ? ' · ' + p.vineyard_id : ''}</span><span class="r num">${fmt(p.area_ha, 2)} ha</span></button><button type="button" class="btn sm ${MMV.has(p.id) ? 'primary' : ''}" data-mmv="${p.id}" aria-pressed="${MMV.has(p.id)}">${MMV.has(p.id) ? '✓ vizită' : '+ vizită'}</button></div>`).join('')}</div>
+    <div class="zmodes" style="margin-top:8px"><button class="btn sm" type="button" data-act="mm-on">${S.layers.mm ? 'Ascunde de pe hartă' : 'Arată pe hartă'}</button>
+      ${sel ? (LIVE ? `<button class="btn sm primary" type="button" data-act="mm-route" ${JOB ? 'disabled' : ''}>${JOB ? 'Se calculează…' : `Traseu prin ${sel} ${sel === 1 ? 'loc' : 'locuri'}`}</button>` : `<button class="btn sm primary" type="button" data-act="mm-gpx">Vizita ca GPX (${sel})</button>`) : ''}
+      <button class="btn sm" type="button" data-act="mm-csv">CSV</button></div>
+    <p class="note">${JOB && LIVE ? `<span class="mono">${JOB.last || ''}</span>` : sel ? (LIVE ? 'Traseul pleacă din START, trece doar prin locurile alese și e verificat cu regulile oficiale (≤ 2 % în afara zonei trecabile). route.geojson oficial nu se schimbă.' : 'Pe site: lista de vizită și punctele GPX. Traseul optim prin ele se calculează pe laptop (python -m pipeline.serve).') : 'Semnal pentru control, nu verdict. Apasă un rând pentru detalii și baza legală; „+ vizită” îl pune pe lista de verificat.'}</p>
+    ${rz ? routeCard(rz) : ''}</section>`;
+}
+function mmCsv() {
+  const q = v => /[",;\n]/.test(String(v ?? '')) ? `"${String(v).replace(/"/g, '""')}"` : (v ?? '');
+  return ['# Posibile nepotriviri dronă vs registru DEMO · semnal pentru control, nu verdict', 'id,tip,eticheta,vineyard_id,cad_nr,suprafata_ha,suprafata_m2,procent,motiv,x,y,in_vizita,baza_legala',
+    ...MMD.features.map(f => { const p = f.properties; return [p.id, p.type, p.label, p.vineyard_id, p.cad_nr.join(' '), p.area_ha, p.area_m2, p.share_pct, p.reason, p.visit[0], p.visit[1], MMV.has(p.id) ? 'da' : '', p.legal].map(q).join(','); })].join('\n') + '\n';
+}
 /* ============ Moldova: contur, raioane, satul zonei studiate ============ */
 let mdLayer = null, mdBounds = null;
 fetch('data/moldova.geojson?v=2').then(r => r.ok ? r.json() : null).then(fc => {
@@ -1387,6 +1456,7 @@ function viewConf() {
       <div class="stat"><div class="v num">${lei(u.requested_lei)}</div><div class="l">cerut în ${fmt(u.requests)} cereri AIPA</div></div>
       <div class="stat"><div class="v num" style="color:${u.eligible_lei < u.requested_lei ? 'var(--warn)' : 'var(--accent)'}">${lei(u.eligible_lei)}</div><div class="l">eligibil după măsurătorile din dronă</div></div></div>
     ${CAD ? (() => { const fs = CAD.features.map(f => f.properties); return `<div class="stats"><div class="stat"><div class="v num">${fmt(fs.filter(p => p.vine_ha > 0).length)}</div><div class="l">parcele cadastrale cu vie (din ${fmt(fs.length)})</div></div><div class="stat"><div class="v num">${fmt(fs.filter(p => p.flags.includes('rvv')).length)}</div><div class="l">cu > 0,15 ha vie: RVV obligatoriu</div></div><div class="stat"><div class="v num" style="color:#A855F7">${fmt(fs.filter(p => p.flags.includes('landuse')).length)}</div><div class="l">vie pe teren pentru construcții</div></div><div class="stat"><div class="v num">${fmt(fs.reduce((a, p) => a + p.vine_ha, 0), 1)}<small>ha</small></div><div class="l">vie pe parcele cadastrale</div></div></div>`; })() : ''}
+    ${mmCard()}
     <div style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn primary" type="button" data-act="cmp-route">Traseu de verificare (${fmt(visit.length)} blocuri)</button><button class="btn" type="button" data-act="cmp-csv">Export CSV</button>${LIVE ? '<button class="btn" type="button" data-act="cmp-upload">Încarcă extras RVV / AIPA (CSV)</button>' : ''}${S.layers.cmp ? '' : '<button class="btn" type="button" data-act="cmp-on">Colorează pe hartă</button>'}${cadLayer && !S.layers.cad ? '<button class="btn" type="button" data-act="cad-on">Arată cadastrul</button>' : ''}</div>
     <section><div class="sec-title"><h2>De vizitat în teren</h2><span class="num">${fmt(visit.length)}</span></div>
       <div class="list">${visit.map(b => `<button type="button" class="li" data-cmp="${b.vineyard_id}"><span class="dot" style="background:${CMC[b.status]}"></span><b>${b.vineyard_id}</b><span class="r">${mainReason(b)}${b.eligibility ? ' · AIPA ' + (b.eligibility.difference_lei >= 0 ? '+' : '') + fmt(b.eligibility.difference_lei) + ' lei' : ''}</span></button>`).join('')}</div></section>
@@ -1651,6 +1721,7 @@ function renderLayers() {
   if (wcLayer) L1.push(['wcand', 'Candidați deșeuri (model AI + clasic, neconfirmați)', 'linear-gradient(90deg,#EAB308,#F97316)']);
   if (mdLayer) L1.push(['md', 'Moldova: contur, raioane, satul zonei', '#EF4444']);
   if (cadLayer) L1.push(['cad', 'Parcele cadastrale (ASP)', '#38BDF8']);
+  if (mmLayer) L1.push(['mm', 'Nepotriviri registru (DEMO): A roșu, B portocaliu', 'linear-gradient(90deg,#DC2626,#F97316)']);
   if (cmpLayer) L1.push(['cmp', 'Conformitate RVV / AIPA', 'linear-gradient(90deg,#EF4444,#F59E0B,#22C55E,#9CA3AF)']);
   if (bstatLayer) L1.push(['bstat', 'Starea blocurilor (roșu / galben / verde)', 'linear-gradient(90deg,#EF4444,#F59E0B,#22C55E)']);
   const allOn = L1.every(([k]) => S.layers[k]);
@@ -1733,6 +1804,9 @@ document.addEventListener('click', e => {
   if (b.dataset.pi != null) { const x = palItems[+b.dataset.pi]; closePal(); return x.run(); }
   if (b.dataset.src) return setSrc(b.dataset.src);
   if (b.dataset.lang) { store.set('lang', b.dataset.lang); return renderLegend(); }
+  if (b.dataset.mmv) return mmToggleVisit(b.dataset.mmv);
+  if (b.dataset.mm) { const f = MMD?.features.find(x => x.properties.id === b.dataset.mm); if (!f) return; if (!S.layers.mm) { S.layers.mm = true; store.set('layers3', S.layers); applyLayers(); renderLayers(); }
+    const l = mmLayer.getLayers().find(x => x.feature === f); if (l) fitBounds(l.getBounds().pad(0.6), 4); return select({type: 'mm', f, layer: l}); }
   if (b.dataset.layersAll) { const ks = b.dataset.layersAll.split(','), on = !ks.every(k => S.layers[k]); for (const k of ks) S.layers[k] = on || k === 'ortho'; store.set('layers3', S.layers); renderLayers(); return applyLayers(); }
   if (b.dataset.layer) { S.layers[b.dataset.layer] = !S.layers[b.dataset.layer]; store.set('layers3', S.layers); renderLayers(); return applyLayers(); }
   if (b.dataset.tile) return goTile(b.dataset.tile);
@@ -1797,6 +1871,10 @@ document.addEventListener('click', e => {
     case 'z-link': return copy(location.href.split('#')[0] + '#zona=' + ZN.key, null);
     case 'z-route': case 'pl-run': return planRoute();
     case 'pl-gps': return gpsStart();
+    case 'mm-on': { S.layers.mm = !S.layers.mm; store.set('layers3', S.layers); applyLayers(); renderLayers(); if (S.layers.mm && mmLayer?.getLayers().length) fitBounds(mmLayer.getBounds().pad(0.1), 3); return renderPanel(); }
+    case 'mm-route': return JOB ? null : mmRoute();
+    case 'mm-gpx': { const g = mmGpx(); if (g && downloadText('vizita_nepotriviri.gpx', g, 'application/gpx+xml')) toast('vizita_nepotriviri.gpx descărcat'); return; }
+    case 'mm-csv': { if (MMD && downloadText('nepotriviri_registru_demo.csv', mmCsv(), 'text/csv')) toast('CSV descărcat'); return; }
     case 'pl-toggle': { PL[b.dataset.k] = !PL[b.dataset.k]; return renderPanel(); }
     case 'pl-cancel': { if (ZN.mode) zoneMode(ZN.mode); return; }
     case 'pl-geojson': { const r = ROUTES.live; if (r && downloadText('route_zona.geojson', JSON.stringify(r.fc), 'application/geo+json')) toast('route_zona.geojson descărcat'); return; }
