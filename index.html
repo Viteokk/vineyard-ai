@@ -189,6 +189,7 @@ input[type=range]{accent-color:var(--accent);width:100%}
 .nav .big small{font-size:14px;color:var(--muted);font-weight:500;margin-left:4px}
 .nav .row{display:flex;gap:8px;align-items:center;justify-content:space-between}
 .nav .btn{min-height:44px}
+.btn.sm{min-height:32px;padding:0 10px;font-size:12px}
 .me{width:16px;height:16px;border-radius:50%;background:#2563EB;box-shadow:0 0 0 3px #fff,0 0 0 8px rgba(37,99,235,.3)}
 @media (max-width:820px){.nav,.panel:not(.collapsed) ~ .nav{left:12px;right:12px;width:auto;transform:none;top:auto;bottom:calc(84px + env(safe-area-inset-bottom,0px))}}
 .toast{position:fixed;left:50%;top:72px;transform:translateX(-50%);z-index:3000;background:var(--ink);color:var(--bg);font-weight:600;padding:10px 16px;border-radius:12px;box-shadow:var(--shadow)}
@@ -197,7 +198,7 @@ input[type=range]{accent-color:var(--accent);width:100%}
   .rail{left:12px;right:12px;top:auto;bottom:calc(12px + env(safe-area-inset-bottom,0px));width:auto;height:60px;flex-direction:row;justify-content:space-around;padding:0 8px}
   .rail .logo,.rail .sp,.rail .tip{display:none}
   .rail .only-phone{display:grid}
-  .nav .row .btn{min-height:44px}
+  .nav .row .btn,.nav .btn.sm{min-height:44px}
   .panel,.panel.wide{left:12px;right:12px;width:auto;top:auto;bottom:calc(84px + env(safe-area-inset-bottom,0px));height:44vh}
   .panel.collapsed{transform:translateY(calc(100% + 100px))}
   .tr{right:12px;top:12px}.tr .btn{display:none}
@@ -671,7 +672,7 @@ function navRender() {
   box.innerHTML = t ? `<div class="row"><div class="eyebrow">Următoarea țintă · #${t.order} din ${ORDERED.length}</div><button class="icon-btn" type="button" data-act="nav-stop" aria-label="Oprește navigarea">${IC.x}</button></div>
     <div class="row"><div><div class="big">${d == null ? '—' : d >= 1000 ? fmt(d / 1000, 2) + '<small>km</small>' : fmt(d, 0) + '<small>m</small>'}</div><div class="note" style="margin-top:4px">${t.id} · ${t.type === 'waste' ? 'deșeu' : 'gol ' + fmt(t.gap_m, 1) + ' m'} · ${t.vineyard_id || ''}${t.row_id ? ' / ' + t.row_id : ''}${head != null ? ' · direcție ' + head + '°' : ''}${p && NAV.accm ? ' · GPS ±' + fmt(NAV.accm, 0) + ' m' : ''}</div></div></div>
     <div class="row"><button class="btn primary" type="button" data-act="nav-done" data-id="${t.id}" style="flex:1">${IC.ok} Verificat</button><button class="btn" type="button" data-act="nav-skip" data-id="${t.id}">Sari</button><button class="btn" type="button" data-act="nav-center" aria-label="Centrează pe mine">◎</button></div>
-    <div class="row" style="justify-content:flex-start;flex-wrap:wrap;gap:6px"><span class="note">Începe de la:</span><button class="btn" type="button" data-act="nav-from-first" style="min-height:32px;padding:0 10px;font-size:12px" aria-pressed="${NAV.startIdx === 0}">nr. 1</button><button class="btn" type="button" data-act="nav-from-nearest" style="min-height:32px;padding:0 10px;font-size:12px" ${p ? '' : 'disabled title="aștept poziția GPS"'}>cea mai apropiată</button><button class="btn" type="button" data-act="nav-pick" style="min-height:32px;padding:0 10px;font-size:12px" aria-pressed="${NAV.picking}">${NAV.picking ? 'apasă o țintă pe hartă…' : 'aleg pe hartă'}</button></div>`
+    <div class="row" style="justify-content:flex-start;flex-wrap:wrap;gap:6px"><span class="note">Începe de la:</span><button class="btn sm" type="button" data-act="nav-from-first" aria-pressed="${NAV.startIdx === 0}">nr. 1</button><button class="btn sm" type="button" data-act="nav-from-nearest" ${p ? '' : 'disabled title="aștept poziția GPS"'}>cea mai apropiată</button><button class="btn sm" type="button" data-act="nav-pick" aria-pressed="${NAV.picking}">${NAV.picking ? 'apasă o țintă pe hartă…' : 'aleg pe hartă'}</button></div>`
     : `<div class="row"><div class="eyebrow">Navigare</div><button class="icon-btn" type="button" data-act="nav-stop" aria-label="Oprește">${IC.x}</button></div><div class="big" style="font-size:18px">Toate țintele sunt verificate</div>`;
   box.hidden = false;
 }
