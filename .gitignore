@@ -21,3 +21,4 @@ out/
 
 # yolo dataset (generated)
 dataset/
+dataset_multi/

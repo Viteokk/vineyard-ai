@@ -1,6 +1,8 @@
 """Fine-tune YOLOv8-seg on the vineyard canopy dataset.
 
 Usage:  python train/train_yolo.py                       # full run (50 epochs, early stop)
+        python train/train_yolo.py --data dataset_multi/data.yaml --model runs/vineyard/canopy/weights/best.pt \
+            --name multi --epochs 25 --patience 6              # one model, 2 classes: vineyard + waste
         python train/train_yolo.py --epochs 1 --fraction 0.1   # 2-minute smoke test
 Watch:  python train/watch.py          (in a 2nd terminal)
 Output: runs/vineyard/<name>/weights/best.pt, results.csv, results.png, val_batch*_pred.jpg
@@ -24,6 +26,7 @@ def main():
     ap.add_argument("--imgsz", type=int, default=640)
     ap.add_argument("--fraction", type=float, default=1.0, help="use only part of the train set (tests)")
     ap.add_argument("--name", default="canopy")
+    ap.add_argument("--patience", type=int, default=10, help="stop if val mAP does not improve for N epochs")
     a = ap.parse_args()
 
     device = "mps" if torch.backends.mps.is_available() else ("0" if torch.cuda.is_available() else "cpu")
@@ -32,7 +35,7 @@ def main():
     model = YOLO(a.model)
     model.train(
         data=a.data, imgsz=a.imgsz, epochs=a.epochs, batch=a.batch, device=device,
-        patience=10,           # stop if val mAP does not improve for 10 epochs
+        patience=a.patience,
         max_det=300,           # many canopies per crop
         fraction=a.fraction,
         project=str(ROOT / "runs" / "vineyard"), name=a.name, exist_ok=True,
