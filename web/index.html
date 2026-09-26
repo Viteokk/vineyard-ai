@@ -191,6 +191,22 @@ input[type=range]{accent-color:var(--accent);width:100%}
 .nav .row{display:flex;gap:8px;align-items:center;justify-content:space-between}
 .nav .btn{min-height:44px}
 .btn.sm{min-height:32px;padding:0 10px;font-size:12px}
+.role-btn{max-width:220px}
+.role-btn span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.role-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:10px}
+.role-card{text-align:left;display:flex;flex-direction:column;gap:6px;padding:14px;border-radius:14px;border:1px solid var(--line);background:var(--hover)}
+.role-card:hover{background:var(--press)}
+.role-card[aria-pressed="true"]{border-color:var(--accent);box-shadow:0 0 0 1px var(--accent) inset}
+.role-card b{font-size:15px}
+.role-card .ic{width:28px;height:6px;border-radius:3px}
+.role-card .sees{font-size:12px;color:var(--faint)}
+.params{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:8px}
+.params label{display:flex;flex-direction:column;gap:4px;font-size:12px;color:var(--muted)}
+.params label>span{display:flex;align-items:center;gap:6px;color:var(--ink);font-size:13px}
+.params input,.params select{width:100%;min-height:36px;border-radius:10px;border:1px solid var(--line);background:var(--solid);color:var(--ink);padding:0 10px;font:inherit}
+.params input{max-width:90px}
+.live{display:inline-flex;align-items:center;gap:6px}
+.live i{width:8px;height:8px;border-radius:50%;background:var(--accent)}
 .me{width:16px;height:16px;border-radius:50%;background:#2563EB;box-shadow:0 0 0 3px #fff,0 0 0 8px rgba(37,99,235,.3)}
 @media (max-width:820px){.nav,.panel:not(.collapsed) ~ .nav{left:12px;right:12px;width:auto;transform:none;top:auto;bottom:calc(84px + env(safe-area-inset-bottom,0px))}}
 .toast{position:fixed;left:50%;top:72px;transform:translateX(-50%);z-index:3000;background:var(--ink);color:var(--bg);font-weight:600;padding:10px 16px;border-radius:12px;box-shadow:var(--shadow)}
@@ -230,6 +246,7 @@ input[type=range]{accent-color:var(--accent);width:100%}
 </button>
 
 <div class="tr">
+  <button class="btn glass role-btn" type="button" data-act="role" id="role-btn" aria-label="Schimbă rolul"></button>
   <button class="icon-btn glass" type="button" data-act="layers" aria-label="Straturi" aria-expanded="false"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l9 5-9 5-9-5 9-5z"/><path d="M3 13l9 5 9-5"/></svg></button>
   <button class="icon-btn glass" type="button" data-act="theme" id="theme-btn" aria-label="Schimbă tema"></button>
   <button class="btn primary" type="button" data-act="export"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v12M7 10l5 5 5-5M5 21h14"/></svg>Export</button>
@@ -261,6 +278,14 @@ input[type=range]{accent-color:var(--accent);width:100%}
     <button class="btn primary" type="button" data-act="copy-ex">Copiază conținutul</button>
   </div>
 </div>
+<div class="veil" id="role-veil" hidden>
+  <div class="modal" role="dialog" aria-modal="true" aria-labelledby="role-title">
+    <div class="p-top"><div><div class="eyebrow">Field Planner</div><h2 id="role-title" style="font-size:20px">Cine folosește harta?</h2></div><button class="icon-btn" type="button" data-act="role-close" aria-label="Închide"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg></button></div>
+    <p class="note">Harta pornește cu ce îți trebuie ție: traseul, țintele și cifrele rolului. Toate straturile rămân accesibile din <kbd>L</kbd>.</p>
+    <div class="role-grid" id="role-list"></div>
+  </div>
+</div>
+<input type="file" id="tif-in" accept=".tif,.tiff,image/tiff" hidden>
 <div class="nav glass" id="nav" hidden aria-live="polite"></div>
 <div class="toast" id="toast" role="status" hidden></div>
 
@@ -336,7 +361,8 @@ Object.values(SRC).forEach(indexSource);
 const S = {
   view: 'harta', src: store.get('src', SRC.pred ? 'pred' : 'ref'), sel: null, q: '', collapsed: false,
   layers: Object.assign({ortho: true, canopy: true, rows: true, inter: true, passage: true, forbidden: true, study: true, grid: false, route_blue: true, route_red: true, targets: true, wcand: true}, store.get('layers', {})),
-  op: store.get('op', 1)
+  op: store.get('op', 1), role: store.get('role', null), speed: store.get('speed', 4), hours: store.get('hours', 6),
+  minGap: store.get('mingap', 5), price: store.get('price', 15)
 };
 if (!SRC[S.src]) S.src = Object.keys(SRC)[0];
 const cur = () => SRC[S.src];
@@ -348,8 +374,9 @@ const bnds = b => L.latLngBounds(ll(b[0], b[1]), ll(b[2], b[3]));
 const map = L.map('map', {crs: CRS, zoomControl: false, attributionControl: false, minZoom: -3, maxZoom: 6.5, zoomSnap: 0.25, zoomDelta: 0.5, wheelPxPerZoomLevel: 100, preferCanvas: true, maxBounds: bnds([EXT[0] - 400, EXT[1] - 400, EXT[2] + 400, EXT[3] + 400])});
 map.setView(ll((EXT[0] + EXT[2]) / 2, (EXT[1] + EXT[3]) / 2), 0);   // layers need a view before being added
 const R = L.canvas({padding: 0.4, tolerance: 5});
-const ortho = L.layerGroup(IDX.chunks.map(c => L.imageOverlay(c.img, bnds(c.bounds), {className: 'ortho', opacity: S.op}))).addTo(map);
-const hires = L.layerGroup((IDX.hires || []).map(h => L.imageOverlay(h.img, bnds(h.bounds), {className: 'ortho', opacity: S.op})));
+map.createPane('imgs').style.zIndex = 350;      // imagery always under the vector canvas, whatever the order it is added in
+const ortho = L.layerGroup(IDX.chunks.map(c => L.imageOverlay(c.img, bnds(c.bounds), {pane: 'imgs', className: 'ortho', opacity: S.op}))).addTo(map);
+const hires = L.layerGroup((IDX.hires || []).map(h => L.imageOverlay(h.img, bnds(h.bounds), {pane: 'imgs', className: 'ortho', opacity: S.op})));
 const HIRES_Z = 3.5;
 const toLL = c => L.latLng(c[1], c[0]);
 const geo = (fc, style, extra = {}) => fc ? L.geoJSON(fc, {renderer: R, coordsToLatLng: toLL, style, interactive: false, ...extra}) : L.layerGroup();
@@ -576,7 +603,7 @@ function statsBlock(s) {
 function viewHarta() {
   const s = cur(), q = S.q.trim().toLowerCase(), list = s.tiles.filter(t => !q || t.includes(q)), max = Math.max(1, ...s.tiles.map(t => s.by[t].can.length));
   $('#p-head').innerHTML = head('Sireț3 · ortofoto 2,5 cm/px', s.name, srcSeg());
-  $('#p-body').innerHTML = `${statsBlock(s)}
+  $('#p-body').innerHTML = `${roleCard()}${statsBlock(s)}
     <p class="note">${S.src === 'pred' ? 'Detecții automate pe toate cele 311 tile-uri, înainte de corectura umană din Marcaj. Unele tile-uri fără vie (livezi, sat) au detecții false: folosește lista de mai jos ca să le verifici.' : 'Adnotările oficiale ale organizatorilor pentru cele 2 tile-uri exemplu. Mărește pe ele: imaginea trece automat la rezoluția completă de 2,5 cm/px.'}</p>
     ${WC.length ? `<section><div class="sec-title"><h2 style="display:flex;align-items:center;gap:8px"><span style="width:10px;height:10px;border-radius:50%;background:#F97316;border:1.5px solid #1A1A1A"></span>Candidați deșeuri</h2><span class="num">${Object.keys(WCV).length} / ${WC.length} verificați · ${Object.values(WCV).filter(x => x === 'y').length} deșeu</span></div>
       <p class="note">Pete găsite automat (checklist pentru Marcaj). Nu sunt adnotări și nu intră în trasee: fiecare se verifică pe imagine (E deșeu / Nu e), apoi se desenează de mână în Marcaj.</p>
@@ -593,7 +620,7 @@ function polyArea(fc) {
   return a;
 }
 function routeCard(r) {
-  const ck = r.ck, p = r.p, min = Math.round(r.len / 4000 * 60);
+  const ck = r.ck, p = r.p, min = Math.round(r.len / (S.speed * 1000) * 60), days = Math.max(1, Math.ceil(min / 60 / S.hours));
   const checks = ck ? [
     [ck.outside_share <= 0.02, 'Doar pe inter-rânduri + passage', `${fmt(ck.outside_share * 100, 2)}% în afară · limita 2%`],
     [ck.start_m <= 5 && ck.end_m <= 5, 'Pleacă și revine la START', `${fmt(ck.start_m, 1)} / ${fmt(ck.end_m, 1)} m · max 5 m`],
@@ -601,7 +628,7 @@ function routeCard(r) {
     [ck.targets === 0 || ck.visited >= 0.9 * ck.targets, 'Ținte atinse la ≤ 2 m', `${fmt(ck.visited)} / ${fmt(ck.targets)}`]] : [];
   return `<section><div class="sec-title"><h2 style="display:flex;align-items:center;gap:8px"><span style="width:14px;height:4px;border-radius:2px;background:${r.color}"></span>Traseu ${r.name.toLowerCase()} · ${r.sub}</h2><span style="display:flex;gap:6px;align-items:center"><span class="mono">${r.file}</span>${UTM ? `<button class="btn" type="button" data-act="gpx" data-route="${r.key}" style="min-height:30px;padding:0 10px;font-size:12px" title="Descarcă traseul + țintele pentru GPS / telefon">GPX</button>` : ''}</span></div>
     <div class="stats"><div class="stat"><div class="v num" style="color:${r.color}">${kmH(r.len)}</div><div class="l">length_m = ${fmt(Math.round(r.len))}</div></div>
-      <div class="stat"><div class="v num">${min >= 60 ? fmt(Math.floor(min / 60)) + '<small>h</small> ' + fmt(min % 60) : fmt(min)}<small>min</small></div><div class="l">pe jos, la 4 km/h</div></div>
+      <div class="stat"><div class="v num">${min >= 60 ? fmt(Math.floor(min / 60)) + '<small>h</small> ' + fmt(min % 60) : fmt(min)}<small>min</small></div><div class="l">pe jos, la ${fmt(S.speed, 1)} km/h · ${days} ${days === 1 ? 'zi' : 'zile'} × ${fmt(S.hours)} h</div></div>
       <div class="stat"><div class="v num">${fmt(p.targets_visited ?? 0)} / ${fmt(p.targets_total ?? 0)}</div><div class="l">ținte vizitate (≤ 2 m)</div></div>
       <div class="stat"><div class="v num">${ck ? (ck.valid ? 'valid' : 'INVALID') : '—'}</div><div class="l">validare regulament${ck ? ` · ${fmt(ck.outside_share * 100, 1)}% în afară` : ''}</div></div></div>
     ${checks.length ? `<div class="list" style="gap:2px;font-size:13px;margin-top:8px">${checks.map(([ok, t, v]) => `<div class="li" style="cursor:default"><span style="color:${ok ? 'var(--accent)' : 'var(--warn)'}">${ok ? IC.ok : '✕'}</span>${t}<span class="r">${v}</span></div>`).join('')}</div>` : ''}
@@ -611,11 +638,120 @@ function missingCard(r) {
   return `<section><div class="sec-title"><h2 style="display:flex;align-items:center;gap:8px"><span style="width:14px;height:4px;border-radius:2px;background:${r.color}"></span>Traseu ${r.name.toLowerCase()} · ${r.sub}</h2><span class="mono">${r.file}</span></div>
     <div class="callout"><b>Nu e calculat încă</b><p class="note">${r.name === 'Inspector' ? 'Trece pe la toate golurile din rânduri (butuci lipsă / morți) și pe la deșeuri.' : 'Trece doar pe la deșeuri, pentru colectare.'} Se calculează cu <span class="mono">pipeline/route.py --mode ${r.name === 'Inspector' ? 'inspector' : 'farmer'}</span>; harta îl afișează aici de îndată ce apare <span class="mono">web/data/${r.file}</span>.</p></div></section>`;
 }
+/* ============ roles ============ */
+const ROLES = {
+  inspector: {name: 'Inspector de stat', short: 'Inspector', color: '#2563EB', view: 'traseu', sub: 'Audit pentru subvenții: goluri în rânduri, butuci lipsă, suprafețe declarate.',
+    sees: 'Traseul albastru, țintele de inspecție, blocurile și ariile.', layers: {route_blue: true, route_red: false, targets: true, wcand: false}},
+  fermier: {name: 'Fermier / administrator', short: 'Fermier', color: '#DC2626', view: 'traseu', sub: 'Deșeuri de strâns, butuci de replantat, costuri pe an.',
+    sees: 'Traseul roșu, deșeurile, butucii lipsă și costurile.', layers: {route_blue: false, route_red: true, targets: true, wcand: true}},
+  agronom: {name: 'Agronom / analist', short: 'Agronom', color: '#1D7A4B', view: 'harta', sub: 'Toată harta: coroane, rânduri, inter-rânduri, măsurători, pipeline.',
+    sees: 'Toate straturile, ambele trasee, analiza unui tile nou.', layers: {route_blue: true, route_red: true, targets: true, wcand: true}}};
+const USER_IC = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0116 0"/></svg>';
+function roleBtn() { $('#role-btn').innerHTML = `${USER_IC}<span>${S.role ? ROLES[S.role].short : 'Alege rolul'}</span>`; }
+function openRole() {
+  $('#role-list').innerHTML = Object.entries(ROLES).map(([k, r]) => `<button type="button" class="role-card" data-role="${k}" aria-pressed="${S.role === k}"><span class="ic" style="background:${r.color}"></span><b>${r.name}</b><span class="note">${r.sub}</span><span class="sees">${r.sees}</span></button>`).join('');
+  $('#role-veil').hidden = false;
+}
+function setRole(k) {
+  const r = ROLES[k]; if (!r) return;
+  S.role = k; store.set('role', k);
+  Object.assign(S.layers, r.layers); store.set('layers', S.layers); applyLayers(); renderLayers();
+  $('#role-veil').hidden = true; roleBtn();
+  if (location.hash.slice(1) === r.view) show(r.view); else location.hash = r.view;
+}
+function roleCard() {
+  if (!S.role) return `<div class="callout"><b>Cine folosește harta?</b><p class="note">Inspector, fermier sau agronom: harta arată ce îi trebuie fiecăruia.</p><div><button class="btn primary" type="button" data-act="role">Alege rolul</button></div></div>`;
+  const r = ROLES[S.role], u = SRC.pred?.sum || {}, gaps = TG.filter(t => t.type === 'gap');
+  const missing = Math.round(gaps.reduce((a, t) => a + (t.gap_m || 0), 0) / 1.2);   // ~1.2 m between vines
+  const ha = ((u.canopy_area_m2 || 0) + (u.interrow_area_m2 || 0)) / 1e4, waste = TG.filter(t => t.type === 'waste').length;
+  const kp = S.role === 'inspector' ? [[fmt(gaps.length), 'goluri în rânduri (ținte)'], [fmt(u.blocks ?? 0), 'blocuri de verificat'], [`${fmt(ha, 1)}<small>ha</small>`, 'vie: coroane + inter-rânduri'], [ROUTES.blue ? kmH(ROUTES.blue.len) : '—', 'traseul albastru']]
+    : S.role === 'fermier' ? [[fmt(waste), 'deșeuri pe traseu (din Marcaj)'], [fmt(missing), 'butuci lipsă ≈ goluri / 1,2 m'], [`${fmt(missing * S.price)}<small>MDL</small>`, `replantare la ${fmt(S.price)} MDL / butaș`], [`${fmt(ha * 52)}–${fmt(ha * 80)}<small>mii MDL</small>`, 'întreținere pe an (52–80 mii MDL/ha)']]
+    : [[fmt(u.blocks ?? 0), 'blocuri (vineyard_id)'], [fmt(u.rows ?? 0), 'rânduri (row_id)'], [kmH(u.total_row_length_m || 0), 'lungime rânduri'], [`${fmt(ha, 1)}<small>ha</small>`, 'coroane + inter-rânduri']];
+  return `<section><div class="sec-title"><h2 style="display:flex;align-items:center;gap:8px"><span style="width:14px;height:4px;border-radius:2px;background:${r.color}"></span>Pentru ${r.name.toLowerCase()}</h2><button class="btn sm" type="button" data-act="role">Schimbă rolul</button></div>
+    <div class="stats">${kp.map(([v, l]) => `<div class="stat"><div class="v num">${v}</div><div class="l">${l}</div></div>`).join('')}</div>
+    <p class="note" style="margin-top:8px">${r.sub}${S.role === 'fermier' && !waste ? ' Deșeurile intră pe traseu după adnotarea lor în Marcaj.' : ''}</p></section>`;
+}
+function paramsCard() {
+  const n = g => TG.filter(t => t.type === 'waste' || (t.gap_m || 0) >= g).length, farmer = S.role === 'fermier', mode = farmer ? 'fermierului' : 'inspectorului';
+  const nWaste = TG.filter(t => t.type === 'waste').length, canRoute = !farmer || nWaste > 0;
+  return `<section><div class="sec-title"><h2>Parametri</h2>${LIVE ? '<span class="badge live"><i></i>calcul live · laptop</span>' : '<span class="badge" style="background:var(--hover);color:var(--muted)">rezultate precalculate</span>'}</div>
+    <div class="params">
+      <label for="p-speed">Viteză de mers<span><input type="number" id="p-speed" min="2" max="7" step="0.5" value="${S.speed}">km/h</span></label>
+      <label for="p-hours">Ore pe teren pe zi<span><input type="number" id="p-hours" min="1" max="12" step="1" value="${S.hours}">h</span></label>
+      ${farmer ? '' : `<label for="p-gap">Gol minim inspectat<span><select id="p-gap">${[3, 5, 8, 10].map(g => `<option value="${g}" ${g === S.minGap ? 'selected' : ''}>≥ ${g} m · ${fmt(n(g))} ținte</option>`).join('')}</select></span></label>`}
+      ${farmer ? `<label for="p-price">Preț butaș<span><input type="number" id="p-price" min="1" max="500" step="1" value="${S.price}">MDL</span></label>` : ''}
+    </div>
+    ${LIVE && !canRoute ? `<p class="note" style="margin-top:8px">Traseul fermierului are nevoie de deșeuri adnotate: se recalculează după exportul din Marcaj.</p>` : LIVE ? `<div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:10px"><button class="btn primary" type="button" data-act="live-route" ${JOB ? 'disabled' : ''}>${JOB ? 'Se calculează…' : `Recalculează traseul ${mode}`}</button></div>
+      <p class="note">${JOB ? `<span class="mono">${JOB.last || 'pornesc'}</span>` : `pipeline/route.py rulează pe laptop pe ${farmer ? 'deșeuri' : `țintele cu gol ≥ ${S.minGap} m`}; distanțele sunt în cache, durează 1–3 minute.`}</p>`
+      : `<p class="note">Timpii și zilele se recalculează imediat. Pentru un traseu nou cu alt prag de gol pornește site-ul de pe laptop: <span class="mono">python -m pipeline.serve</span>, apoi <span class="mono">http://127.0.0.1:8000</span>.</p>`}</section>`;
+}
+let LIVE = null, JOB = null;
+const AN = [];
+fetch('api/status', {cache: 'no-store'}).then(r => r.ok ? r.json() : null).then(j => { if (j?.live) { LIVE = j; renderPanel(); } }).catch(() => {});
+async function liveRoute() {
+  const mode = S.role === 'fermier' ? 'farmer' : 'inspector', gap = S.minGap;
+  try {
+    const r = await fetch('api/route', {method: 'POST', body: JSON.stringify({mode, min_gap: gap, time: 20})}).then(r => r.json());
+    if (!r.job) throw new Error(r.error || 'fără răspuns');
+    JOB = {id: r.job, last: ''}; renderPanel();
+    const poll = async () => {
+      let j; try { j = await fetch('api/job/' + JOB.id, {cache: 'no-store'}).then(r => r.json()); } catch (e) { return setTimeout(poll, 4000); }
+      JOB.last = ((j.log || []).slice(-1)[0] || '').replace(/\s*\(\d+s\)\s*$/, '').trim().slice(0, 90);
+      if (j.state === 'running') { if (S.view === 'traseu') renderPanel(); return setTimeout(poll, 3000); }
+      JOB = null;
+      if (j.state !== 'done' || !j.route) { toast('Recalcularea nu a reușit'); return renderPanel(); }
+      addLiveRoute(j.route, j.targets, mode, gap);
+    };
+    setTimeout(poll, 2000);
+  } catch (e) { JOB = null; toast('Nu pot porni recalcularea: ' + e.message); renderPanel(); }
+}
+function addLiveRoute(fc, tg, mode, gap) {
+  if (ROUTES.live) map.removeLayer(ROUTES.live.layer);
+  const p = fc.features[0].properties, line = geo(fc, {color: '#10B981', weight: 3.5});
+  ROUTES.live = {fc, tg, ck: null, key: 'live', p, len: p.length_m || 0, name: 'Personalizat', sub: `${mode === 'farmer' ? 'fermier' : 'inspector'}, gol ≥ ${gap} m`,
+    color: '#10B981', file: 'route_live.geojson', layer: L.layerGroup([geo(fc, {color: '#FFFFFF', weight: 7, opacity: .9}), line])};
+  S.layers.route_live = true; applyLayers(); renderLayers(); renderPanel();
+  map.fitBounds(line.getBounds(), {padding: [40, 40]});
+  toast(`Traseu nou: ${fmt(p.length_m / 1000, 2)} km · ${fmt(p.targets_visited)} / ${fmt(p.targets_total)} ținte`);
+}
+async function analyzeFile(f) {
+  if (!f) return;
+  toast(`Analizez ${f.name}…`);
+  try {
+    const canopy = $('#an-src')?.value || (LIVE?.model ? 'model' : 'classical');
+    const r = await fetch('api/analyze?canopy=' + canopy, {method: 'POST', headers: {'X-Filename': f.name}, body: f}).then(r => r.json());
+    if (r.error) throw new Error(r.error);
+    const b = bnds(r.bounds), Lr = r.layers || {};
+    const layer = L.layerGroup([L.imageOverlay(r.image, b, {pane: 'imgs', className: 'ortho'}),
+      geo(Lr.interrows, {color: '#22D3EE', weight: .8, fillColor: '#22D3EE', fillOpacity: .13}),
+      geo(Lr.canopies, {color: '#FF3DAA', weight: .9, fillColor: '#FF3DAA', fillOpacity: .2}),
+      geo(Lr.rows, {color: '#FFD43B', weight: 2}), geo(Lr.waste, {color: '#9333EA', weight: 2.5, fill: false}),
+      L.rectangle(b, {renderer: R, color: '#FFFFFF', weight: 2, fill: false, dashArray: '6 4', interactive: false})]).addTo(map);
+    AN.unshift({...r, layer});
+    map.fitBounds(b, {padding: [40, 40]});
+    if (S.view !== 'pipeline') location.hash = 'pipeline'; else renderPanel();
+    toast(`${r.name}: ${fmt(r.summary.canopy_count)} coroane, ${fmt(r.summary.rows)} rânduri, ${fmt(r.waste_boxes)} deșeuri · ${fmt(r.seconds.total, 1)} s`);
+  } catch (e) { toast('Analiza nu a reușit: ' + e.message); }
+}
+function analyzeCard() {
+  if (!LIVE) return `<section><div class="sec-title"><h2>Analizează un tile nou</h2><span class="badge" style="background:var(--hover);color:var(--muted)">doar pe laptop</span></div>
+    <p class="note">Încarci un GeoTIFF (2,5 cm/px) și primești coroanele, rândurile, inter-rândurile și deșeurile pe hartă. Browserul nu poate rula modelul, așa că pornește site-ul de pe laptop:</p>
+    <div class="code">python -m pipeline.serve\n<span class="c"># apoi deschide http://127.0.0.1:8000</span></div></section>`;
+  return `<section><div class="sec-title"><h2>Analizează un tile nou</h2><span class="badge live"><i></i>${LIVE.model ? 'model ' + LIVE.model : 'doar detector clasic'}</span></div>
+    <p class="note">GeoTIFF georeferențiat, 2,5 cm/px (± 30 %). Detectorul clasic găsește rândurile și inter-rândurile; modelul AI adaugă deșeurile și, la alegere, coroanele.</p>
+    <div class="params" style="margin:8px 0">${LIVE.model ? `<label for="an-src">Coroane din<span><select id="an-src"><option value="model">modelul AI</option><option value="classical">detectorul clasic</option></select></span></label>` : ''}</div>
+    <div style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn primary" type="button" data-act="analyze">Alege un GeoTIFF</button>${AN.length ? '<button class="btn" type="button" data-act="an-clear">Șterge rezultatele</button>' : ''}</div>
+    ${AN.map(a => `<div class="stats" style="margin-top:10px"><div class="stat"><div class="v num">${fmt(a.summary.canopy_count)}</div><div class="l">coroane · ${fmt(a.summary.canopy_area_m2, 0)} m² · ${a.canopy_source === 'model' ? 'model AI' : 'clasic'}</div></div>
+      <div class="stat"><div class="v num">${fmt(a.summary.rows)}</div><div class="l">rânduri · ${kmT(a.summary.total_row_length_m)}</div></div>
+      <div class="stat"><div class="v num">${fmt(a.summary.interrow_area_m2, 0)}<small>m²</small></div><div class="l">inter-rânduri</div></div>
+      <div class="stat"><div class="v num">${fmt(a.waste_boxes)}</div><div class="l">deșeuri · ${fmt(a.seconds.total, 1)} s pe ${a.name}</div></div></div>`).join('')}</section>`;
+}
 function viewTraseu() {
   const sc = EXTRA.start?.features?.[0]?.geometry.coordinates;
   $('#p-head').innerHTML = head('Două trasee · START → ținte → START', 'Inspector (albastru) și fermier (roșu)');
-  $('#p-body').innerHTML = `
-    ${['blue', 'red'].map(k => ROUTES[k] ? routeCard(ROUTES[k]) : missingCard(EXTRA.routes[k])).join('')}
+  const order = S.role === 'fermier' ? ['red', 'blue'] : ['blue', 'red'];
+  $('#p-body').innerHTML = `${roleCard()}${paramsCard()}${ROUTES.live ? routeCard(ROUTES.live) : ''}
+    ${order.map(k => ROUTES[k] ? routeCard(ROUTES[k]) : missingCard(EXTRA.routes[k])).join('')}
     ${UTM && TG.some(t => t.order) ? `<section><div class="sec-title"><h2>Navigare pe teren</h2><span class="num">${fmt(Object.keys(NAV.done).length)} verificate</span></div>
       <div style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn primary" type="button" data-act="nav-start">${NAV.watch ? 'Navigarea rulează' : 'Pornește navigarea'}</button><button class="btn" type="button" data-act="nav-reset">Resetează bifele</button></div>
       <p class="note" style="margin-top:8px">Pe telefon: GPS-ul pune poziția ta pe hartă și arată distanța până la următoarea țintă nevizitată din ordinea traseului inspector; „Verificat” o bifează (se ține minte în browser).</p></section>` : ''}
@@ -657,6 +793,7 @@ function viewPipe() {
     [nR ? 'done' : 'todo', 'Ținte + 2 trasee + măsurători', `${nR} trasee (inspector, fermier) · measurements.csv`, nR ? '~12 min' : '—'], ['wip', 'Corectură în Marcaj', 'după PUBLISH, toată echipa', 'manual']];
   $('#p-head').innerHTML = head('Pipeline & reproducere', 'De la dronă la hartă');
   $('#p-body').innerHTML = `<section class="steps">${steps.map(([c, t, s, tm], i) => `<div class="step ${c}"><span class="ic">${c === 'done' ? IC.ok : i + 1}</span><div><b>${t}</b><small>${s}</small></div><span class="t">${tm}</span></div>`).join('')}</section>
+    ${analyzeCard()}
     <section><div class="sec-title"><h2>Fișă tehnică</h2></div><div class="facts">
       <div>Hartă</div><div>Leaflet, CRS.Simple direct în UTM 35N, fără reproiectare</div><div>Imagine</div><div>10 cm/px pe toată zona, 2,5 cm/px pe tile-urile de referință</div>
       <div>Procesare</div><div>1 min 53 s detecție pe 311 tile-uri, MacBook Pro Apple Silicon</div><div>API-uri plătite</div><div>niciunul</div>
@@ -673,6 +810,7 @@ python -m http.server -d web 8000</div></section>`;
 const VIEWS = {harta: viewHarta, traseu: viewTraseu, masuratori: viewMas, pipeline: viewPipe};
 function renderPanel() { VIEWS[S.view](); }
 function show(v) {
+  if (ROLES[v]) return setRole(v);         // #inspector, #fermier, #agronom
   if (!VIEWS[v]) v = 'harta';
   const wasWide = $('#panel').classList.contains('wide');
   if (S.view !== v) S.q = '';
@@ -813,6 +951,7 @@ document.addEventListener('click', e => {
   if (b.dataset.target) { const t = TG.find(x => x.id === b.dataset.target); if (t) { map.flyTo(ll(t.x, t.y), 3.5, {duration: .6}); select({type: 'target', t}); } return; }
   if (b.dataset.rowid) return goRow(b.dataset.rowid);
   if (b.dataset.exk) return openExport(b.dataset.exk);
+  if (b.dataset.role) return setRole(b.dataset.role);
   switch (b.dataset.act) {
     case 'panel': return collapsePanel(!S.collapsed);
     case 'palette': return openPal();
@@ -838,6 +977,11 @@ document.addEventListener('click', e => {
     case 'copy-ex': return copy($('#ex-text').value, $('#ex-text'));
     case 'copy-repro': return copy($('#repro').innerText.replace(/^Copiază\s*/, ''), null);
     case 'unsel': return select(null);
+    case 'role': return openRole();
+    case 'role-close': $('#role-veil').hidden = true; return;
+    case 'live-route': return JOB ? null : liveRoute();
+    case 'analyze': return $('#tif-in').click();
+    case 'an-clear': { AN.forEach(a => map.removeLayer(a.layer)); AN.length = 0; return renderPanel(); }
     case 'wc-y': case 'wc-n': { const c = S.sel?.c; if (!c) return; const set = wcMark(c, b.dataset.act === 'wc-y' ? 'y' : 'n'); return set && c.rank < WC.length ? wcGo(c.rank + 1) : select({type: 'wcand', c}); }
     case 'wc-prev': return S.sel?.c && wcGo(S.sel.c.rank - 1);
     case 'wc-next': return S.sel?.c && wcGo(S.sel.c.rank + 1);
@@ -849,22 +993,31 @@ document.addEventListener('input', e => {
   if (e.target.id === 'op') { S.op = e.target.value / 100; store.set('op', S.op); ortho.eachLayer(l => l.setOpacity(S.op)); hires.eachLayer(l => l.setOpacity(S.op)); }
   if (e.target.id === 'tile-q' || e.target.id === 'row-q') { S.q = e.target.value; const id = e.target.id, pos = e.target.selectionStart; renderPanel(); const n = $('#' + id); n.focus(); n.setSelectionRange(pos, pos); }
 });
+document.addEventListener('change', e => {
+  const id = e.target.id, v = +e.target.value;
+  if (id === 'tif-in') { const f = e.target.files[0]; e.target.value = ''; return analyzeFile(f); }
+  const P = {'p-speed': ['speed', 'speed', 1, 10], 'p-hours': ['hours', 'hours', 1, 16], 'p-gap': ['minGap', 'mingap', 1, 50], 'p-price': ['price', 'price', 0, 10000]}[id];
+  if (!P || !(v >= P[2] && v <= P[3])) return;
+  S[P[0]] = v; store.set(P[1], v); renderPanel();
+});
 document.addEventListener('keydown', e => {
   const typing = e.target.matches('input,textarea');
   if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'k') { e.preventDefault(); return $('#pal-veil').hidden ? openPal() : closePal(); }
-  if (e.key === 'Escape') { if (!$('#pal-veil').hidden) return closePal(); if (!$('#ex-veil').hidden) return ($('#ex-veil').hidden = true); if (!$('#layers').hidden) return ($('#layers').hidden = true); if (S.sel) return select(null); }
+  if (e.key === 'Escape') { if (!$('#role-veil').hidden) return ($('#role-veil').hidden = true); if (!$('#pal-veil').hidden) return closePal(); if (!$('#ex-veil').hidden) return ($('#ex-veil').hidden = true); if (!$('#layers').hidden) return ($('#layers').hidden = true); if (S.sel) return select(null); }
   if (typing) return;
   if (e.key === '/') { e.preventDefault(); return openPal(); }
   if ('1234'.includes(e.key) && e.key.length === 1) location.hash = ['harta', 'traseu', 'masuratori', 'pipeline'][+e.key - 1];
   if (e.key.toLowerCase() === 'l') $('.tr [data-act="layers"]').click();
   if (e.key === '0') fitAll();
 });
-['#pal-veil', '#ex-veil'].forEach(s => $(s).addEventListener('click', e => { if (e.target === $(s)) $(s).hidden = true; }));
+['#pal-veil', '#ex-veil', '#role-veil'].forEach(s => $(s).addEventListener('click', e => { if (e.target === $(s)) $(s).hidden = true; }));
 addEventListener('hashchange', () => show(location.hash.slice(1)));
 
 /* ============ boot ============ */
 applyTheme(store.get('theme', 'auto'));
-show(location.hash.slice(1) || 'harta');
+roleBtn();
+show(location.hash.slice(1) || (S.role ? ROLES[S.role].view : 'harta'));
+if (!S.role && !ROLES[location.hash.slice(1)]) openRole();
 map.fitBounds(bnds(EXT), phone() ? {paddingTopLeft: [16, 70], paddingBottomRight: [16, innerHeight * .44 + 100]} : {paddingTopLeft: [leftPad() + 16, 76], paddingBottomRight: [76, 76]});
 renderLayers(); applyLayers(); scale();
 $('#loader').remove();
