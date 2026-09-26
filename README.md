@@ -120,6 +120,14 @@ visited, measurements per block / row, pipeline status. Data contract: `web/data
   (precomputed routes for ≥ 5 / 8 / 10 m on the static site, `scripts/build_route_variants.py`).
 - **Field use:** GPX export of each route, GPS navigation on the phone with a chosen start and checked targets.
 
+### Compliance: vineyard register (ONVV), cadastre, AIPA subsidies
+Tab „Conformitate” (role *Inspector*): per block, what the drone measured (planted area, density, gaps) against the
+Registrul vitivinicol entry and the AIPA request (demo records, clearly labelled), plus the **real public cadastral parcels**
+(ASP, WFS on geodata.gov.md): status per block, the eligible amount recomputed, a 9 km control route through the 28 blocks
+to visit only, and a printable inspection report. A real registry extract (CSV) can be loaded in live mode.
+Sources, legal basis and what is real vs demo: [`docs/COMPLIANCE.md`](docs/COMPLIANCE.md).
+`python -m pipeline.cadastre` · `python -m pipeline.compliance --visit-route [--registry-csv extras.csv]`
+
 ### Live mode on the laptop
 ```bash
 python -m pipeline.serve            # http://127.0.0.1:8000 — the same site plus the local API

@@ -1,0 +1,5 @@
+vineyard_id,rvv_code,exploatant,variety,planting_year,declared_area_ha,declared_density,igp,aipa_measure,aipa_year,requested_lei,demo
+V63,RVV-DEMO-V63,Exploatant demo 63,Cabernet Sauvignon,1992,4.10,3400,Codru,,,,true
+V02,RVV-DEMO-V02,Exploatant demo 02,Muscat Ottonel,2024,2.00,3400,Codru,Infiintarea plantatiilor viticole (struguri pentru vin),2024,86600,true
+V32,RVV-DEMO-V32,Exploatant demo 32,Feteasca Neagra,2025,3.10,4200,Codru,Infiintarea plantatiilor viticole (struguri pentru vin),2025,140000,true
+V11,,,,,,,,,,,true

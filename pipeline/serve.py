@@ -8,6 +8,9 @@
   POST /api/route         {"mode": "inspector"|"farmer", "min_gap": 3.0, "time": 20}
                           -> {"job": id}: pipeline.route on the targets that pass the filters (cached distances)
   GET  /api/job/<id>      {"state": "running"|"done"|"error", "log": [...], "route": ..., "targets": ..., "seconds"}
+  POST /api/compliance    body = registry extract as CSV (registry/rvv_template.csv columns)
+                          -> pipeline.compliance on it -> the new compliance.json (written to out/live/, the
+                             published web/data/compliance.json with the demo registry is left as it is)
 
 Usage:  python -m pipeline.serve [--port 8000] [--weights runs/vineyard/multi/weights/best.pt] [--device cpu]
 Binds to 127.0.0.1 only. Nothing here changes route.geojson / measurements.csv: live results go to out/live/.
@@ -129,6 +132,19 @@ def run_route(job: dict, mode: str, min_gap: float, tlimit: int) -> None:
                targets=json.loads((d / "targets.geojson").read_text()))
 
 
+def compliance(data: bytes, name: str) -> dict:
+    d = LIVE / "compliance" / uuid.uuid4().hex[:8]
+    d.mkdir(parents=True, exist_ok=True)
+    src = d / (re.sub(r"[^A-Za-z0-9_.-]", "_", Path(name).name) or "registru.csv")
+    src.write_bytes(data)
+    out = d / "compliance.json"
+    p = subprocess.run([sys.executable, "-m", "pipeline.compliance", "--registry-csv", str(src), "--out", str(out)],
+                       cwd=C.ROOT, capture_output=True, text=True)
+    if p.returncode != 0 or not out.exists():
+        raise ValueError((p.stderr or p.stdout).strip().splitlines()[-1] if (p.stderr or p.stdout) else "compliance a eșuat")
+    return json.loads(out.read_text())
+
+
 class Handler(SimpleHTTPRequestHandler):
     def log_message(self, fmt, *args):            # keep the console for the API
         if self.path.startswith("/api/"):
@@ -164,6 +180,8 @@ class Handler(SimpleHTTPRequestHandler):
             if self.path.startswith("/api/analyze"):
                 canopy = "model" if "canopy=model" in self.path else "classical"
                 return self.send_json(analyze(data, self.headers.get("X-Filename", "upload.tif"), canopy))
+            if self.path.startswith("/api/compliance"):
+                return self.send_json(compliance(data, self.headers.get("X-Filename", "registru.csv")))
             if self.path.startswith("/api/route"):
                 q = json.loads(data or b"{}")
                 mode = q.get("mode", "inspector")
