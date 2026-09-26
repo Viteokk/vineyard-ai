@@ -505,7 +505,9 @@ function select(sel) {
   } else if (sel.type === 'target') {
     const t = sel.t;
     html = `<div class="p-top"><div><div class="eyebrow">${t.type === 'waste' ? 'Deșeu' : 'Țintă de inspecție'}${t.order ? ' · oprirea ' + t.order : ''}</div><h2 style="font-size:19px">${t.id}</h2></div>${close}</div>
-      <dl>${t.type === 'gap' ? `<dt>Gol în rând</dt><dd class="num">${fmt(t.gap_m, 1)} m</dd>` : ''}<dt>vineyard_id</dt><dd>${t.vineyard_id || '—'}</dd>${t.row_id ? `<dt>row_id</dt><dd>${t.row_id}</dd>` : ''}<dt>X, Y</dt><dd class="mono">${t.x.toFixed(2)}, ${t.y.toFixed(2)}</dd></dl>`;
+      <dl>${t.type === 'gap' ? `<dt>Gol în rând</dt><dd class="num">${fmt(t.gap_m, 1)} m</dd>` : ''}<dt>vineyard_id</dt><dd>${t.vineyard_id || '—'}</dd>${t.row_id ? `<dt>row_id</dt><dd>${t.row_id}</dd>` : ''}<dt>X, Y</dt><dd class="mono">${t.x.toFixed(2)}, ${t.y.toFixed(2)}</dd></dl>
+      ${t.order ? `<div class="acts"><button class="btn primary" type="button" data-act="nav-here" data-id="${t.id}">Navighează de aici</button></div>` : ''}`;
+    if (NAV.picking) navStartFrom(t, 'ales pe hartă');
     hi = L.circleMarker(ll(t.x, t.y), {renderer: R, radius: 11, color: '#FFFFFF', weight: 3, fill: false}).addTo(map);
   } else if (sel.type === 'tile') {
     const g = cur().by[sel.name], b = TB[sel.name];
@@ -642,17 +644,28 @@ function show(v) {
 function setSrc(k) { S.src = k; store.set('src', k); for (const [l] of shown) { map.removeLayer(l); } shown.clear(); select(null); refreshAnnotations(); renderPanel(); }
 
 /* ============ GPS navigation (phone) ============ */
-const NAV = {watch: null, pos: null, me: null, acc: null, done: store.get('done', {}), skipped: {}};
+const NAV = {watch: null, pos: null, me: null, acc: null, done: store.get('done', {}), skipped: {}, startIdx: 0, manual: false, picking: false};
 const ORDERED = TG.filter(t => t.order).sort((a, b) => a.order - b.order);
-function navNext() { return ORDERED.find(t => !NAV.done[t.id] && !NAV.skipped[t.id]) || null; }
+function navNext() {                          // first unvisited target from the chosen start, following the tour order cyclically
+  const n = ORDERED.length;
+  for (let k = 0; k < n; k++) { const t = ORDERED[(NAV.startIdx + k) % n]; if (!NAV.done[t.id] && !NAV.skipped[t.id]) return t; }
+  return null;
+}
+function navStartFrom(t, why) {
+  const i = ORDERED.findIndex(x => x.id === t.id);
+  if (i < 0) return toast(`${t.id} nu e pe traseu (nevizitată)`);
+  NAV.startIdx = i; NAV.skipped = {}; NAV.manual = true; NAV.picking = false;
+  navRender(); toast(`Start: ${t.id}${why ? ' · ' + why : ''}`);
+}
 function navRender() {
-  const box = $('#nav'); if (!NAV.watch && !NAV.pos) { box.hidden = true; return; }
+  const box = $('#nav'); if (!NAV.watch && !NAV.pos && !NAV.manual) { box.hidden = true; return; }
   const t = navNext(), p = NAV.pos;
   const d = (t && p) ? Math.hypot(t.x - p[0], t.y - p[1]) : null;
   const head = (t && p) ? Math.round((Math.atan2(t.x - p[0], t.y - p[1]) * 180 / Math.PI + 360) % 360) : null;
   box.innerHTML = t ? `<div class="row"><div class="eyebrow">Următoarea țintă · #${t.order} din ${ORDERED.length}</div><button class="icon-btn" type="button" data-act="nav-stop" aria-label="Oprește navigarea">${IC.x}</button></div>
     <div class="row"><div><div class="big">${d == null ? '—' : d >= 1000 ? fmt(d / 1000, 2) + '<small>km</small>' : fmt(d, 0) + '<small>m</small>'}</div><div class="note" style="margin-top:4px">${t.id} · ${t.type === 'waste' ? 'deșeu' : 'gol ' + fmt(t.gap_m, 1) + ' m'} · ${t.vineyard_id || ''}${t.row_id ? ' / ' + t.row_id : ''}${head != null ? ' · direcție ' + head + '°' : ''}${p && NAV.accm ? ' · GPS ±' + fmt(NAV.accm, 0) + ' m' : ''}</div></div></div>
-    <div class="row"><button class="btn primary" type="button" data-act="nav-done" data-id="${t.id}" style="flex:1">${IC.ok} Verificat</button><button class="btn" type="button" data-act="nav-skip" data-id="${t.id}">Sari</button><button class="btn" type="button" data-act="nav-center" aria-label="Centrează pe mine">◎</button></div>`
+    <div class="row"><button class="btn primary" type="button" data-act="nav-done" data-id="${t.id}" style="flex:1">${IC.ok} Verificat</button><button class="btn" type="button" data-act="nav-skip" data-id="${t.id}">Sari</button><button class="btn" type="button" data-act="nav-center" aria-label="Centrează pe mine">◎</button></div>
+    <div class="row" style="justify-content:flex-start;flex-wrap:wrap;gap:6px"><span class="note">Începe de la:</span><button class="btn" type="button" data-act="nav-from-first" style="min-height:32px;padding:0 10px;font-size:12px" aria-pressed="${NAV.startIdx === 0}">nr. 1</button><button class="btn" type="button" data-act="nav-from-nearest" style="min-height:32px;padding:0 10px;font-size:12px" ${p ? '' : 'disabled title="aștept poziția GPS"'}>cea mai apropiată</button><button class="btn" type="button" data-act="nav-pick" style="min-height:32px;padding:0 10px;font-size:12px" aria-pressed="${NAV.picking}">${NAV.picking ? 'apasă o țintă pe hartă…' : 'aleg pe hartă'}</button></div>`
     : `<div class="row"><div class="eyebrow">Navigare</div><button class="icon-btn" type="button" data-act="nav-stop" aria-label="Oprește">${IC.x}</button></div><div class="big" style="font-size:18px">Toate țintele sunt verificate</div>`;
   box.hidden = false;
 }
@@ -671,7 +684,7 @@ function navStart() {
     err => { toast('GPS indisponibil: ' + (err.message || err.code)); navStop(); }, {enableHighAccuracy: true, maximumAge: 2000, timeout: 15000});
   renderPanel(); navRender(); toast('Navigare pornită · aștept poziția GPS');
 }
-function navStop() { if (NAV.watch) navigator.geolocation.clearWatch(NAV.watch); NAV.watch = null; NAV.pos = null; if (NAV.me) { map.removeLayer(NAV.me); map.removeLayer(NAV.acc); NAV.me = NAV.acc = null; } $('#nav').hidden = true; renderPanel(); }
+function navStop() { if (NAV.watch) navigator.geolocation.clearWatch(NAV.watch); NAV.watch = null; NAV.pos = null; NAV.manual = false; NAV.picking = false; if (NAV.me) { map.removeLayer(NAV.me); map.removeLayer(NAV.acc); NAV.me = NAV.acc = null; } $('#nav').hidden = true; renderPanel(); }
 window.__fpDebugPosition = navPosition;      // debugging hook (no GPS in a desktop preview)
 
 /* ============ layers popover ============ */
@@ -765,6 +778,10 @@ document.addEventListener('click', e => {
     case 'layers': { const p = $('#layers'); p.hidden = !p.hidden; b.setAttribute('aria-expanded', !p.hidden); if (!p.hidden) $('#insp').hidden = true; return; }
     case 'theme': { const o = ['auto', 'light', 'dark'], n = o[(o.indexOf(store.get('theme', 'auto')) + 1) % 3]; store.set('theme', n); return applyTheme(n); }
     case 'nav-start': return navStart();
+    case 'nav-from-first': { NAV.startIdx = 0; NAV.skipped = {}; NAV.picking = false; navRender(); return; }
+    case 'nav-from-nearest': { if (!NAV.pos) return toast('Aștept poziția GPS'); const c = ORDERED.filter(t => !NAV.done[t.id]); if (!c.length) return; const t = c.reduce((a, x) => Math.hypot(x.x - NAV.pos[0], x.y - NAV.pos[1]) < Math.hypot(a.x - NAV.pos[0], a.y - NAV.pos[1]) ? x : a); return navStartFrom(t, `${fmt(Math.hypot(t.x - NAV.pos[0], t.y - NAV.pos[1]), 0)} m de tine`); }
+    case 'nav-pick': { NAV.picking = !NAV.picking; navRender(); if (NAV.picking) toast('Apasă o țintă pe hartă'); return; }
+    case 'nav-here': { const t = TG.find(x => x.id === b.dataset.id); if (!t) return; navStartFrom(t); if (!NAV.watch && navigator.geolocation) navStart(); return; }
     case 'nav-stop': return navStop();
     case 'nav-done': { NAV.done[b.dataset.id] = true; store.set('done', NAV.done); navRender(); if (S.view === 'traseu') viewTraseu(); toast(`${b.dataset.id} verificat`); return; }
     case 'nav-skip': { NAV.skipped[b.dataset.id] = true; navRender(); return; }
