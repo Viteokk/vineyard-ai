@@ -123,9 +123,9 @@ visited, measurements per block / row, pipeline status. Data contract: `web/data
 - **Roles** (login page, or `#inspector` / `#fermier` in the link): state inspector (compliance, blue route, gaps,
   blocks, areas) and vineyard administrator (red route, waste, missing vines ≈ gap length / 1.2 m, replanting cost,
   yearly maintenance at MDL 52 000–80 000 / ha from the brief, Marcaj corrections). Each role sees only its tabs.
-- **MPass (simulated):** „Intră cu MPass” on the login page runs the shape of the real flow: `mpass.html`, an authorization
-  page clearly labelled as a demo, with test identities and no credential fields, then `auth.html`, the callback that opens the
-  session with the role. A real integration needs Field Planner registered as a SAML 2.0 service provider with the
+- **MPass:** „Intră cu MPass” on the login page redirects to the real `https://mpass.gov.md/login/saml`. For the demo, a
+  simulated flow is linked under it: `mpass.html`, an authorization page clearly labelled as a demo, with test identities
+  and no credential fields, then `auth.html`, the callback that opens the session with the role. A real integration needs Field Planner registered as a SAML 2.0 service provider with the
   Agenția de Guvernare Electronică and a server-side assertion consumer endpoint that checks the signature and maps
   the IDNP to a role; a static site cannot do this.
 - **Parameters:** walking speed and hours per day (times and field days update at once), minimum gap to inspect

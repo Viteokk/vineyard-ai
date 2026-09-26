@@ -27,7 +27,7 @@ h1{font:800 clamp(38px,6vw,56px)/1.05 'Bricolage Grotesque','Geist',sans-serif;m
 .tile.insp{--c:var(--blue)}.tile.admin{--c:var(--red)}
 .tile b{display:block;font:800 30px/1.1 'Bricolage Grotesque','Geist',sans-serif}
 .tile span.sub{display:block;margin-top:6px;font-weight:500}
-.note{color:var(--muted);font-size:14px;margin:0;text-align:center}
+.note{color:var(--muted);font-size:14px;margin:0;text-align:center;max-width:520px;text-wrap:balance}.note a{color:var(--ink)}
 .or{display:flex;align-items:center;gap:12px;color:var(--muted);font-size:13px;width:min(620px,100%)}.or::before,.or::after{content:'';flex:1;height:1px;background:rgba(255,255,255,.16)}
 .mpass{display:inline-flex;align-items:center;gap:10px;min-height:52px;padding:0 24px;border-radius:14px;background:#fff;color:#0B0F0D;font:700 16px 'Geist',sans-serif;text-decoration:none}
 .mpass:hover{background:#E9EFE9}.mpass:focus-visible{outline:3px solid var(--yellow);outline-offset:3px}
@@ -51,8 +51,8 @@ h1{font:800 clamp(38px,6vw,56px)/1.05 'Bricolage Grotesque','Geist',sans-serif;m
     </button>
   </div>
   <div class="or">sau</div>
-  <a class="mpass" href="mpass.html?return=app.html"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="10" width="16" height="11" rx="2"/><path d="M8 10V7a4 4 0 018 0v3"/></svg>Intră cu MPass</a>
-  <p class="note">Demo: MPass e simulat. Plăcile de mai sus intră direct, fără parolă.</p>
+  <a class="mpass" href="https://mpass.gov.md/login/saml" rel="noopener"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="10" width="16" height="11" rx="2"/><path d="M8 10V7a4 4 0 018 0v3"/></svg>Intră cu MPass</a>
+  <p class="note">MPass te duce pe mpass.gov.md. Întoarcerea în Field Planner după autentificare cere înregistrarea platformei la AGE.<br>Pentru demo: plăcile de mai sus sau <a href="mpass.html?return=app.html">simularea MPass</a>.</p>
 </main>
 <script>
 document.querySelectorAll('.tile').forEach(b => b.addEventListener('click', () => {
