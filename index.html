@@ -360,7 +360,7 @@ Object.values(SRC).forEach(indexSource);
 /* ============ state ============ */
 const S = {
   view: 'harta', src: store.get('src', SRC.pred ? 'pred' : 'ref'), sel: null, q: '', collapsed: false,
-  layers: Object.assign({ortho: true, canopy: true, rows: true, inter: true, passage: true, forbidden: true, study: true, grid: false, route_blue: true, route_red: true, targets: true, wcand: true}, store.get('layers', {})),
+  layers: Object.assign({ortho: true, canopy: true, rows: true, inter: true, passage: true, forbidden: true, study: true, grid: false, route_blue: true, route_red: true, targets: true, wcand: true, bstat: false}, store.get('layers', {})),
   op: store.get('op', 1), role: store.get('role', null), speed: store.get('speed', 4), hours: store.get('hours', 6),
   minGap: store.get('mingap', 5), price: store.get('price', 15)
 };
@@ -509,6 +509,7 @@ function applyLayers() {
   for (const [k, r] of Object.entries(ROUTES)) S.layers['route_' + k] ? r.layer.addTo(map) : map.removeLayer(r.layer);
   syncTargets();
   if (wcLayer) S.layers.wcand ? wcLayer.addTo(map) : map.removeLayer(wcLayer);
+  if (bstatLayer) { if (S.layers.bstat) { bstatLayer.addTo(map); bstatLayer.bringToBack(); } else map.removeLayer(bstatLayer); }
   ortho.eachLayer(l => l.setOpacity(S.op)); hires.eachLayer(l => l.setOpacity(S.op));
   refreshAnnotations();
 }
@@ -565,6 +566,19 @@ function select(sel) {
       ${t.order ? `<div class="acts"><button class="btn primary" type="button" data-act="nav-here" data-id="${t.id}">Navighează de aici</button></div>` : ''}`;
     if (NAV.picking) navStartFrom(t, 'ales pe hartă');
     hi = L.circleMarker(ll(t.x, t.y), {renderer: R, radius: 11, color: '#FFFFFF', weight: 3, fill: false}).addTo(map);
+  } else if (sel.type === 'block') {
+    const b = sel.b, ha = blockHa(b), rows = b.disrupted_row_ids;
+    html = `<div class="p-top"><div><div class="eyebrow">Bloc · stare ${BSN[b.status]}</div><h2 style="font-size:19px">${b.vineyard_id}</h2></div>${close}</div>
+      <dl><dt>Rânduri</dt><dd class="num">${fmt(b.rows)} · ${kmT(b.row_length_m)}</dd><dt>Disrupted</dt><dd class="num">${fmt(b.disrupted_rows)} (${fmt(b.disrupted_share * 100)}%)</dd>
+        <dt>Goluri</dt><dd class="num">${fmt(b.gaps)} · ${fmt(b.gap_length_m, 0)} m</dd><dt>Suprafață</dt><dd class="num">${fmt(ha, 2)} ha</dd>
+        <dt>Întreținere / an</dt><dd class="num">${fmt(ha * 52)}–${fmt(ha * 80)} mii MDL</dd></dl>
+      <div class="list" style="gap:2px;font-size:13px">
+        ${b.missing_vines ? `<div class="li" style="cursor:default"><span class="dot" style="background:${BSC[b.status]}"></span>Replantează ~${fmt(b.missing_vines)} butuci<span class="r num">~${fmt(b.missing_vines * S.price)} MDL</span></div>` : ''}
+        ${b.waste ? `<div class="li" style="cursor:default"><span class="dot" style="background:#9333EA"></span>Strânge ${fmt(b.waste)} deșeuri<span class="r">traseul roșu</span></div>` : ''}
+        ${rows.length ? `<div class="li" style="cursor:default;flex-wrap:wrap;gap:4px"><span class="dot" style="background:#FFD43B"></span>Verifică rândurile:${rows.slice(0, 12).map(r => ` <button type="button" class="btn sm" data-rowid="${r}">${r.split('-').pop()}</button>`).join('')}${rows.length > 12 ? ` <span class="note">+${rows.length - 12}</span>` : ''}</div>` : ''}
+      </div>
+      ${b.bbox ? `<div class="acts"><button class="btn" type="button" data-act="zoom-block">Mărește pe bloc</button></div>` : ''}`;
+    if (sel.layer) hi = L.geoJSON(sel.layer.feature, {renderer: R, coordsToLatLng: toLL, style: {color: '#FFFFFF', weight: 3, fill: false}, interactive: false}).addTo(map);
   } else if (sel.type === 'wcand') {
     const c = sel.c, v = WCV[c.rank], n = WC.length, done = Object.keys(WCV).length, yes = Object.values(WCV).filter(x => x === 'y').length;
     html = `<div class="p-top"><div><div class="eyebrow">Candidat deșeu #${c.rank} din ${n} · automat, neconfirmat</div><h2 style="font-size:19px">${short(c.tile)} · px ${Math.round((c.px[0] + c.px[2]) / 2)}, ${Math.round((c.px[1] + c.px[3]) / 2)}</h2></div>${close}</div>
@@ -603,7 +617,7 @@ function statsBlock(s) {
 function viewHarta() {
   const s = cur(), q = S.q.trim().toLowerCase(), list = s.tiles.filter(t => !q || t.includes(q)), max = Math.max(1, ...s.tiles.map(t => s.by[t].can.length));
   $('#p-head').innerHTML = head('Sireț3 · ortofoto 2,5 cm/px', s.name, srcSeg());
-  $('#p-body').innerHTML = `${roleCard()}${statsBlock(s)}
+  $('#p-body').innerHTML = `${roleCard()}${statsBlock(s)}${S.role === 'agronom' || !S.role ? blocksCard() : ''}
     <p class="note">${S.src === 'pred' ? 'Detecții automate pe toate cele 311 tile-uri, înainte de corectura umană din Marcaj. Unele tile-uri fără vie (livezi, sat) au detecții false: folosește lista de mai jos ca să le verifici.' : 'Adnotările oficiale ale organizatorilor pentru cele 2 tile-uri exemplu. Mărește pe ele: imaginea trece automat la rezoluția completă de 2,5 cm/px.'}</p>
     ${WC.length ? `<section><div class="sec-title"><h2 style="display:flex;align-items:center;gap:8px"><span style="width:10px;height:10px;border-radius:50%;background:#F97316;border:1.5px solid #1A1A1A"></span>Candidați deșeuri</h2><span class="num">${Object.keys(WCV).length} / ${WC.length} verificați · ${Object.values(WCV).filter(x => x === 'y').length} deșeu</span></div>
       <p class="note">Pete găsite automat (checklist pentru Marcaj). Nu sunt adnotări și nu intră în trasee: fiecare se verifică pe imagine (E deșeu / Nu e), apoi se desenează de mână în Marcaj.</p>
@@ -641,11 +655,11 @@ function missingCard(r) {
 /* ============ roles ============ */
 const ROLES = {
   inspector: {name: 'Inspector de stat', short: 'Inspector', color: '#2563EB', view: 'traseu', sub: 'Audit pentru subvenții: goluri în rânduri, butuci lipsă, suprafețe declarate.',
-    sees: 'Traseul albastru, țintele de inspecție, blocurile și ariile.', layers: {route_blue: true, route_red: false, targets: true, wcand: false}},
+    sees: 'Traseul albastru, țintele de inspecție, blocurile și ariile.', layers: {route_blue: true, route_red: false, targets: true, wcand: false, bstat: true}},
   fermier: {name: 'Fermier / administrator', short: 'Fermier', color: '#DC2626', view: 'traseu', sub: 'Deșeuri de strâns, butuci de replantat, costuri pe an.',
-    sees: 'Traseul roșu, deșeurile, butucii lipsă și costurile.', layers: {route_blue: false, route_red: true, targets: true, wcand: true}},
+    sees: 'Traseul roșu, deșeurile, butucii lipsă și costurile.', layers: {route_blue: false, route_red: true, targets: true, wcand: true, bstat: true}},
   agronom: {name: 'Agronom / analist', short: 'Agronom', color: '#1D7A4B', view: 'harta', sub: 'Toată harta: coroane, rânduri, inter-rânduri, măsurători, pipeline.',
-    sees: 'Toate straturile, ambele trasee, analiza unui tile nou.', layers: {route_blue: true, route_red: true, targets: true, wcand: true}}};
+    sees: 'Toate straturile, ambele trasee, analiza unui tile nou.', layers: {route_blue: true, route_red: true, targets: true, wcand: true, bstat: false}}};
 const USER_IC = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0116 0"/></svg>';
 function roleBtn() { $('#role-btn').innerHTML = `${USER_IC}<span>${S.role ? ROLES[S.role].short : 'Alege rolul'}</span>`; }
 function openRole() {
@@ -662,7 +676,7 @@ function setRole(k) {
 function roleCard() {
   if (!S.role) return `<div class="callout"><b>Cine folosește harta?</b><p class="note">Inspector, fermier sau agronom: harta arată ce îi trebuie fiecăruia.</p><div><button class="btn primary" type="button" data-act="role">Alege rolul</button></div></div>`;
   const r = ROLES[S.role], u = SRC.pred?.sum || {}, gaps = TG.filter(t => t.type === 'gap');
-  const missing = Math.round(gaps.reduce((a, t) => a + (t.gap_m || 0), 0) / 1.2);   // ~1.2 m between vines
+  const missing = BR ? BR.summary.missing_vines : Math.round(gaps.reduce((a, t) => a + (t.gap_m || 0), 0) / 1.2);   // ~1.2 m between vines
   const ha = ((u.canopy_area_m2 || 0) + (u.interrow_area_m2 || 0)) / 1e4, waste = TG.filter(t => t.type === 'waste').length;
   const kp = S.role === 'inspector' ? [[fmt(gaps.length), 'goluri în rânduri (ținte)'], [fmt(u.blocks ?? 0), 'blocuri de verificat'], [`${fmt(ha, 1)}<small>ha</small>`, 'vie: coroane + inter-rânduri'], [ROUTES.blue ? kmH(ROUTES.blue.len) : '—', 'traseul albastru']]
     : S.role === 'fermier' ? [[fmt(waste), 'deșeuri pe traseu (din Marcaj)'], [fmt(missing), 'butuci lipsă ≈ goluri / 1,2 m'], [`${fmt(missing * S.price)}<small>MDL</small>`, `replantare la ${fmt(S.price)} MDL / butaș`], [`${fmt(ha * 52)}–${fmt(ha * 80)}<small>mii MDL</small>`, 'întreținere pe an (52–80 mii MDL/ha)']]
@@ -685,7 +699,38 @@ function paramsCard() {
       <p class="note">${JOB ? `<span class="mono">${JOB.last || 'pornesc'}</span>` : `pipeline/route.py rulează pe laptop pe ${farmer ? 'deșeuri' : `țintele cu gol ≥ ${S.minGap} m`}; distanțele sunt în cache, durează 1–3 minute.`}</p>`
       : `<p class="note">Timpii și zilele se recalculează imediat.${VARS && !farmer ? ` Pragul de gol schimbă traseul: variantele ≥ ${Object.keys(VARS).join(', ')} m sunt calculate dinainte.` : ''} Orice alt calcul (alt prag, alt start, un tile nou) rulează de pe laptop: <span class="mono">python -m pipeline.serve</span>, apoi <span class="mono">http://127.0.0.1:8000</span>.</p>`}</section>`;
 }
-let LIVE = null, JOB = null, VARS = null;
+let LIVE = null, JOB = null, VARS = null, BR = null, bstatLayer = null;
+const BSC = {red: '#EF4444', yellow: '#F59E0B', green: '#22C55E'}, BSN = {red: 'roșu', yellow: 'galben', green: 'verde'};
+Promise.all([fetch('data/blocks_report.json').then(r => r.ok ? r.json() : null), fetch('data/blocks_status.geojson').then(r => r.ok ? r.json() : null)]).then(([rep, fc]) => {
+  if (!rep) return;
+  BR = {...rep, by: Object.fromEntries(rep.blocks.map(b => [b.vineyard_id, b]))};
+  if (fc) bstatLayer = L.geoJSON(fc, {renderer: R, coordsToLatLng: toLL, style: f => ({color: BSC[f.properties.status], weight: 1.4, fillColor: BSC[f.properties.status], fillOpacity: .16}),
+    onEachFeature: (f, l) => l.on('click', e => { L.DomEvent.stop(e); const b = BR.by[f.properties.vineyard_id]; if (b) select({type: 'block', b, layer: l}); })});
+  applyLayers(); renderLayers(); renderPanel();
+}).catch(() => {});
+const blockHa = b => (b.canopy_m2 + b.interrow_m2) / 1e4;
+function goBlock(vid) {
+  const b = BR?.by[vid]; if (!b) return toast(`${vid} nu e în raport`);
+  if (b.bbox) fitBounds(bnds(b.bbox), 4);
+  let lay = null; bstatLayer?.eachLayer(l => { if (l.feature.properties.vineyard_id === vid) lay = l; });
+  select({type: 'block', b, layer: lay});
+}
+function blocksCsv() {
+  const q = v => /[",;\n]/.test(String(v)) ? `"${String(v).replace(/"/g, '""')}"` : v;
+  const head = ['vineyard_id', 'stare', 'randuri', 'randuri_disrupted', 'goluri', 'lungime_goluri_m', 'butuci_lipsa', 'cost_replantare_mdl', 'deseuri', 'ha', 'intretinere_min_mdl', 'intretinere_max_mdl', 'randuri_de_verificat'];
+  const lines = BR.blocks.map(b => [b.vineyard_id, b.status, b.rows, b.disrupted_rows, b.gaps, b.gap_length_m, b.missing_vines, Math.round(b.missing_vines * S.price), b.waste,
+    blockHa(b).toFixed(3), Math.round(blockHa(b) * 52000), Math.round(blockHa(b) * 80000), b.disrupted_row_ids.join(' ')].map(q).join(','));
+  return [head.join(','), ...lines].join('\n') + '\n';
+}
+function blocksCard() {
+  if (!BR) return '';
+  const u = BR.summary, att = BR.blocks.filter(b => b.status !== 'green');
+  return `<section><div class="sec-title"><h2>Blocuri care au nevoie de atenție</h2><span class="num">${fmt(att.length)} din ${fmt(u.blocks)}</span></div>
+    <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:8px">${['red', 'yellow', 'green'].map(k => `<span class="badge" style="background:${BSC[k]}22;color:var(--ink)"><span class="dot" style="background:${BSC[k]};display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:5px"></span>${fmt(u.status[k])} ${BSN[k]}</span>`).join('')}</div>
+    <div class="list">${att.slice(0, 40).map(b => `<button type="button" class="li" data-block="${b.vineyard_id}"><span class="dot" style="background:${BSC[b.status]}"></span><b>${b.vineyard_id}</b><span class="r num">${fmt(b.disrupted_share * 100)}% disrupted · ~${fmt(b.missing_vines)} butuci${b.waste ? ' · ' + fmt(b.waste) + ' deșeuri' : ''}</span></button>`).join('')}</div>
+    <p class="note">Roșu: peste 30 % din rânduri disrupted; galben: 10–30 %; verde: sub 10 %. Butuci lipsă ≈ lungimea golurilor / ${fmt(u.vine_spacing_m, 1)} m. Cifrele vin din pre-adnotări și se actualizează după corectura din Marcaj.</p>
+    <div style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn" type="button" data-act="blocks-csv">Export CSV sarcini</button>${S.layers.bstat ? '' : '<button class="btn" type="button" data-act="bstat-on">Colorează blocurile pe hartă</button>'}</div></section>`;
+}
 fetch('data/variants/index.json').then(r => r.ok ? r.json() : null).then(j => { VARS = j; }).catch(() => {});
 async function loadVariant(g) {                // static site: precomputed route for this gap threshold
   const v = VARS?.[String(g)]; if (!v) return false;
@@ -758,7 +803,7 @@ function viewTraseu() {
   const sc = EXTRA.start?.features?.[0]?.geometry.coordinates;
   $('#p-head').innerHTML = head('Două trasee · START → ținte → START', 'Inspector (albastru) și fermier (roșu)');
   const order = S.role === 'fermier' ? ['red', 'blue'] : ['blue', 'red'];
-  $('#p-body').innerHTML = `${roleCard()}${paramsCard()}${ROUTES.live ? routeCard(ROUTES.live) : ''}
+  $('#p-body').innerHTML = `${roleCard()}${paramsCard()}${S.role === 'fermier' || S.role === 'inspector' ? blocksCard() : ''}${ROUTES.live ? routeCard(ROUTES.live) : ''}
     ${order.map(k => ROUTES[k] ? routeCard(ROUTES[k]) : missingCard(EXTRA.routes[k])).join('')}
     ${UTM && TG.some(t => t.order) ? `<section><div class="sec-title"><h2>Navigare pe teren</h2><span class="num">${fmt(Object.keys(NAV.done).length)} verificate</span></div>
       <div style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn primary" type="button" data-act="nav-start">${NAV.watch ? 'Navigarea rulează' : 'Pornește navigarea'}</button><button class="btn" type="button" data-act="nav-reset">Resetează bifele</button></div>
@@ -883,6 +928,7 @@ function renderLayers() {
   for (const [k, r] of Object.entries(ROUTES)) L1.push(['route_' + k, `Traseu ${r.name.toLowerCase()} (${r.sub})`, r.color]);
   if (targetsLayer) L1.push(['targets', 'Ținte (goluri, deșeuri)', '#2563EB']);
   if (wcLayer) L1.push(['wcand', 'Candidați deșeuri (checklist, neconfirmați)', '#F97316']);
+  if (bstatLayer) L1.push(['bstat', 'Starea blocurilor (roșu / galben / verde)', 'linear-gradient(90deg,#EF4444,#F59E0B,#22C55E)']);
   $('#layers').innerHTML = `<div class="sec-title" style="padding:2px 4px 4px"><h2>Straturi</h2><span><kbd>L</kbd></span></div>` +
     L1.map(([k, l, c]) => `<button type="button" class="sw" role="switch" aria-checked="${!!S.layers[k]}" data-layer="${k}"><span class="sw-i" style="background:${c};border:1px solid var(--line)"></span>${l}<span class="tg"></span></button>`).join('') +
     `<label for="op">Opacitate ortofoto<input type="range" id="op" min="15" max="100" value="${Math.round(S.op * 100)}"></label>
@@ -898,6 +944,7 @@ function palSearch(q) {
   if (WC.length && (!q || 'candidați deșeuri deseuri'.includes(q))) it.push({g: 'Locuri', k: 'D', l: 'Candidați deșeuri', r: `${WC.length} din checklist`, run: () => wcGo((WC.find(x => !WCV[x.rank]) || WC[0]).rank)});
   if (!q || 'start'.includes(q)) it.push({g: 'Locuri', k: 'S', l: 'START', r: 'punctul de plecare', run: () => startLL && map.flyTo(startLL, 3)});
   if (q) for (const t of TILES.filter(t => t.name && t.name.includes(q)).slice(0, 12)) { const g = cur().by[t.name]; it.push({g: 'Tile-uri', k: 'T', l: short(t.name), r: g ? `${g.can.length} coroane` : 'fără detecții', run: () => goTile(t.name)}); }
+  if (q.length > 1 && BR) for (const b of BR.blocks.filter(b => b.vineyard_id.toLowerCase().includes(q)).slice(0, 8)) it.push({g: 'Blocuri', k: 'V', l: b.vineyard_id, r: `${BSN[b.status]} · ${fmt(b.rows)} rânduri · ~${fmt(b.missing_vines)} butuci lipsă`, run: () => goBlock(b.vineyard_id)});
   if (q.length > 1) { const s = cur(); let n = 0; for (const t of s.tiles) for (const f of s.by[t].rows) if (n < 10 && f.properties.row_id.toLowerCase().includes(q)) { n++; it.push({g: 'Rânduri', k: 'R', l: f.properties.row_id, r: fmt(f.properties.length_m, 1) + ' m', run: () => goRow(f.properties.row_id)}); } }
   return it.slice(0, 40);
 }
@@ -960,6 +1007,7 @@ document.addEventListener('click', e => {
   if (b.dataset.rowid) return goRow(b.dataset.rowid);
   if (b.dataset.exk) return openExport(b.dataset.exk);
   if (b.dataset.role) return setRole(b.dataset.role);
+  if (b.dataset.block) return goBlock(b.dataset.block);
   switch (b.dataset.act) {
     case 'panel': return collapsePanel(!S.collapsed);
     case 'palette': return openPal();
@@ -986,6 +1034,9 @@ document.addEventListener('click', e => {
     case 'copy-repro': return copy($('#repro').innerText.replace(/^Copiază\s*/, ''), null);
     case 'unsel': return select(null);
     case 'role': return openRole();
+    case 'zoom-block': return S.sel?.b?.bbox && fitBounds(bnds(S.sel.b.bbox), 5);
+    case 'bstat-on': { S.layers.bstat = true; store.set('layers', S.layers); applyLayers(); renderLayers(); return renderPanel(); }
+    case 'blocks-csv': { const t = blocksCsv(); if (downloadText('sarcini_blocuri.csv', t, 'text/csv')) toast('sarcini_blocuri.csv descărcat'); else copy(t, null); return; }
     case 'role-close': $('#role-veil').hidden = true; return;
     case 'live-route': return JOB ? null : liveRoute();
     case 'analyze': return $('#tif-in').click();
