@@ -668,7 +668,7 @@ function statsBlock(s) {
 function viewHarta() {
   const s = cur(), q = S.q.trim().toLowerCase(), list = s.tiles.filter(t => !q || t.includes(q)), max = Math.max(1, ...s.tiles.map(t => s.by[t].can.length));
   $('#p-head').innerHTML = head('Sireț3 · ortofoto 2,5 cm/px', s.name, srcSeg());
-  $('#p-body').innerHTML = `${roleCard()}${statsBlock(s)}${S.role === 'agronom' || !S.role ? blocksCard() : ''}
+  $('#p-body').innerHTML = `${roleCard()}${statsBlock(s)}${S.role !== 'inspector' ? blocksCard() : ''}
     <p class="note">${S.src === 'pred' ? 'Detecții automate pe toate cele 311 tile-uri, înainte de corectura umană din Marcaj. Unele tile-uri fără vie (livezi, sat) au detecții false: folosește lista de mai jos ca să le verifici.' : 'Adnotările oficiale ale organizatorilor pentru cele 2 tile-uri exemplu. Mărește pe ele: imaginea trece automat la rezoluția completă de 2,5 cm/px.'}</p>
     ${WC.length ? `<section><div class="sec-title"><h2 style="display:flex;align-items:center;gap:8px"><span style="width:10px;height:10px;border-radius:50%;background:#F97316;border:1.5px solid #1A1A1A"></span>Candidați deșeuri</h2><span class="num">${Object.keys(WCV).length} / ${WC.length} verificați · ${Object.values(WCV).filter(x => x === 'y').length} deșeu</span></div>
       <p class="note">${WC.filter(c => c.source === 'model').length} găsite de modelul AI lângă vie (galben, primele în listă) + ${WC.filter(c => c.source !== 'model').length} de detectorul clasic (portocaliu). Nu sunt adnotări și nu intră în trasee: fiecare se verifică pe imagine (E deșeu / Nu e), apoi se desenează de mână în Marcaj.</p>
@@ -770,11 +770,10 @@ function rulerRender() {
 /* ============ roles ============ */
 const ROLES = {
   inspector: {name: 'Inspector de stat', short: 'Inspector', color: '#2563EB', view: 'conformitate', sub: 'Audit pentru subvenții: registrul viticol (ONVV) și cererile AIPA comparate cu ce vede drona.',
-    sees: 'Traseul albastru, țintele de inspecție, blocurile și ariile.', layers: {route_blue: true, route_red: false, targets: true, wcand: false, bstat: false, cmp: true, cad: true}},
-  fermier: {name: 'Fermier / administrator', short: 'Fermier', color: '#DC2626', view: 'traseu', sub: 'Deșeuri de strâns, butuci de replantat, costuri pe an.',
-    sees: 'Traseul roșu, deșeurile, butucii lipsă și costurile.', layers: {route_blue: false, route_red: true, targets: true, wcand: true, bstat: true}},
-  agronom: {name: 'Agronom / analist', short: 'Agronom', color: '#1D7A4B', view: 'harta', sub: 'Toată harta: coroane, rânduri, inter-rânduri, măsurători, pipeline.',
-    sees: 'Toate straturile, ambele trasee, analiza unui tile nou.', layers: {route_blue: true, route_red: true, targets: true, wcand: true, bstat: false, cmp: false, cad: false}}};
+    sees: 'Conformitatea pe blocuri, cadastrul, traseul de control, procesul-verbal.', layers: {route_blue: true, route_red: false, targets: true, wcand: false, bstat: false, cmp: true, cad: true}},
+  fermier: {name: 'Administrator (fermier)', short: 'Administrator', color: '#DC2626', view: 'traseu', sub: 'Administrează plantația: deșeuri de strâns, butuci de replantat, starea blocurilor, costuri pe an, măsurători.',
+    sees: 'Traseul roșu, deșeurile, starea blocurilor, costurile, măsurătorile și analiza unui tile nou.', layers: {route_blue: false, route_red: true, targets: true, wcand: true, bstat: true, cmp: false, cad: false}}};
+if (S.role && !ROLES[S.role]) S.role = null;      // roles removed since (e.g. agronom) -> choose again
 const USER_IC = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0116 0"/></svg>';
 function roleBtn() { $('#role-btn').innerHTML = `${USER_IC}<span>${S.role ? ROLES[S.role].short : 'Alege rolul'}</span>`; }
 function openRole() {
@@ -789,7 +788,7 @@ function setRole(k) {
   if (location.hash.slice(1) === r.view) show(r.view); else location.hash = r.view;
 }
 function roleCard() {
-  if (!S.role) return `<div class="callout"><b>Cine folosește harta?</b><p class="note">Inspector, fermier sau agronom: harta arată ce îi trebuie fiecăruia.</p><div><button class="btn primary" type="button" data-act="role">Alege rolul</button></div></div>`;
+  if (!S.role) return `<div class="callout"><b>Cine folosește harta?</b><p class="note">Inspector sau administrator (fermier): harta arată ce îi trebuie fiecăruia.</p><div><button class="btn primary" type="button" data-act="role">Alege rolul</button></div></div>`;
   const r = ROLES[S.role], u = SRC.pred?.sum || {}, gaps = TG.filter(t => t.type === 'gap');
   const missing = BR ? BR.summary.missing_vines : Math.round(gaps.reduce((a, t) => a + (t.gap_m || 0), 0) / 1.2);   // ~1.2 m between vines
   const ha = ((u.canopy_area_m2 || 0) + (u.interrow_area_m2 || 0)) / 1e4, waste = TG.filter(t => t.type === 'waste').length;
@@ -1105,7 +1104,8 @@ python -m http.server -d web 8000</div></section>`;
 const VIEWS = {harta: viewHarta, traseu: viewTraseu, masuratori: viewMas, pipeline: viewPipe, conformitate: viewConf};
 function renderPanel() { VIEWS[S.view](); }
 function show(v) {
-  if (ROLES[v]) return setRole(v);         // #inspector, #fermier, #agronom
+  if (v === 'administrator') v = 'fermier';
+  if (ROLES[v]) return setRole(v);         // #inspector, #fermier (#administrator)
   const idm = /^(V\d+)(-R\d+)?$/i.exec(v || '');   // shareable links: #V63 (block), #V02-R017 (row)
   if (idm && !VIEWS[v]) { PENDING = v.toUpperCase(); if (S.view !== 'harta' || !$('#p-body').innerHTML) show('harta'); return openPending(); }
   if (!VIEWS[v]) v = 'harta';
