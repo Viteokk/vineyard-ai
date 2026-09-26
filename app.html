@@ -1121,7 +1121,7 @@ function printZone() {
   try { window.print(); } catch (e) { toast('Tipărirea nu e disponibilă aici'); }
 }
 /* ============ Planifică: zonă + START + ținte -> traseu calculat în browser (web/router.js, aceleași reguli ca pipeline/route.py) ============ */
-const PL = {gaps: true, minGap: store.get('pl_gap', 3), waste: true, wcand: S.role === 'fermier', strict: false, ann: false, more: false, busy: null, pct: 0, worker: null};
+const PL = {gaps: S.role !== 'fermier', minGap: store.get('pl_gap', 3), waste: true, wcand: S.role === 'fermier',   // inspection (gaps + waste) vs waste collection, as in the brief strict: false, ann: false, more: false, busy: null, pct: 0, worker: null};
 const ringsOf = g => !g ? [] : g.type === 'Polygon' ? [g.coordinates] : g.type === 'MultiPolygon' ? g.coordinates : [];
 const bbHit = (a, b) => !(a[2] < b[0] || a[0] > b[2] || a[3] < b[1] || a[1] > b[3]);
 function ringBB(r) { let a = [Infinity, Infinity, -Infinity, -Infinity]; for (const [x, y] of r) a = [Math.min(a[0], x), Math.min(a[1], y), Math.max(a[2], x), Math.max(a[3], y)]; return a; }
