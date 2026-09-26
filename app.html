@@ -66,7 +66,7 @@ kbd{font-family:var(--mono);font-size:11px;padding:1px 6px;border-radius:6px;bor
 .rail .tip{position:absolute;left:54px;top:50%;transform:translateY(-50%);white-space:nowrap;background:var(--ink);color:var(--bg);font-size:12px;font-weight:600;padding:5px 9px;border-radius:8px;opacity:0;pointer-events:none;transition:opacity .15s}
 .rail a:hover .tip,.rail a:focus-visible .tip{opacity:1}
 .rail .sp{flex-grow:1}
-.only-phone{display:none}
+.rail .only-phone{display:none}
 .rail button{width:44px;height:44px;border-radius:12px;display:grid;place-items:center;color:var(--muted)}
 .rail button:hover{background:var(--hover);color:var(--ink)}
 .panel{position:fixed;left:88px;top:16px;bottom:16px;width:392px;border-radius:20px;z-index:999;display:flex;flex-direction:column;overflow:hidden;transition:width .28s cubic-bezier(.2,.8,.2,1),transform .28s cubic-bezier(.2,.8,.2,1)}
@@ -138,15 +138,33 @@ tbody tr:hover td{background:var(--hover)}
 .facts div{padding:9px 0;border-top:1px solid var(--line)}
 .facts div:nth-child(odd){color:var(--muted)}
 
-.cmd{position:fixed;left:calc(50% + 240px);top:16px;transform:translateX(-50%);width:min(420px,calc(100vw - 620px));min-width:260px;height:44px;border-radius:14px;display:flex;align-items:center;gap:10px;padding:0 8px 0 14px;z-index:1000;color:var(--muted);text-align:left}
+.cmd{width:clamp(220px,calc(100vw - 1000px),360px);height:44px;border-radius:14px;display:flex;align-items:center;gap:10px;padding:0 8px 0 14px;z-index:1000;color:var(--muted);text-align:left}
 .cmd:hover{color:var(--ink)}
 .cmd .grow{flex-grow:1}
-.panel.collapsed ~ .cmd{left:50%}
-.panel.wide:not(.collapsed) ~ .cmd{display:none}
+body:has(.panel.wide:not(.collapsed)) .cmd{display:none}
 .tr{position:fixed;right:16px;top:16px;display:flex;gap:8px;z-index:1000}
 .tr .icon-btn{width:44px;height:44px;border-radius:14px}
 .tr .btn{min-height:44px;border-radius:14px}
-.tr .logout-btn:hover{color:var(--red,#CC092F)}
+.tgroup{display:flex;gap:2px;padding:0;border-radius:14px}
+.tgroup .icon-btn{width:44px;height:44px;border-radius:13px}
+.tgroup .icon-btn:hover{background:var(--hover);color:var(--ink)}
+.rail a.logo,.rail a.logo:hover{width:40px;height:40px;background:var(--accent);color:var(--on-accent)}
+.rail button{position:relative}
+.rail button:hover .tip,.rail button:focus-visible .tip{opacity:1}
+.rail-sep{width:28px;height:1px;background:var(--line);margin:4px 0}
+.rail .avatar{width:40px;height:40px;border-radius:50%;background:var(--rc,#64748B);color:#fff;font:700 13px/1 'Geist',system-ui,sans-serif;letter-spacing:.02em;box-shadow:0 0 0 2px var(--panel),0 0 0 4px var(--rc,#64748B);margin:4px 0}
+.rail .avatar:hover{background:var(--rc,#64748B);color:#fff;filter:brightness(1.08)}
+.rail .avatar svg{display:block}
+.rail .rail-out:hover{color:#DC2626;background:rgba(220,38,38,.10)}
+.pop.acct{left:88px;right:auto;top:auto;bottom:16px;width:290px;padding:16px;gap:12px;background:var(--solid);box-shadow:0 18px 48px rgba(0,0,0,.28)}
+.acct-h{display:flex;gap:12px;align-items:center}
+.acct-h .av{width:44px;height:44px;border-radius:50%;background:var(--rc);color:#fff;display:grid;place-items:center;font:700 15px/1 'Geist',system-ui,sans-serif;flex-shrink:0}
+.acct-h b{display:block;font-size:15px}
+.acct .meta{display:grid;grid-template-columns:auto 1fr;gap:6px 12px;font-size:13px;margin:0;padding-top:12px;border-top:1px solid var(--line)}
+.acct .meta dt{color:var(--muted)}.acct .meta dd{margin:0}
+.acct .acts{display:flex;flex-direction:column;gap:8px}
+.acct .btn{width:100%}
+.btn.out{color:#DC2626}.btn.out:hover{background:rgba(220,38,38,.10)}
 .pop{position:fixed;right:16px;top:70px;width:290px;border-radius:18px;padding:14px;z-index:1001;display:flex;flex-direction:column;gap:2px;max-height:calc(100vh - 100px);overflow:auto}
 .sw{display:flex;align-items:center;gap:10px;min-height:38px;font-size:13px;padding:0 4px;border-radius:10px;width:100%;text-align:left}
 .sw:hover{background:var(--hover)}
@@ -195,8 +213,6 @@ input[type=range]{accent-color:var(--accent);width:100%}
 .nav .row{display:flex;gap:8px;align-items:center;justify-content:space-between}
 .nav .btn{min-height:44px}
 .btn.sm{min-height:32px;padding:0 10px;font-size:12px}
-.role-btn{max-width:220px}
-.role-btn span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .role-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:10px}
 .role-card{text-align:left;display:flex;flex-direction:column;gap:6px;padding:14px;border-radius:14px;border:1px solid var(--line);background:var(--hover)}
 .role-card:hover{background:var(--press)}
@@ -251,17 +267,20 @@ input[type=range]{accent-color:var(--accent);width:100%}
 .me{width:16px;height:16px;border-radius:50%;background:#2563EB;box-shadow:0 0 0 3px #fff,0 0 0 8px rgba(37,99,235,.3)}
 @media (max-width:820px){.nav,.panel:not(.collapsed) ~ .nav{left:12px;right:12px;width:auto;transform:none;top:auto;bottom:calc(84px + env(safe-area-inset-bottom,0px))}}
 .toast{position:fixed;left:50%;top:72px;transform:translateX(-50%);z-index:3000;background:var(--ink);color:var(--bg);font-weight:600;padding:10px 16px;border-radius:12px;box-shadow:var(--shadow)}
-@media (max-width:1100px){.cmd{display:none}}
+@media (max-width:1100px){.cmd{display:none}.rail .only-phone{display:grid}}
 @media (max-width:820px){
   .rail{left:12px;right:12px;top:auto;bottom:calc(12px + env(safe-area-inset-bottom,0px));width:auto;height:60px;flex-direction:row;justify-content:space-around;padding:0 8px}
   .rail .logo,.rail .sp,.rail .tip{display:none}
   .rail .only-phone{display:grid}
   .rail a,.rail button{width:38px}
+  .rail .rail-out,.rail .rail-sep{display:none}
+  .rail .avatar{width:34px;height:34px;font-size:12px}
   .nav .row .btn,.nav .btn.sm{min-height:44px}
   .panel,.panel.wide{left:12px;right:12px;width:auto;top:auto;bottom:calc(84px + env(safe-area-inset-bottom,0px));height:44vh}
   .panel.collapsed{transform:translateY(calc(100% + 100px))}
   .tr{right:12px;top:12px}.tr .btn{display:none}
   .pop,.insp{right:12px;left:12px;width:auto;top:66px}
+  .pop.acct{left:12px;right:12px;width:auto;top:auto;bottom:calc(84px + env(safe-area-inset-bottom,0px))}
   .zoom,.readout{display:none}
 }
 @media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
@@ -270,7 +289,7 @@ input[type=range]{accent-color:var(--accent);width:100%}
 <div id="map" role="application" aria-label="Ortofoto Sireț3 cu adnotări"></div>
 
 <nav class="rail glass" aria-label="Secțiuni">
-  <div class="logo" aria-hidden="true"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M5 20V9M10 20V4M15 20V9M20 20V4"/></svg></div>
+  <a class="logo" href="index.html" aria-label="Field Planner, pagina de start"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M5 20V9M10 20V4M15 20V9M20 20V4"/></svg></a>
   <a href="#harta" data-view="harta"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 4L3 6v14l6-2 6 2 6-2V4l-6 2-6-2z"/><path d="M9 4v14M15 6v14"/></svg><span class="tip">Hartă <kbd>1</kbd></span><span class="sr">Hartă</span></a>
   <a href="#traseu" data-view="traseu"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="6" cy="19" r="2"/><circle cx="18" cy="5" r="2"/><path d="M8 19h6a4 4 0 000-8h-4a4 4 0 010-8h6"/></svg><span class="tip">Traseu <kbd>2</kbd></span><span class="sr">Traseu</span></a>
   <a href="#masuratori" data-view="masuratori"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 20V10M10 20V4M16 20v-7M21 20H3"/></svg><span class="tip">Măsurători <kbd>3</kbd></span><span class="sr">Măsurători</span></a>
@@ -280,26 +299,29 @@ input[type=range]{accent-color:var(--accent);width:100%}
   <a href="#conformitate" data-view="conformitate"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l8 3v6c0 4.5-3.4 8.3-8 9-4.6-.7-8-4.5-8-9V6l8-3z"/><path d="M8.5 12l2.5 2.5 4.5-5"/></svg><span class="tip">Conformitate <kbd>5</kbd></span><span class="sr">Conformitate</span></a>
   <div class="sp"></div>
   <button type="button" data-act="palette" class="only-phone" aria-label="Caută tile, rând, bloc"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg></button>
-  <button type="button" data-act="panel" aria-label="Ascunde sau arată panoul"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="3"/><path d="M9 4v16"/></svg></button>
+  <button type="button" data-act="panel" aria-label="Ascunde sau arată panoul"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="3"/><path d="M9 4v16"/></svg><span class="tip">Panou</span></button>
+  <div class="rail-sep" aria-hidden="true"></div>
+  <button type="button" class="avatar" data-act="acct" id="acct-btn" aria-label="Cont" aria-expanded="false"><span id="acct-ini"></span><span class="tip" id="acct-tip"></span></button>
+  <button type="button" class="rail-out" data-act="logout" id="logout-btn" aria-label="Ieșire din cont" hidden><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 4h3a2 2 0 012 2v12a2 2 0 01-2 2h-3"/><path d="M10 17l-5-5 5-5M5 12h11"/></svg><span class="tip">Ieșire</span></button>
 </nav>
 
 <aside class="panel glass" id="panel"><div class="p-head" id="p-head"></div><div class="p-body" id="p-body"></div></aside>
 
-<button class="cmd glass" type="button" data-act="palette" aria-label="Caută tile-uri, rânduri, secțiuni">
+<div class="tr">
+  <button class="cmd glass" type="button" data-act="palette" aria-label="Caută tile-uri, rânduri, secțiuni">
   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg>
   <span class="grow">Caută tile, rând, secțiune…</span><kbd>⌘K</kbd>
 </button>
-
-<div class="tr">
-  <button class="btn glass role-btn" type="button" data-act="role" id="role-btn" aria-label="Schimbă rolul"></button>
-  <button class="icon-btn glass logout-btn" type="button" data-act="logout" id="logout-btn" aria-label="Ieșire din cont" title="Ieșire" hidden><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 4h3a2 2 0 012 2v12a2 2 0 01-2 2h-3"/><path d="M10 17l-5-5 5-5M5 12h11"/></svg></button>
-  <button class="icon-btn glass" type="button" data-act="layers" aria-label="Straturi" aria-expanded="false"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l9 5-9 5-9-5 9-5z"/><path d="M3 13l9 5 9-5"/></svg></button>
-  <button class="icon-btn glass" type="button" data-act="legend" aria-label="Legendă" aria-expanded="false"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M9.5 9.5a2.5 2.5 0 114 2c-.9.6-1.5 1.1-1.5 2.5M12 17h.01"/></svg></button>
-  <button class="icon-btn glass" type="button" data-act="theme" id="theme-btn" aria-label="Schimbă tema"></button>
+  <div class="tgroup glass">
+  <button class="icon-btn" type="button" data-act="layers" title="Straturi (L)" aria-label="Straturi" aria-expanded="false"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l9 5-9 5-9-5 9-5z"/><path d="M3 13l9 5 9-5"/></svg></button>
+  <button class="icon-btn" type="button" data-act="legend" title="Legendă" aria-label="Legendă" aria-expanded="false"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M9.5 9.5a2.5 2.5 0 114 2c-.9.6-1.5 1.1-1.5 2.5M12 17h.01"/></svg></button>
+  <button class="icon-btn" type="button" data-act="theme" id="theme-btn" aria-label="Schimbă tema" title="Temă"></button>
+  </div>
   <button class="btn primary" type="button" data-act="export"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v12M7 10l5 5 5-5M5 21h14"/></svg>Export</button>
 </div>
 <div class="pop glass" id="layers" hidden></div>
 <div class="pop glass" id="legend" hidden></div>
+<div class="pop glass acct" id="acct" hidden role="dialog" aria-label="Cont"></div>
 <div class="ruler glass" id="ruler" hidden aria-live="polite"></div>
 <div class="insp glass" id="insp" hidden></div>
 <div class="zoom glass">
@@ -807,7 +829,26 @@ const ROLE_VIEWS = {inspector: ['conformitate', 'harta', 'traseu', 'zona', 'masu
 const allowedView = v => !S.role || !ROLE_VIEWS[S.role] || ROLE_VIEWS[S.role].includes(v);
 function applyRoleNav() { $$('.rail a[data-view]').forEach(a => { a.hidden = !allowedView(a.dataset.view); }); }
 const USER_IC = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0116 0"/></svg>';
-function roleBtn() { $('#role-btn').innerHTML = `${USER_IC}<span>${SESSION?.name ? SESSION.name + ' · ' : ''}${S.role ? ROLES[S.role].short : 'Alege rolul'}</span>`; $('#logout-btn').hidden = !SESSION; applyRoleNav(); }
+const escH = s => String(s ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/"/g, '&quot;');
+const initials = n => String(n || '').split(/\s+/).filter(Boolean).slice(0, 2).map(w => w[0].toUpperCase()).join('');
+const acctColor = () => ROLES[S.role]?.color || '#64748B';
+function acctIni() { const r = ROLES[S.role]; return SESSION?.name ? escH(initials(SESSION.name)) : r ? r.short[0] : USER_IC; }
+function roleBtn() {
+  const r = ROLES[S.role], b = $('#acct-btn');
+  b.style.setProperty('--rc', acctColor());
+  $('#acct-ini').innerHTML = acctIni();
+  const label = SESSION?.name ? `${SESSION.name} · ${r?.short || ''}` : r ? r.short : 'Alege rolul';
+  $('#acct-tip').textContent = label; b.setAttribute('aria-label', 'Cont: ' + label);
+  $('#logout-btn').hidden = !SESSION; applyRoleNav();
+}
+function renderAcct() {
+  const r = ROLES[S.role], sn = SESSION || {};
+  const via = sn.via === 'mpass-demo' ? 'MPass (simulat)' : SESSION ? 'Intrare demo, fără parolă' : 'Neconectat';
+  const since = sn.at ? new Date(sn.at).toLocaleString('ro-RO', {day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit'}) : '';
+  $('#acct').innerHTML = `<div class="acct-h"><span class="av" style="--rc:${acctColor()}">${acctIni()}</span><div><b>${escH(sn.name || (r ? r.name : 'Vizitator'))}</b><span class="note">${r ? escH(r.short) : 'Niciun rol ales'}${sn.org ? ' · ' + escH(sn.org) : ''}</span></div></div>
+  <dl class="meta"><dt>Autentificare</dt><dd>${via}</dd>${since ? `<dt>De la</dt><dd>${since}</dd>` : ''}<dt>Acces</dt><dd>${r ? r.sees : 'Toate tab-urile'}</dd></dl>
+  <div class="acts"><button class="btn" type="button" data-act="role">Schimbă rolul</button>${SESSION ? '<button class="btn out" type="button" data-act="logout">Ieșire din cont</button>' : '<a class="btn primary" href="login.html">Intră în cont</a>'}</div>`;
+}
 function openRole() {
   $('#role-title').textContent = SESSION ? `Conectat: ${SESSION.name || 'utilizator demo'}` : 'Cine folosește harta?';
   $('#role-sess').innerHTML = SESSION ? `<div class="callout"><b>${SESSION.name ? SESSION.name + ' · ' : ''}${ROLES[S.role]?.name || ''}${SESSION.org ? ' · ' + SESSION.org : ''}</b><p class="note">${SESSION.via === 'mpass-demo' ? 'Intrat prin MPass (simulat). ' : ''}Sesiune demo în acest browser. Tab-urile afișate sunt cele ale rolului.</p><div><button class="btn primary" type="button" data-act="logout">Ieșire</button></div></div>` : `<div class="callout"><p class="note">Ai și o <a href="login.html">pagină de intrare</a> pe roluri.</p></div>`;
@@ -1586,7 +1627,7 @@ document.addEventListener('click', e => {
     case 'fit': return fitAll();
     case 'md-fit': return mdBounds ? fitBounds(mdBounds, 0) : toast('Harta Moldovei se încarcă');
     case 'goto-start': return startLL && map.flyTo(startLL, 3.5, {duration: .6});
-    case 'layers': { const p = $('#layers'); $('#legend').hidden = true; p.hidden = !p.hidden; b.setAttribute('aria-expanded', !p.hidden); if (!p.hidden) $('#insp').hidden = true; return; }
+    case 'layers': { const p = $('#layers'); $('#legend').hidden = true; $('#acct').hidden = true; p.hidden = !p.hidden; b.setAttribute('aria-expanded', !p.hidden); if (!p.hidden) $('#insp').hidden = true; return; }
     case 'theme': { const o = ['auto', 'light', 'dark'], n = o[(o.indexOf(store.get('theme', 'auto')) + 1) % 3]; store.set('theme', n); return applyTheme(n); }
     case 'nav-start': return navStart();
     case 'nav-from-first': { NAV.startIdx = 0; NAV.skipped = {}; NAV.picking = false; navRender(); return; }
@@ -1604,9 +1645,10 @@ document.addEventListener('click', e => {
     case 'copy-ex': return copy($('#ex-text').value, $('#ex-text'));
     case 'copy-repro': return copy($('#repro').innerText.replace(/^Copiază\s*/, ''), null);
     case 'unsel': return select(null);
-    case 'role': return openRole();
+    case 'role': $('#acct').hidden = true; $('#acct-btn').setAttribute('aria-expanded', 'false'); return openRole();
+    case 'acct': { const p = $('#acct'); if (p.hidden) renderAcct(); p.hidden = !p.hidden; b.setAttribute('aria-expanded', !p.hidden); if (!p.hidden) { $('#layers').hidden = true; $('#legend').hidden = true; } return; }
     case 'logout': { try { localStorage.removeItem('fpm.session'); localStorage.removeItem('fpm.role'); } catch (e) {} location.href = 'index.html'; return; }
-    case 'legend': { const p = $('#legend'); if (p.hidden) renderLegend(); p.hidden = !p.hidden; b.setAttribute('aria-expanded', !p.hidden); if (!p.hidden) { $('#layers').hidden = true; $('#insp').hidden = true; } return; }
+    case 'legend': { const p = $('#legend'); if (p.hidden) renderLegend(); p.hidden = !p.hidden; b.setAttribute('aria-expanded', !p.hidden); if (!p.hidden) { $('#layers').hidden = true; $('#acct').hidden = true; $('#insp').hidden = true; } return; }
     case 'ruler': return rulerToggle();
     case 'cst-pick': { CST.picking = !CST.picking; map.getContainer().style.cursor = CST.picking ? 'crosshair' : ''; if (CST.picking) { if (phone()) collapsePanel(true); toast('Apasă pe hartă punctul de start'); } return renderPanel(); }
     case 'cst-clear': return setCustomStart(null);
@@ -1666,7 +1708,7 @@ document.addEventListener('keydown', e => {
   if (e.key === 'Enter' && ZN.mode === 'poly' && !e.target.matches('input,textarea')) return finishPoly();
   const typing = e.target.matches('input,textarea');
   if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'k') { e.preventDefault(); return $('#pal-veil').hidden ? openPal() : closePal(); }
-  if (e.key === 'Escape') { if (ZN.mode) { ZN.mode = null; ZN.pts = []; clearDraft(); map.doubleClickZoom.enable(); map.getContainer().style.cursor = ''; return renderPanel(); } if (CST.picking) { CST.picking = false; map.getContainer().style.cursor = ''; return renderPanel(); } if (RULER.on) return rulerToggle(); if (!$('#legend').hidden) return ($('#legend').hidden = true); if (!$('#role-veil').hidden) return ($('#role-veil').hidden = true); if (!$('#pal-veil').hidden) return closePal(); if (!$('#ex-veil').hidden) return ($('#ex-veil').hidden = true); if (!$('#layers').hidden) return ($('#layers').hidden = true); if (S.sel) return select(null); }
+  if (e.key === 'Escape') { if (ZN.mode) { ZN.mode = null; ZN.pts = []; clearDraft(); map.doubleClickZoom.enable(); map.getContainer().style.cursor = ''; return renderPanel(); } if (CST.picking) { CST.picking = false; map.getContainer().style.cursor = ''; return renderPanel(); } if (RULER.on) return rulerToggle(); if (!$('#acct').hidden) return ($('#acct').hidden = true); if (!$('#legend').hidden) return ($('#legend').hidden = true); if (!$('#role-veil').hidden) return ($('#role-veil').hidden = true); if (!$('#pal-veil').hidden) return closePal(); if (!$('#ex-veil').hidden) return ($('#ex-veil').hidden = true); if (!$('#layers').hidden) return ($('#layers').hidden = true); if (S.sel) return select(null); }
   if (typing) return;
   if (e.key === '/') { e.preventDefault(); return openPal(); }
   if ('1234567'.includes(e.key) && e.key.length === 1) location.hash = ['harta', 'traseu', 'masuratori', 'pipeline', 'conformitate', 'corectura', 'zona'][+e.key - 1];
@@ -1679,6 +1721,7 @@ addEventListener('hashchange', () => show(location.hash.slice(1)));
 /* ============ boot ============ */
 applyTheme(store.get('theme', 'auto'));
 roleBtn();
+document.addEventListener('pointerdown', e => { const p = $('#acct'); if (!p.hidden && !p.contains(e.target) && !e.target.closest('#acct-btn')) { p.hidden = true; $('#acct-btn').setAttribute('aria-expanded', 'false'); } });
 show(location.hash.slice(1) || (S.role ? ROLES[S.role].view : 'harta'));
 if (!S.role && !ROLES[location.hash.slice(1)] && !/^#([VC]\d+|zona)/i.test(location.hash)) openRole();   // shared links open straight on the object
 map.fitBounds(bnds(EXT), phone() ? {paddingTopLeft: [16, 70], paddingBottomRight: [16, innerHeight * .44 + 100]} : {paddingTopLeft: [leftPad() + 16, 76], paddingBottomRight: [76, 76]});
