@@ -96,6 +96,11 @@ Full per-stage timings of the last run: `out/timing.json`.
 
 ## Model
 
+How the whole solution works, the training data and the open questions: [`docs/MODEL.md`](docs/MODEL.md).
+One YOLOv8n-seg with two classes (`vineyard`, `waste`): `train/make_multi_dataset.py` (Sireț3 crops with the official
+reference + pseudo-labels, DroneWaste v1.0 and UAVVaste, both CC BY 4.0, non-waste categories dropped) →
+`train/train_yolo.py --name multi` → `pipeline/infer_multi.py` (waste boxes + optional model canopies on classical rows).
+
 Submitted detections come from the classical pipeline (it scored higher than the fine-tuned YOLO on the example
 tiles: canopy 0.587 vs 0.562, because its outlines match the loosely traced reference better). The neural model
 is delivered anyway: `train/make_dataset.py` (pseudo-labels + official example, 640 px crops) → `train/train_yolo.py`
@@ -104,9 +109,27 @@ is delivered anyway: `train/make_dataset.py` (pseudo-labels + official example, 
 ## Web interface
 
 `web/index.html` — Leaflet on the real orthophoto in UTM (CRS.Simple, no reprojection): layers (canopies, rows with
-`row_id`, inter-rows with cover, passages, forbidden, blocks), both routes with length, time at 4 km/h and targets
+`row_id`, inter-rows with cover, passages, forbidden, blocks), both routes with length, walking time and targets
 visited, measurements per block / row, pipeline status. Data contract: `web/data/*.geojson`, `web/data/pred/*`,
-`web/data/route*.geojson`, `web/data/route_check_*.json`.
+`web/data/route*.geojson`, `web/data/route_check_*.json`, `web/data/variants/`.
+
+- **Roles** (first screen, or `#inspector` / `#fermier` / `#agronom` in the link): state inspector (blue route,
+  gaps, blocks, areas), farmer (red route, waste, missing vines ≈ gap length / 1.2 m, replanting cost, yearly
+  maintenance at MDL 52 000–80 000 / ha from the brief), agronomist (all layers).
+- **Parameters:** walking speed and hours per day (times and field days update at once), minimum gap to inspect
+  (precomputed routes for ≥ 5 / 8 / 10 m on the static site, `scripts/build_route_variants.py`).
+- **Field use:** GPX export of each route, GPS navigation on the phone with a chosen start and checked targets.
+
+### Live mode on the laptop
+```bash
+python -m pipeline.serve            # http://127.0.0.1:8000 — the same site plus the local API
+```
+The site detects the API and switches to live computation:
+- **Recompute a route** with any gap threshold (`POST /api/route`): `pipeline.route` on the filtered targets with
+  the cached distance matrix, 1–3 min on the M4 Pro, drawn as a third route with its own GPX.
+- **Analyse a new tile** (`POST /api/analyze`): upload any georeferenced GeoTIFF at ~2.5 cm/px; the classical
+  detector and the AI model return canopies, rows, inter-rows and waste on the map with counts and areas
+  (~4 s per 2048 px tile on CPU).
 
 ## Paid APIs / LLMs
 
