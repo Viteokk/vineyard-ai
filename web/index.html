@@ -56,6 +56,7 @@ nav a.link:hover{color:#fff}
 @keyframes pulse{from{opacity:.9;transform:scale(1)}to{opacity:0;transform:scale(3.2)}}
 .mapcard .place{font:700 15px/1.3 'Geist',sans-serif}
 .mapcard .detail{font-size:13px;color:var(--muted);min-height:2.6em}
+.hint-touch{display:none}@media (hover:none){.hint-mouse{display:none}.hint-touch{display:inline}}
 .mapcard .loading{color:var(--muted);font-size:14px;padding:40px 0;text-align:center}
 .stats{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));background:var(--glass);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);border:1px solid var(--line);border-radius:18px;margin-bottom:40px}
 .stats div{padding:22px 26px;display:flex;flex-direction:column;gap:6px}
@@ -86,7 +87,8 @@ section{padding-block:80px}
 .badge.real{background:rgba(74,222,128,.14);color:var(--leaf)}.badge.demo{background:rgba(255,210,0,.14);color:var(--yellow)}
 footer{border-top:1px solid var(--line);padding-block:28px 40px;color:var(--muted);font-size:14px;display:flex;gap:16px;flex-wrap:wrap;justify-content:space-between}
 @media (max-width:960px){.hero-grid,.roles{grid-template-columns:1fr}.steps{grid-template-columns:1fr 1fr}.trust{grid-template-columns:1fr}.stats{grid-template-columns:1fr 1fr}.mapcard{max-width:460px}}
-@media (max-width:560px){nav a.link{display:none}.steps,.stats{grid-template-columns:1fr}.hero::before{background:rgba(10,14,12,.85)}}
+@media (max-width:960px){.hero{min-height:0}.hero-grid{padding-block:24px 28px;gap:28px}.mapcard{max-width:none}.mapcard svg{max-height:380px}}
+@media (max-width:560px){nav a.link{display:none}.steps{grid-template-columns:1fr}.stats{grid-template-columns:1fr 1fr}.stats div{padding:16px 18px}.hero::before{background:rgba(10,14,12,.85)}.hero .lead{font-size:17px}section{padding-block:56px}.btn{min-height:48px}}
 @media (prefers-reduced-motion:reduce){html{scroll-behavior:auto}.mapcard .pulse{animation:none;opacity:0}}
 </style>
 </head>
@@ -116,7 +118,7 @@ footer{border-top:1px solid var(--line);padding-block:28px 40px;color:var(--mute
       <span class="eyebrow">Unde suntem</span>
       <div id="md" class="loading">Se încarcă harta…</div>
       <div class="place" id="place">Sireți, r. Strășeni · IGP Codru</div>
-      <div class="detail" id="detail">145 ha zburate · 70 de blocuri · 676 parcele. Treci cu cursorul peste raioane.</div>
+      <div class="detail" id="detail">145 ha zburate · 70 de blocuri · 676 parcele. <span class="hint-mouse">Treci cu cursorul peste raioane.</span><span class="hint-touch">Atinge un raion.</span></div>
     </aside>
   </div>
   <div class="wrap" style="width:100%">
@@ -174,7 +176,7 @@ footer{border-top:1px solid var(--line);padding-block:28px 40px;color:var(--mute
 /* interactive Moldova: raions from data/moldova.geojson (EPSG:32635); hover highlights and names them */
 (async function () {
   const box = document.getElementById('md'), place = document.getElementById('place'), detail = document.getElementById('detail');
-  const def = {p: place.textContent, d: detail.textContent};
+  const def = {p: place.textContent, d: detail.innerHTML};
   let fc;
   try { fc = await fetch('data/moldova.geojson').then(r => r.json()); } catch (e) { box.textContent = 'Harta nu s-a putut încărca.'; return; }
   const country = fc.features.find(f => f.properties.kind === 'country'), raions = fc.features.filter(f => f.properties.kind === 'raion'), com = fc.features.find(f => f.properties.kind === 'commune');
@@ -199,16 +201,21 @@ footer{border-top:1px solid var(--line);padding-block:28px 40px;color:var(--mute
   box.className = ''; box.innerHTML = svg.join('');
   const show = el => {
     box.querySelectorAll('.raion.on').forEach(x => x.classList.remove('on'));
-    if (!el) { place.textContent = def.p; detail.textContent = def.d; return; }
+    if (!el) { place.textContent = def.p; detail.innerHTML = def.d; return; }
     el.classList.add('on');
     const f = raions[+el.dataset.i];
     place.textContent = clean(f.properties.name);
-    detail.textContent = el.classList.contains('study') ? 'Aici e Sireț3: 145 ha zburate cu drona. Apasă ca să intri.' : 'Încă nezburat. Același pipeline merge pe orice zbor nou din raion.';
+    detail.textContent = el.classList.contains('study') ? (matchMedia('(hover: none)').matches ? 'Aici e Sireț3: 145 ha zburate cu drona. Atinge din nou ca să intri.' : 'Aici e Sireț3: 145 ha zburate cu drona. Apasă ca să intri.') : 'Încă nezburat. Același pipeline merge pe orice zbor nou din raion.';
   };
   box.addEventListener('mouseover', e => { const el = e.target.closest('.raion'); if (el) show(el); });
-  box.addEventListener('mouseleave', () => show(null));
+  box.addEventListener('mouseleave', () => { if (!matchMedia('(hover: none)').matches) show(null); });
   box.addEventListener('focusin', e => { const el = e.target.closest('.raion'); if (el) show(el); });
-  box.addEventListener('click', e => { if (e.target.closest('.raion.study')) location.href = 'login.html'; });
+  box.addEventListener('click', e => {
+    const el = e.target.closest('.raion'); if (!el) return;
+    const touch = matchMedia('(hover: none)').matches;
+    if (touch && !el.classList.contains('on')) return show(el);          // first tap selects
+    if (el.classList.contains('study')) location.href = 'login.html';
+  });
   box.addEventListener('keydown', e => { if (e.key === 'Enter' && e.target.closest('.raion.study')) location.href = 'login.html'; });
 })();
 </script>
