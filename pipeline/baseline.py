@@ -74,6 +74,25 @@ class P:  # tunable parameters (metres unless noted)
     max_slope: float = 0.03      # residual slope allowed in the rotated frame
     canopy_half: float = 0.30    # canopy band half-width around the axis (reference convention)
     edge_snap: float = 4.0       # extend a row to the imagery edge if its first/last vine is this close
+    # v3: orientation and row support (v1 behaviour: --v1)
+    orient_mode: str = "support" # "support": of the strongest periodic directions, keep the one whose rows sit on the
+                                 # most vegetation compared with the space between them; "period" (v1): the most
+                                 # periodic direction (a ploughed field, a tree line or wheel tracks could win)
+    orient_k: int = 6            # candidate directions (local maxima of periodicity, >= 6 deg apart)
+    min_contrast: float = 0.05   # on-row minus between-row vegetation share needed to call it a vineyard
+    row_support: bool = True     # drop rows / trim row ends that are not on vines
+    sup_ratio: float = 1.3       # a row needs on/between vegetation >= this (vine rows: median 7, wrong lines ~1.0)
+    sup_diff: float = 0.08       # ... and on - between >= this
+    trim_win: float = 0.0        # window (m) to trim row ends over fields / houses; 0 = off (it cost 0.01 on the
+                                 # reference, where rows run to the imagery edge; overshoots are fixed in Marcaj)
+    trim_diff: float = 0.03      # an end is trimmed only where there is hardly any vegetation on the line (field,
+    trim_on: float = 0.05        # road, roof) or dense green everywhere with no more on the line than between
+    trim_dense: float = 0.4      # the lines (trees, meadow); grassy vineyards keep their green on the line
+    trim_min: float = 6.0        # ... and only if that stretch is at least this long
+    trim_run: float = 4.0        # the kept part starts / ends with at least this much continuous vine support
+    second_pass: bool = True     # v3: a second vineyard with another row direction on the same tile
+    second_min_free: float = 0.15  # ... searched in what the first pass left unexplained (share of the tile)
+    second_min_angle: float = 15.0 # ... only if its direction differs by at least this (deg)
 
 
 # ---------------------------------------------------------------- helpers
@@ -118,7 +137,7 @@ def periodicity(profile: np.ndarray, px: float, pmin: float, pmax: float):
     return float(spec[band].sum() / spec[1:].sum()), float(1 / freqs[k])
 
 
-def find_orientation(veg: np.ndarray, valid: np.ndarray, p: P):
+def find_orientation(veg: np.ndarray, valid: np.ndarray, p: P, avoid: float | None = None):
     small = cv2.resize(veg.astype(np.float32), None, fx=1 / DS, fy=1 / DS, interpolation=cv2.INTER_AREA)
     vsmall = cv2.resize(valid.astype(np.float32), None, fx=1 / DS, fy=1 / DS, interpolation=cv2.INTER_AREA)
     px = RES * DS
@@ -134,9 +153,56 @@ def find_orientation(veg: np.ndarray, valid: np.ndarray, p: P):
         return periodicity(prof, px, p.period_min, p.period_max)
 
     coarse = [(score(a)[0], a) for a in np.arange(0, 180, 2.0)]
+    if avoid is not None:                           # second pass: another direction than the first vineyard
+        far = lambda a: min(abs(a - avoid) % 180, 180 - abs(a - avoid) % 180) >= p.second_min_angle
+        coarse = [(sc if far(a) else 0.0, a) for sc, a in coarse]
     s, best = max(coarse)
-    a, period = refine_orientation(veg, valid, best, p)
-    return a, s, period
+    if p.orient_mode == "period":                   # v1
+        a, period = refine_orientation(veg, valid, best, p)
+        return a, s, period
+    # v3: local maxima of periodicity are candidates; keep the one with the highest on-row vs between-row contrast
+    n = len(coarse)
+    peaks = sorted((coarse[i] for i in range(n) if coarse[i][0] >= coarse[i - 1][0] and coarse[i][0] >= coarse[(i + 1) % n][0]), reverse=True)
+    cands = []
+    for sc, a0 in peaks:
+        if sc < 0.5 * p.min_period_score:
+            break
+        if all(min(abs(a0 - c), 180 - abs(a0 - c)) >= 6 for _, c in cands):
+            cands.append((sc, a0))
+        if len(cands) >= p.orient_k:
+            break
+    best_c = None
+    for sc, a0 in cands or [(s, best)]:
+        a, period = refine_orientation(veg, valid, a0, p)
+        c = row_contrast(small, vsmall, a, period, px)
+        if best_c is None or c > best_c[0]:
+            best_c = (c, a, period, sc)
+    c, a, period, sc = best_c
+    return a, (sc if c >= p.min_contrast else 0.0), period
+
+
+def row_contrast(small: np.ndarray, vsmall: np.ndarray, a: float, period: float, px: float) -> float:
+    """Best (over grid phase) difference between the vegetation share on the row lines and half a period away.
+    Vines: 0.2-0.5; lines drawn across the rows, over scrub or a ploughed field: ~0."""
+    M, size = rot_matrix(small.shape, a)
+    r, v = cv2.warpAffine(small, M, size), cv2.warpAffine(vsmall, M, size)
+    vs = v.sum(1)
+    keep = vs > 0.3 * vs.max()
+    prof = (r.sum(1) / np.maximum(vs, 1))
+    per = period / px
+    if keep.sum() < 3 * per:
+        return 0.0
+    idx = np.arange(len(prof))
+    best = 0.0
+    for ph in np.arange(0, per, max(per / 12, 1.0)):
+        on = np.round(np.arange(ph, len(prof), per)).astype(int)
+        mid = np.round(np.arange(ph + per / 2, len(prof), per)).astype(int)
+        on, mid = on[(on < len(prof))], mid[(mid < len(prof))]
+        on, mid = on[keep[on]], mid[keep[mid]]
+        if len(on) < 3 or len(mid) < 3:
+            continue
+        best = max(best, float(prof[on].mean() - prof[mid].mean()))
+    return best
 
 
 def refine_orientation(veg: np.ndarray, valid: np.ndarray, a0: float, p: P, ds: int = 2):
@@ -240,6 +306,22 @@ def grid_positions(th: np.ndarray, ok: np.ndarray, period_px: float, p: P) -> li
     return [y for y in ys if ok[int(y)]]
 
 
+def band_frac(rv: np.ndarray, rvalid: np.ndarray, row: "Row", xs: np.ndarray, dy0: float, hb: int, H: int):
+    """Per x: share of vegetation pixels in the +-hb band around the row axis shifted by dy0 (px), and where the band
+    lies on imagery."""
+    yl = np.round(row.yat(xs) + dy0).astype(int)
+    inside = (yl - hb >= 0) & (yl + hb < H)
+    tot = np.zeros(len(xs), np.float32)
+    val = np.zeros(len(xs), np.float32)
+    for dy in range(-hb, hb + 1, max(1, hb // 3)):
+        yq = np.clip(yl + dy, 0, H - 1)
+        vv = inside & (rvalid[yq, xs] > 0)
+        tot += (rv[yq, xs] > 0) & vv
+        val += vv
+    ok = val > 0
+    return np.where(ok, tot / np.maximum(val, 1), 0.0), ok
+
+
 def detect_rows(rv: np.ndarray, rvalid: np.ndarray, period: float, p: P) -> list[Row]:
     H, W = rv.shape
     cnt = rvalid.sum(1)
@@ -289,6 +371,40 @@ def detect_rows(rv: np.ndarray, rvalid: np.ndarray, period: float, p: P) -> list
             continue
         on = np.flatnonzero(occ)
         x0, x1 = int(on[0]), int(on[-1])
+        if p.row_support:                            # v3: is this line on vines (vs half a period to either side)?
+            frac = lambda dyc: band_frac(rv, rvalid, row, xs, dyc, hb, H)
+            f_on, ok_on = frac(0.0)
+            f_a, ok_a = frac(-period / 2 / RES)
+            f_b, ok_b = frac(+period / 2 / RES)
+            both = ok_a.astype(np.float32) + ok_b.astype(np.float32)
+            f_mid = np.where(both > 0, (f_a * ok_a + f_b * ok_b) / np.maximum(both, 1), 0.0)
+            span = np.zeros(W, bool)
+            span[x0:x1 + 1] = True
+            use = ok_on & (both > 0) & span
+            if use.sum() * RES >= min(p.min_row_veg, 0.4 * chord):   # same length rule as above (corner rows)
+                won, wmid = float(f_on[use].mean()), float(f_mid[use].mean())
+                if won / max(wmid, 0.02) < p.sup_ratio or won - wmid < p.sup_diff:
+                    continue                          # not a vine row: across the real rows, over scrub / a field
+            if p.trim_win > 0:                        # trim ends that clearly run over fields / yards / grass
+                w = int(p.trim_win / RES) | 1
+                known = (ok_on & (both > 0)).astype(np.float32)
+                cnt = np.maximum(uniform_filter1d(known, size=w), 1e-6)
+                lon = uniform_filter1d(np.where(known > 0, f_on, 0).astype(np.float32), size=w) / cnt
+                lmid = uniform_filter1d(np.where(known > 0, f_mid, 0).astype(np.float32), size=w) / cnt
+                lk = uniform_filter1d(known, size=w)
+                bad = (lk > 0.5) & ((lon < p.trim_on) | ((lon - lmid < p.trim_diff) & (lmid > p.trim_dense)))
+                good = span & ~bad
+                if (x1 - x0) * RES < 2 * p.trim_run:      # short rows (tile corners) are kept as they are
+                    good = span.copy()
+                runs = [(a, b) for a, b in _runs(good) if (b - a) * RES >= min(p.trim_run, (x1 - x0 + 1) * RES)]
+                gi = np.array([x for a, b in (runs[:1] + runs[-1:]) for x in (a, b - 1)]) if runs else np.array([], int)
+                if gi.size == 0:
+                    continue
+                tmin = p.trim_min / RES                # only long stretches: short ones are shadows / missing vines
+                if gi[0] - x0 >= tmin:
+                    x0 = int(gi[0])
+                if x1 - gi[-1] >= tmin:
+                    x1 = int(gi[-1])
         # vines usually reach the tile edge: snap row ends to the imagery edge if close enough
         vr = [(a, b) for a, b in _runs(vline) if a <= x0 < b] or [(0, W)]
         va, vb = vr[0]
@@ -462,10 +578,28 @@ def process_tile(tile: Tile, p: P = P(), debug: list | None = None) -> list[dict
     veg = (e > p.exg_canopy) & valid
     veg = cv2.morphologyEx(veg.astype(np.uint8), cv2.MORPH_OPEN, np.ones((3, 3), np.uint8))
     veg = cv2.morphologyEx(veg, cv2.MORPH_CLOSE, cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (5, 5)))
+    vid = f"T{tile.row:03d}_{tile.col:03d}"
+    objs, angle, period = _detect(tile, img, e, veg, valid, p, debug, vid)
+    if objs and p.second_pass and p.orient_mode != "period":
+        # v3: what the first vineyard does not explain (its rows +- half a spacing, grown by 1 m) may hold a second
+        # vineyard with another row direction (block corners, neighbouring plots)
+        foot = np.zeros(valid.shape, np.uint8)
+        wpx = int(round((period + 2.0) / RES))
+        for o in objs:
+            if o["label"] == "row":
+                cv2.polylines(foot, [np.round(np.asarray(o["points"])).astype(np.int32)], False, 1, thickness=wpx)
+        free = valid & (foot == 0)
+        if free.mean() >= p.second_min_free:
+            objs2, _, _ = _detect(tile, img, e, (veg.astype(bool) & free).astype(np.uint8), free, p, None, vid + "b", avoid=angle)
+            objs += objs2
+    return objs
 
-    angle, pscore, period = find_orientation(veg, valid, p)
+
+def _detect(tile: Tile, img, e, veg, valid, p: P, debug, vid: str, avoid: float | None = None):
+    """One row direction on (part of) a tile -> (objects, angle, period)."""
+    angle, pscore, period = find_orientation(veg, valid, p, avoid)
     if pscore < p.min_period_score:
-        return []
+        return [], angle, period
 
     M, size = rot_matrix(veg.shape, angle)
     Minv = cv2.invertAffineTransform(M)
@@ -475,11 +609,10 @@ def process_tile(tile: Tile, p: P = P(), debug: list | None = None) -> list[dict
     # ---- row axes: periodic grid over the across-row profile, then a robust line fit per row
     rows = detect_rows(rv, rvalid, period, p)
     if len(rows) < p.min_rows:
-        return []
+        return [], angle, period
 
     # ---- canopies: vegetation inside the canopy band of each row, one polygon per plant
     objs: list[dict] = []
-    vid = f"T{tile.row:03d}_{tile.col:03d}"
     rc = cv2.warpAffine((e > p.exg_crown).astype(np.uint8) & valid.astype(np.uint8), M, size,
                         flags=cv2.INTER_NEAREST)
     tile_box = box(0, 0, tile.width, tile.height)
@@ -487,7 +620,7 @@ def process_tile(tile: Tile, p: P = P(), debug: list | None = None) -> list[dict
     keep = vine_rows(rows, row_polys, period, p, debug)
     rows = [r for r, k in zip(rows, keep) if k]
     if len(rows) < p.min_rows:
-        return []
+        return [], angle, period
     for polys, k in zip(row_polys, keep):
         if not k:
             continue
@@ -532,7 +665,7 @@ def process_tile(tile: Tile, p: P = P(), debug: list | None = None) -> list[dict
         objs.append({"label": "interrow_area", "type": "polygon",
                      "points": list(poly.exterior.coords)[:-1],
                      "attrs": {"vineyard_id": vid, "interrow_cover": cover}})
-    return objs
+    return objs, angle, period
 
 
 def main() -> None:
@@ -541,7 +674,9 @@ def main() -> None:
     ap.add_argument("--out", default=str(C.OUT / "baseline.xml"))
     ap.add_argument("--limit", type=int, default=0)
     ap.add_argument("--no-forbidden", action="store_true", help="keep objects inside organiser forbidden zones")
+    ap.add_argument("--v1", action="store_true", help="v1 behaviour (as uploaded to Marcaj): most periodic direction, no row support")
     a = ap.parse_args()
+    params = P(orient_mode="period", row_support=False) if a.v1 else P()
     paths = sorted(Path(a.tiles).glob("siret3_r*_c*.tif"))
     if a.limit:
         paths = paths[: a.limit]
@@ -552,7 +687,7 @@ def main() -> None:
         t = time.time()
         try:
             tile = open_tile(pth)
-            res[pth.name] = drop_forbidden(process_tile(tile), tile, forbidden, P())
+            res[pth.name] = drop_forbidden(process_tile(tile, params), tile, forbidden, params)
         except Exception as ex:  # one bad tile must not kill a 311-tile run; export it empty
             print(f"{pth.name}: FAILED {type(ex).__name__}: {ex}", file=sys.stderr)
             res[pth.name] = []

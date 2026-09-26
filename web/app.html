@@ -243,7 +243,9 @@ input[type=range]{accent-color:var(--accent);width:100%}
 .chip{display:inline-block;font-size:11px;font-weight:600;padding:1px 8px;border-radius:999px;white-space:nowrap}
 .chip.gol{background:rgba(239,68,68,.15);color:#DC2626}.chip.gol_check{background:rgba(245,158,11,.18);color:#B45309}
 .chip.partial{background:rgba(59,130,246,.15);color:#2563EB}.chip.deseu,.chip.deseu_top{background:rgba(147,51,234,.15);color:#9333EA}
-.chip.lipsa{background:rgba(34,197,94,.16);color:#15803D}
+.chip.lipsa,.chip.adauga,.chip.a_doua{background:rgba(34,197,94,.16);color:#15803D}
+.chip.goleste{background:rgba(239,68,68,.15);color:#DC2626}.chip.verifica{background:rgba(245,158,11,.18);color:#B45309}
+.chip.refa{background:rgba(234,179,8,.2);color:#A16207}.chip.curata{background:rgba(59,130,246,.15);color:#2563EB}
 .zmodes{display:flex;gap:6px;flex-wrap:wrap}
 .pl{display:flex;flex-direction:column;gap:10px}
 .insp.wide{width:min(430px,calc(100vw - 32px))}
@@ -1271,7 +1273,8 @@ function viewZona() {
 /* ============ corectură Marcaj: plan pe task-uri ============ */
 let COR = null;
 const CORD = store.get('cor', {});
-const CORA = {gol: 'golește tot', gol_check: 'verifică, apoi golește', partial: 'șterge zonele fără vie', deseu: 'posibil deșeu', deseu_top: 'deșeu probabil', lipsa: 'vie ratată: desenează rândurile'};
+const CORA = {goleste: 'golește tot (fără vie)', verifica: 'verifică: vie doar în colț / tânără', refa: 'refă rândurile (direcție greșită)', a_doua: 'adaugă a doua vie (altă direcție)', curata: 'șterge rândurile în plus', adauga: 'vie ratată: desenează rândurile',
+  gol: 'golește tot', gol_check: 'verifică, apoi golește', partial: 'șterge zonele fără vie', deseu: 'posibil deșeu', deseu_top: 'deșeu probabil', lipsa: 'vie ratată: desenează rândurile'};
 fetch('data/marcaj_tasks.json').then(r => r.ok ? r.json() : null).then(j => { COR = j; if (S.view === 'corectura') renderPanel(); }).catch(() => {});
 function viewCor() {
   $('#p-head').innerHTML = head(`Corectură Marcaj · proiectul ${COR?.project ?? ''}`, '63 de task-uri');
@@ -1280,13 +1283,15 @@ function viewCor() {
   const done = COR.tasks.filter(t => CORD[t.task]).length;
   const count = k => work.reduce((a, t) => a + t.frames.filter(f => f.actions.includes(k)).length, 0);
   $('#p-body').innerHTML = `<div class="stats"><div class="stat"><div class="v num">${fmt(done)} / 63</div><div class="l">task-uri trimise (Submit), bifate aici</div></div>
-      <div class="stat"><div class="v num" style="color:#DC2626">${fmt(count('gol') + count('gol_check'))}</div><div class="l">tile-uri fără vie de golit</div></div>
-      <div class="stat"><div class="v num" style="color:#2563EB">${fmt(count('partial'))}</div><div class="l">tile-uri cu zone de șters</div></div>
-      <div class="stat"><div class="v num" style="color:#15803D">${fmt(count('lipsa'))}</div><div class="l">tile-uri cu vie ratată</div></div></div>
+      <div class="stat"><div class="v num" style="color:#DC2626">${fmt(count('goleste') + count('gol'))}</div><div class="l">tile-uri fără vie de golit${count('verifica') ? ` · ${fmt(count('verifica'))} de verificat` : ''}</div></div>
+      <div class="stat"><div class="v num" style="color:#A16207">${fmt(count('refa'))}</div><div class="l">tile-uri cu rânduri în direcție greșită</div></div>
+      <div class="stat"><div class="v num" style="color:#2563EB">${fmt(count('curata') + count('partial'))}</div><div class="l">tile-uri cu rânduri în plus</div></div>
+      <div class="stat"><div class="v num" style="color:#15803D">${fmt(count('adauga') + count('a_doua') + count('lipsa'))}</div><div class="l">tile-uri cu vie de adăugat</div></div></div>
+    <p class="note">Plan ${COR.version || 'v1'}: ce e acum în Marcaj comparat cu detectorul v3. Pe fiecare frame vezi câte rânduri are acum și câte găsește v3. <a href="review.html" target="_blank" rel="noopener">Vezi toate tile-urile cu liniile desenate</a></p>
     <p class="note">Pe fiecare task din Marcaj: faci ce scrie la fiecare frame, te uiți rapid la restul, apoi <b>Save + Submit</b> și bifezi aici. Click pe un frame = harta sare la tile și arată ce a desenat AI-ul. Bifele rămân doar în acest browser. <a href="https://marcaj.com/projects/38" target="_blank" rel="noopener">Deschide proiectul în Marcaj</a></p>
     <div style="display:flex;flex-direction:column;gap:8px">${work.map(t => `<div class="cor-task ${CORD[t.task] ? 'done' : ''}">
       <div class="cor-head"><b>Task #${t.task}</b><span class="note">${t.frames.length} frame${t.frames.length > 1 ? '-uri' : ''} de lucru</span><span style="flex:1"></span><button class="btn sm" type="button" data-cor-done="${t.task}" aria-pressed="${!!CORD[t.task]}">${CORD[t.task] ? '✓ Trimis' : 'Marchează trimis'}</button></div>
-      ${t.frames.map(f => `<button type="button" class="cor-fr" data-cor-tile="${f.tile}"><b class="num">${f.frame ? 'frame ' + f.frame : 'frame ?'}</b><span class="mono">${short(f.tile)}</span>${f.actions.map(a => `<span class="chip ${a}">${CORA[a]}</span>`).join('')}<span class="note">${f.objects ? fmt(f.objects) + ' obiecte AI' : 'gol acum'}${f.vineyard_id ? ' · vineyard_id ' + f.vineyard_id : ''}</span></button>`).join('')}</div>`).join('')}</div>
+      ${t.frames.map(f => `<button type="button" class="cor-fr" data-cor-tile="${f.tile}"><b class="num">${f.frame ? 'frame ' + f.frame : 'frame ?'}</b><span class="mono">${short(f.tile)}</span>${f.actions.map(a => `<span class="chip ${a}">${CORA[a]}</span>`).join('')}<span class="note">${f.rows_marcaj != null ? `rânduri acum ${fmt(f.rows_marcaj)} → v3 ${fmt(f.rows_v3)}` : f.objects ? fmt(f.objects) + ' obiecte AI' : 'gol acum'}${f.vineyard_id ? ' · vineyard_id ' + f.vineyard_id : ''}</span></button>`).join('')}</div>`).join('')}</div>
     <section><div class="sec-title"><h2>Fără probleme găsite</h2><span class="num">${fmt(clean.length)}</span></div>
       <div style="display:flex;gap:6px;flex-wrap:wrap">${clean.map(t => `<button class="btn sm" type="button" data-cor-done="${t.task}" aria-pressed="${!!CORD[t.task]}">${CORD[t.task] ? '✓ ' : ''}#${t.task}</button>`).join('')}</div>
       <p class="note">Doar privire rapidă și Submit.</p></section>`;

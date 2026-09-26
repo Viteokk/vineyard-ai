@@ -94,6 +94,31 @@ Measured on a MacBook Pro (Apple M4 Pro, 24 GB), macOS 27, Python 3.12, no GPU u
 YOLOv8n-seg training (optional): 53 min on the M4 Pro GPU (MPS), 17 epochs, early stop, best at epoch 7.
 Full per-stage timings of the last run: `out/timing.json`.
 
+## Detector v3 (row direction and row support)
+The first upload to Marcaj (v1) drew one row direction per tile from the most *periodic* vegetation pattern; on tiles
+with ploughed fields, tree lines or scrub that pattern was not the vines, so rows were drawn across the real rows or
+over non-vineyard land (measured: on 123 of 194 tiles the lines carried no more vegetation than the space between them).
+`pipeline/baseline.py` v3 (default; `--v1` reproduces the upload):
+- **direction by support**: of the 6 most periodic directions, keep the one whose row lines sit on the most vegetation
+  compared with half a spacing away (vines 0.2–0.5, wrong lines ~0);
+- **row support filter**: a row needs on/between vegetation ≥ 1.3 and a difference ≥ 0.08 (vine rows: median 7,
+  wrong lines ~1.0);
+- **second pass**: what the first vineyard leaves unexplained is searched for a second vineyard with another direction
+  (block corners, neighbouring plots);
+- **model veto** (`scripts/model_veto.py`): tiles where the YOLO11 canopy model finds no vine at all stay empty.
+
+On the two official reference tiles the local score (`pipeline.eval`) goes from 0.817 to 0.844 (axes F1 0.961 → 1.000,
+canopies 0.587 → 0.633); the per-line check `scripts/row_support.py` finds 0 tiles with lines off the vines (v1: 123).
+Remaining gaps: very young vineyards and vineyards in a tile corner (listed for manual work). Correction plan for Marcaj
+(v1 in Marcaj vs v3, per task and frame): `scripts/marcaj_plan_v3.py` → `out/marcaj_plan_v3.md`, web `review.html` and
+the Corectură tab. v3 upload ZIPs: `out/upload_v3/` (only usable if the organisers reset the project).
+
+```bash
+python -m pipeline.baseline --out out/baseline_all_v3.xml && python scripts/model_veto.py out/baseline_all_v3.xml out/baseline_all_v3v.xml
+python -m pipeline.blocks --inp out/baseline_all_v3v.xml --out out/pre_global_v3.xml --geojson out/blocks_v3.geojson
+python scripts/row_support.py --inp out/pre_global_v3.xml && python scripts/marcaj_plan_v3.py
+```
+
 ## Model
 
 How the whole solution works, the training data and the open questions: [`docs/MODEL.md`](docs/MODEL.md).
