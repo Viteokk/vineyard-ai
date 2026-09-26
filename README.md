@@ -1,4 +1,4 @@
-# vineyard-ai — Vineyard AI Field Challenge (DeepTech GigaHack 2026 · Marcaj)
+# VinePlan (vineyard-ai) — Vineyard AI Field Challenge (DeepTech GigaHack 2026 · Marcaj)
 
 End-to-end pipeline for the Sireț3 UAV orthomosaic (311 GeoTIFF tiles, 2.5 cm/px, EPSG:32635):
 AI pre-annotations (canopies, row axes, inter-row areas, attributes) → manual correction in Marcaj →
@@ -11,7 +11,7 @@ global block / row IDs → measurements → two walking routes → interactive w
 | Measurements by `vineyard_id` / `row_id` | [`measurements.csv`](measurements.csv) |
 | Web interface | **https://viteokk.github.io/vineyard-ai/** (GitHub Pages from `web/`, branch `gh-pages`) · local: `python -m http.server -d web 8000` |
 | Model weights | [yolo11n-seg-vineyard-waste.pt (release v0.2-weights)](https://github.com/Viteokk/vineyard-ai/releases/tag/v0.2-weights) · earlier canopy-only [v0.1-weights](https://github.com/Viteokk/vineyard-ai/releases/tag/v0.1-weights) |
-| Pre-annotations uploaded to Marcaj | `out/upload/*.zip` (CVAT for images 1.1, built by `pipeline/export_cvat.py`) |
+| Pre-annotations uploaded to Marcaj | `out/upload_v3/*.zip` (detector v3, CVAT for images 1.1, built by `pipeline/export_cvat.py`) — Marcaj project “Team Victor Istrati (v2)” after the organisers' one-time reset; the first upload (v1) is kept in `out/upload/` |
 
 ## Architecture
 
@@ -50,14 +50,28 @@ Stages (each is its own CLI, `python -m pipeline.<stage> --help`):
 | (optional) | `pipeline.infer_yolo` | YOLOv8n-seg canopies on 640 px crops, merged with the classical rows |
 | blocks | `pipeline.blocks` | global `vineyard_id` (connected plantings < 5 m apart, roads always separate) and `row_id` shared by the segments of one physical row across tiles |
 | targets | `pipeline.targets` | inspection targets = row gaps ≥ 5 m (ID, X, Y, `vineyard_id`, `row_id`) + waste centres |
-| route | `pipeline.route` | 0.5 m grid graph on inter-rows + passages (canopies / forbidden blocked), OR-Tools TSP from START, outside-share budget < 1.5 % (official limit 2 %); `--mode inspector` / `--mode farmer` |
-| validate | `pipeline.validate` | one LineString, EPSG:32635, `length_m`, start = end ≤ 5 m, share outside inter-rows + passages, targets visited ≤ 2 m |
+| route | `pipeline.route` | 0.5 m grid graph on inter-rows + passages (canopies / forbidden blocked, vine rows are walls), OR-Tools TSP from START, legs straightened by string pulling, outside-share budget ≤ 1.7 % (official limit 2 %); `--mode inspector` / `--mode farmer` (rules below) |
+| validate | `pipeline.validate` | one LineString, EPSG:32635, `length_m`, start = end ≤ 5 m, share outside inter-rows + passages, targets visited ≤ 2 m, row crossings outside passages (info) |
 | measure | `pipeline.measurements` | `measurements.csv`: totals, per block, per row (m, m², ha; canopy area = union of polygons) |
 | export | `pipeline.export_cvat` | Marcaj upload ZIPs (`annotations.xml` + unchanged tiles), split < 60 MB, validated |
 | web | `scripts/make_web_tiles.py`, `scripts/build_web_map.py` | orthophoto mosaic (10 cm/px + full-res reference tiles) and GeoJSON layers for `web/index.html` |
 
-Sunday recompute from the corrected Marcaj export: `python -m pipeline.blocks --inp out/marcaj_export.xml --out out/marcaj_global.xml`
-then `python -m pipeline.run --from targets --inp out/marcaj_global.xml`.
+**Walking route rules** (`pipeline/route.py`). The route never crosses a vine row: the trellis wires make a row
+impassable even where vines are missing, so every row axis is a wall (±0.65 m: the ±0.3 m vine band plus the 0.35 m
+walking margin, round ends) over its whole length, planting gaps included, with the segments of one row joined across
+tile seams. The route walks along the inter-rows and changes inter-row only past the row ends (headlands) or on an
+authorised passage (a road crossing the rows stays open). Each leg is then straightened by string pulling: the stops stay
+fixed vertices, and a shortcut is kept only if it stays on walkable cells, crosses no row, touches no canopy / forbidden
+zone and adds no metres outside the inter-rows + passages, so the line has no grid staircase. `--allow-row-crossing` restores the old
+behaviour (stepping over a row through a planting gap). Inspector route on the current annotations (931 targets):
+21.7 km, 1.27 % outside, 616 targets within 2 m, 0 row crossings, 3 535 vertices; the previous route (crossings allowed,
+grid staircase) was 13.2 km, 1.58 %, 584 targets, 295 row crossings, 11 098 vertices. 34 targets in the north-east
+corner of V02 sit in inter-rows closed off by the study-area edge and a forbidden zone, reachable only across a row, so
+they are skipped (plus one target on an isolated 3-row plot in V20, unreachable in both modes).
+
+Sunday recompute from the corrected Marcaj export (ZIP or annotations.xml; one per task or one for the project):
+`python scripts/sunday.py EXPORT.zip` — merges the files, reports missing attributes, then targets → routes →
+validation → measurements → web data (`--dry DIR` runs the same chain into DIR first, `--reblock` recomputes IDs).
 
 Local scoring on the two official example tiles (same formulas as the challenge): `python -m pipeline.eval --pred out/baseline.xml`
 → partial score 0.817 for the classical detector (canopy 0.587, axes 0.961, attributes 0.970, grouping 1.0, counts 0.98).
@@ -83,15 +97,16 @@ Measured on a MacBook Pro (Apple M4 Pro, 24 GB), macOS 27, Python 3.12, no GPU u
 
 | Stage | 311 tiles |
 |---|---|
-| detect (classical) | 1 min 53 s |
+| detect (classical v3: direction by support, second pass) | 5 min 24 s (v1: 1 min 53 s) |
 | blocks (global IDs) | 3 s |
 | targets | 7 s |
-| route inspector (1 855 targets) | ~12 min (10 min distance matrix, cached; 60 s TSP) |
-| route farmer | seconds (no waste in the pre-annotations) |
+| route inspector (931 targets, row walls) | 3 min 10 s (grid 21 s, distance matrix 11 s, cached; 60 s TSP + 5 re-solves of 10 s, legs rebuilt and straightened in parallel) |
+| route farmer | 23 s (grid only: no waste in the pre-annotations) |
 | measurements + export ZIPs | 5 s |
 | web data (mosaic + layers) | 3 min |
 
-YOLOv8n-seg training (optional): 53 min on the M4 Pro GPU (MPS), 17 epochs, early stop, best at epoch 7.
+YOLO11n-seg training (2 classes, optional): about 8 min per epoch on the M4 Pro GPU (MPS), 15 epochs with early stop
+(the first YOLOv8n-seg canopy model: 53 min, 17 epochs).
 Full per-stage timings of the last run: `out/timing.json`.
 
 ## Detector v3 (row direction and row support)
@@ -105,7 +120,9 @@ over non-vineyard land (measured: on 123 of 194 tiles the lines carried no more 
   wrong lines ~1.0);
 - **second pass**: what the first vineyard leaves unexplained is searched for a second vineyard with another direction
   (block corners, neighbouring plots);
-- **model veto** (`scripts/model_veto.py`): tiles where the YOLO11 canopy model finds no vine at all stay empty.
+- **model veto** (`scripts/veto_list.py` → `scripts/model_veto.py`): tiles where the detectors disagree completely (the
+  high-recall v1 classical detector draws vines, the released YOLO11 model finds no canopy) stay empty: meadow, scrub,
+  ploughed fields, gardens. Very young vineyards found only by v3 (tiny plants the model misses) are kept.
 - **waste** (`scripts/add_waste.py`): YOLO11 waste detections with score ≥ 0.4, at most 2.5 m per side and outside the
   organiser forbidden zones (sheet-metal roofs were the main false positive): 11 boxes, checked in Marcaj.
 
@@ -116,7 +133,10 @@ Remaining gaps: very young vineyards and vineyards in a tile corner (listed for 
 the Corectură tab. v3 upload ZIPs: `out/upload_v3/` (only usable if the organisers reset the project).
 
 ```bash
-python -m pipeline.baseline --out out/baseline_all_v3.xml && python scripts/model_veto.py out/baseline_all_v3.xml out/baseline_all_v3v.xml
+python -m pipeline.baseline --out out/baseline_all_v3.xml
+python -m pipeline.infer_multi --weights yolo11n-seg-vineyard-waste.pt --base out/pre_global.xml --out out/model11_canopy_all.xml \
+       --scores out/waste_model11.json --canopy model --conf 0.25 --conf-review 0.15      # model canopies + waste scores
+python scripts/veto_list.py && python scripts/model_veto.py out/baseline_all_v3.xml out/baseline_all_v3v.xml
 python scripts/add_waste.py out/baseline_all_v3v.xml out/baseline_all_v3w.xml
 python -m pipeline.blocks --inp out/baseline_all_v3w.xml --out out/pre_global_v3.xml --geojson out/blocks_v3.geojson
 python -m pipeline.export_cvat --inp out/pre_global_v3.xml --out out/upload_v3      # the 9 ZIPs uploaded to Marcaj (project v2)
@@ -154,7 +174,7 @@ visited, measurements per block / row, pipeline status. Data contract: `web/data
   yearly maintenance at MDL 52 000–80 000 / ha from the brief, Marcaj corrections). Each role sees only its tabs.
 - **MPass:** „Intră cu MPass” on the login page redirects to the real `https://mpass.gov.md/login/saml`. For the demo, a
   simulated flow is linked under it: `mpass.html`, an authorization page clearly labelled as a demo, with test identities
-  and no credential fields, then `auth.html`, the callback that opens the session with the role. A real integration needs Field Planner registered as a SAML 2.0 service provider with the
+  and no credential fields, then `auth.html`, the callback that opens the session with the role. A real integration needs VinePlan registered as a SAML 2.0 service provider with the
   Agenția de Guvernare Electronică and a server-side assertion consumer endpoint that checks the signature and maps
   the IDNP to a role; a static site cannot do this.
 - **Planifică (both roles):** choose a work zone (cadastral number anywhere in Moldova via ASP, a drawn rectangle / polygon,

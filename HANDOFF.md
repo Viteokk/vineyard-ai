@@ -96,10 +96,14 @@ după fiecare sarcină: rulare → rezultat → commit + push.
   S8 Dockerfile scris dar **docker nu e instalat pe acest Mac** (de testat pe alt calculator), README cu diagramă.
 - PRODUCT_PLAN (P1 → P2 → P6 → P4 → P5 → P3) începe după upload-ul în Marcaj; P5 (GPX + GPS) e deja gata.
 - Navigare GPS: punctul de start se alege (nr. 1 / cea mai apropiată țintă de mine / o țintă aleasă pe hartă / „Navighează de aici” din fișa țintei); ordinea continuă ciclic după traseu.
-- **Traversarea rândurilor prin goluri e necesară.** Testat `route.py --no-row-crossing` (banda rândului impasabilă, mers
-  out-and-back): 361 opriri fără drum, rezultat 6,2 km / 24 opriri / 6 % în afară / 3 % acoperire → INVALID. Traseul
-  predat traversează doar prin goluri (fără butuci; 0 m prin coroane): 767 traversări × ~0,6 m = 513 m din cei 560 m „în afară”.
-  Argument la pitch: „nu trecem niciodată printr-o coroană; trecem între inter-rânduri doar unde lipsesc butuci."
+- **Rândurile sunt pereți (implicit din sâmbătă seara, cerința lui Victor: „în lungul rândului, nu printre”).** Sârmele
+  spalierului nu se pot traversa nici unde lipsesc butuci: `route.py` blochează axa ±0,65 m pe tot rândul (segmentele
+  unui rând lipite peste marginile de tile), deschis doar pe pasaje; traseul schimbă inter-rândul doar la capete sau pe
+  drum, iar segmentele sunt îndreptate (string pulling, fără „scări”). Pe `out/marcaj_global.xml`: 21,7 km, 1,27 % în
+  afară, 616/931 ținte, **0 traversări**, VALID (înainte, cu traversări: 13,2 km, 1,58 %, 584/931, 295 traversări).
+  34 de ținte din colțul NE al V02 rămân fără acces (închise de marginea zonei de studiu). `--allow-row-crossing` =
+  vechiul comportament; `validate.py` raportează `row_crossings`. (Testul vechi `--no-row-crossing`, INVALID, era pe
+  adnotările vechi `pre_global.xml`.)
 
 ## Termene (ora Chișinăului)
 | Când | Ce |
