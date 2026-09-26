@@ -155,6 +155,7 @@ def main() -> None:
     ap.add_argument("--registry-csv", default="", help="real registry extract (CSV, see registry/rvv_template.csv)")
     ap.add_argument("--visit-route", action="store_true", help="also compute the route through the blocks to visit")
     ap.add_argument("--targets", default=str(C.OUT / "targets.geojson"))
+    ap.add_argument("--inp", default=str(C.OUT / "pre_global.xml"), help="annotations the visit route is planned on")
     ap.add_argument("--per-block", type=int, default=2, help="control points per block on the visit route")
     a = ap.parse_args()
 
@@ -340,7 +341,7 @@ def main() -> None:
         tin.write_text(json.dumps({"type": "FeatureCollection", "features": feats}))
         var = WEB / "variants"
         var.mkdir(parents=True, exist_ok=True)
-        subprocess.run([sys.executable, "-m", "pipeline.route", "--mode", "inspector", "--targets", str(tin),
+        subprocess.run([sys.executable, "-m", "pipeline.route", "--mode", "inspector", "--inp", a.inp, "--targets", str(tin),
                         "--out", str(var / "route_compliance.geojson"),
                         "--targets-out", str(var / "targets_compliance.geojson"), "--time", "20"],
                        cwd=C.ROOT, check=True, stdout=subprocess.DEVNULL)

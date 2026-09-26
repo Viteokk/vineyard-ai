@@ -130,7 +130,10 @@ def main() -> None:
     ap.add_argument("--out", default=str(C.OUT / "targets.geojson"))
     ap.add_argument("--min-gap", type=float, default=3.0, help="gap length (m) that makes an inspection target; 3 m "
                     "recovers 100 %% of the reference gaps on the example tiles (5 m: 62 %%)")
+    ap.add_argument("--reach", type=float, default=REACH, help="a target counts as reachable if an inter-row / passage "
+                    "lies within this distance (m); the route decides with its outside-walking budget whether to go")
     a = ap.parse_args()
+    globals()["REACH"] = a.reach
     layers, _ = convert(Path(a.inp), Path(a.tiles))
     feats = build(layers, a.min_gap)
     Path(a.out).write_text(json.dumps({"type": "FeatureCollection", "crs": CRS, "features": feats}))

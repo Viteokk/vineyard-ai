@@ -1,5 +1,5 @@
-"""Empty the tiles where the YOLO11 canopy model finds no vine at all (out/emptied_by_model.json, 72 tiles: meadow,
-scrub, ploughed fields, gardens), whatever the classical detector drew there. Used for the v3 pre-annotations
+"""Empty the tiles where the YOLO11 canopy model finds no vine at all (out/veto_yolo11.json from scripts/veto_list.py:
+meadow, scrub, ploughed fields, gardens), whatever the classical detector drew there. Used for the v3 pre-annotations
 (classical rows on vegetation AND the model sees vines). Usage: python scripts/model_veto.py IN.xml OUT.xml"""
 import json
 import sys
@@ -10,7 +10,7 @@ import config as C  # noqa: E402
 from pipeline.cvat_io import read_cvat, write_cvat  # noqa: E402
 
 inp, out = sys.argv[1], sys.argv[2]
-veto = set(json.loads((C.OUT / "emptied_by_model.json").read_text()))
+veto = set(json.loads((C.OUT / "veto_yolo11.json").read_text()))
 d = read_cvat(inp)
 n = sum(1 for t in veto if d.get(t))
 for t in veto:

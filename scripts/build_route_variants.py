@@ -21,6 +21,7 @@ def main() -> None:
     ap = argparse.ArgumentParser()
     ap.add_argument("--gaps", type=float, nargs="+", default=[5, 8, 10])
     ap.add_argument("--time", type=int, default=20)
+    ap.add_argument("--inp", default=str(C.OUT / "pre_global.xml"), help="annotations the routes are planned on")
     a = ap.parse_args()
     WEB.mkdir(parents=True, exist_ok=True)
     feats = json.loads((C.OUT / "targets.geojson").read_text())["features"]
@@ -30,7 +31,7 @@ def main() -> None:
         tin = C.OUT / f"targets_gap{g:g}.geojson"
         tin.write_text(json.dumps({"type": "FeatureCollection", "features": keep}))
         route, tout = WEB / f"route_inspector_gap{g:g}.geojson", WEB / f"targets_inspector_gap{g:g}.geojson"
-        subprocess.run([sys.executable, "-m", "pipeline.route", "--mode", "inspector", "--targets", str(tin),
+        subprocess.run([sys.executable, "-m", "pipeline.route", "--mode", "inspector", "--inp", a.inp, "--targets", str(tin),
                         "--out", str(route), "--targets-out", str(tout), "--time", str(a.time)], cwd=C.ROOT, check=True)
         p = json.loads(route.read_text())["features"][0]["properties"]
         index[f"{g:g}"] = {"route": f"data/variants/{route.name}", "targets": f"data/variants/{tout.name}", **p}

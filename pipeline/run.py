@@ -9,7 +9,7 @@ Stages (each is also a CLI on its own, see the module docstrings):
   validate  pipeline.validate  official route rules                               -> out/route_check_*.json
   measure   pipeline.measurements + pipeline.block_report + pipeline.compliance   -> measurements.csv, web/data/blocks_report.json,
             + pipeline.register                                                     web/data/compliance.json, web/data/register.geojson
-  export    pipeline.export_cvat  Marcaj upload ZIPs                              -> out/upload/*.zip
+  export    pipeline.export_cvat  Marcaj upload ZIPs                              -> out/upload_v3/*.zip
   web       scripts.make_web_tiles + scripts.build_web_map                        -> web/data/
 Timings per stage and the hardware go to out/timing.json (quoted in README.md).
 
@@ -65,12 +65,17 @@ def main() -> None:
     for stage in todo:
         t = time.time()
         if stage == "detect":
-            sh([PY, "-m", "pipeline.baseline", "--tiles", a.tiles, "--out", str(C.OUT / "baseline_all.xml")])
+            sh([PY, "-m", "pipeline.baseline", "--tiles", a.tiles, "--out", str(C.OUT / "baseline_all.xml")])   # v3 detector
             if a.weights:
                 sh([PY, "-m", "pipeline.infer_yolo", "--weights", a.weights, "--base", str(C.OUT / "baseline_all.xml"),
                     "--tiles", a.tiles, "--out", str(detect_xml)])
             else:
                 shutil.copy(C.OUT / "baseline_all.xml", detect_xml)
+            # v3: tiles where the YOLO canopy model sees no vine stay empty; YOLO11 waste boxes with the size rule
+            if (C.OUT / "veto_yolo11.json").exists():
+                sh([PY, "scripts/model_veto.py", str(detect_xml), str(detect_xml)])
+            if (C.OUT / "waste_model11.json").exists():
+                sh([PY, "scripts/add_waste.py", str(detect_xml), str(detect_xml)])
         elif stage == "blocks":
             sh([PY, "-m", "pipeline.blocks", "--inp", str(detect_xml), "--out", str(global_xml), "--tiles", a.tiles])
         elif stage == "targets":
@@ -79,7 +84,8 @@ def main() -> None:
             for mode in ("inspector", "farmer"):
                 sh([PY, "-m", "pipeline.route", "--mode", mode, "--inp", str(global_xml), "--tiles", a.tiles,
                     "--time", str(a.route_time)])
-            sh([PY, "-m", "pipeline.tours"])                 # day tours (START -> START, <= 6 h at 4 km/h)
+            sh([PY, "-m", "pipeline.tours", "--inp", str(global_xml)])   # day tours (START -> START, <= 6 h at 4 km/h)
+            sh([PY, "scripts/build_route_variants.py", "--inp", str(global_xml)])   # static site: routes for gap >= 5 / 8 / 10 m
         elif stage == "validate":
             for mode, f in (("inspector", "route.geojson"), ("farmer", "route_waste.geojson")):
                 subprocess.run([PY, "-m", "pipeline.validate", "--route", f, "--inp", str(global_xml), "--tiles", a.tiles,
@@ -89,12 +95,12 @@ def main() -> None:
             sh([PY, "-m", "pipeline.measurements", "--inp", str(global_xml), "--tiles", a.tiles, "--out", "measurements.csv"])
             sh([PY, "-m", "pipeline.block_report"])          # per-block status / tasks for the web map
             sh([PY, "-m", "pipeline.cadastre"])              # ASP cadastral parcels x blocks (cached download)
-            sh([PY, "-m", "pipeline.compliance", "--visit-route"])   # RVV / AIPA checks per block (demo registry)
+            sh([PY, "-m", "pipeline.compliance", "--visit-route", "--inp", str(global_xml)])   # RVV / AIPA checks per block (demo registry)
             sh([PY, "-m", "pipeline.register"])              # DEMO vineyard register: parcels, declared vs measured (US-2)
             sh([PY, "-m", "pipeline.register_mismatch"])     # possible unauthorised plantings / register to update (US-3)
             sh([PY, "-m", "pipeline.env_indicators"])        # environmental indicators per block, ISO 14001 activity data (US-1)
         elif stage == "export":
-            sh([PY, "-m", "pipeline.export_cvat", "--inp", str(global_xml), "--tiles", a.tiles])
+            sh([PY, "-m", "pipeline.export_cvat", "--inp", str(global_xml), "--tiles", a.tiles, "--out", str(C.OUT / "upload_v3")])
         elif stage == "web":
             sh([PY, "scripts/make_web_tiles.py"])
             sh([PY, "scripts/build_web_map.py", "--pred", str(global_xml)])

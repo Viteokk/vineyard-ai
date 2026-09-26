@@ -26,6 +26,7 @@ WEB = C.ROOT / "web" / "data" / "tours"
 
 def main() -> None:
     ap = argparse.ArgumentParser()
+    ap.add_argument("--inp", default=str(C.OUT / "pre_global.xml"), help="annotations the routes are planned on (same as pipeline.route)")
     ap.add_argument("--route", default=str(C.ROOT / "route.geojson"))
     ap.add_argument("--targets", default=str(C.OUT / "targets_inspector.geojson"))
     ap.add_argument("--speed", type=float, default=4.0, help="km/h")
@@ -48,7 +49,7 @@ def main() -> None:
             tin = C.OUT / f"tour_in_{d + 1}.geojson"
             tin.write_text(json.dumps({"type": "FeatureCollection", "features": group}))
             rout, tout = WEB / f"tour_{d + 1}.geojson", WEB / f"targets_{d + 1}.geojson"
-            subprocess.run([sys.executable, "-m", "pipeline.route", "--mode", "inspector", "--targets", str(tin),
+            subprocess.run([sys.executable, "-m", "pipeline.route", "--mode", "inspector", "--inp", a.inp, "--targets", str(tin),
                             "--out", str(rout), "--targets-out", str(tout), "--time", str(a.time)],
                            cwd=C.ROOT, check=True, stdout=subprocess.DEVNULL)
             p = json.loads(rout.read_text())["features"][0]["properties"]

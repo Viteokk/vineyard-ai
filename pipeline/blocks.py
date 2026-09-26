@@ -236,14 +236,43 @@ def assign(data: dict[str, list[dict]], tiles_dir: Path):
     return new, blocks, bid, n_rows, rows_per_block, row_vid
 
 
+def outlines(data: dict[str, list[dict]], tiles_dir: Path) -> dict:
+    """Block outlines for annotations that already carry their IDs (a Marcaj export): the same strips as build_blocks,
+    grouped by the annotated vineyard_id instead of recomputing the IDs."""
+    passages = load_passages()
+    segs = defaultdict(list)
+    for name, objs in data.items():
+        rows = [o for o in objs if o["label"] == "row" and o["attrs"].get("vineyard_id") and len(o["points"]) > 1]
+        if not rows:
+            continue
+        p = tiles_dir / name
+        t = open_tile(p if p.exists() else C.EXAMPLES / "images" / name)
+        for o in rows:
+            segs[o["attrs"]["vineyard_id"]].append(LineString(t.px_to_utm(o["points"])))
+    feats = []
+    for vid in sorted(segs):
+        g = unary_union(build_blocks(segs[vid], passages) or [s.buffer(STRIP, cap_style="flat") for s in segs[vid]])
+        feats.append({"type": "Feature", "properties": {"vineyard_id": vid, "area_m2": round(g.area, 1)},
+                      "geometry": mapping(g)})
+    return {"type": "FeatureCollection", "crs": {"type": "name", "properties": {"name": "urn:ogc:def:crs:EPSG::32635"}},
+            "features": feats}
+
+
 def main() -> None:
     ap = argparse.ArgumentParser()
     ap.add_argument("--inp", default=str(C.OUT / "baseline_all.xml"))
     ap.add_argument("--out", default=str(C.OUT / "pre_global.xml"))
     ap.add_argument("--tiles", default=str(C.TILES))
     ap.add_argument("--geojson", default=str(C.OUT / "blocks.geojson"))
+    ap.add_argument("--outlines-only", action="store_true",
+                    help="keep the annotated IDs, only write the block outlines (--geojson) for them")
     a = ap.parse_args()
     data = read_cvat(a.inp)
+    if a.outlines_only:
+        fc = outlines(data, Path(a.tiles))
+        Path(a.geojson).write_text(json.dumps(fc))
+        print(f"{len(fc['features'])} block outlines from the annotated IDs -> {a.geojson}")
+        return
     dropped = 0
     for _ in range(3):                                   # drop fragment blocks, then rebuild without them
         new, blocks, bid, n_rows, rpb, row_vid = assign(data, Path(a.tiles))
