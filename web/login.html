@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<title>Intrare Field Planner</title>
+<title>Autentificare · VinePlan</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,800&family=Geist:wght@400;500;600;700&family=Geist+Mono:wght@500&display=swap">
 <style>
@@ -52,44 +52,73 @@ legend{font-size:14px;font-weight:600;margin-bottom:8px;padding:0}
 .mpass{display:flex;align-items:center;justify-content:center;gap:10px;min-height:50px;border:1px solid var(--line);border-radius:12px;background:#fff;color:var(--ink);font:600 16px 'Geist',sans-serif;text-decoration:none}
 .mpass:hover{background:var(--field)}
 .sim{align-self:center;font-size:13px;color:var(--muted)}
+.lang{display:flex;border:1px solid rgba(255,255,255,.2);border-radius:10px;overflow:hidden}.lang button{background:none;border:0;color:#9FAAA3;font:600 12px/1 'Geist',sans-serif;padding:8px 9px;cursor:pointer}.lang button[aria-pressed="true"]{background:rgba(255,255,255,.16);color:#fff}
+header nav{display:flex;align-items:center;gap:14px}
 .note{color:#9FAAA3;font-size:13px;margin:0;text-align:center;max-width:440px;text-wrap:balance}
 @media (max-width:420px){.card{padding:22px 18px}.role{padding:10px;gap:8px}.role svg{width:22px;height:22px}}
 @media (prefers-reduced-motion:reduce){*{transition:none!important}}
 </style>
 </head>
 <body>
-<header><a class="logo" href="index.html">Field Planner</a><a class="back" href="index.html">Înapoi</a></header>
+<header><a class="logo" href="index.html">VinePlan</a><nav><div class="lang" role="group" aria-label="Limba / Язык / Language"><button type="button" data-lang="ro">RO</button><button type="button" data-lang="ru">RU</button><button type="button" data-lang="en">EN</button></div><a class="back" href="index.html" data-i="back">Înapoi</a></nav></header>
 <main>
   <div class="ribbon" aria-hidden="true"><i></i><i></i><i></i></div>
   <form class="card" id="f" novalidate>
-    <h1>Intră în cont</h1>
+    <h1 data-i="h1">Autentificare</h1>
     <fieldset>
-      <legend>Intru în calitate de</legend>
+      <legend data-i="as">Intru în calitate de</legend>
       <div class="roles">
         <label class="role insp"><input type="radio" name="role" value="inspector" checked>
           <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l8 3v6c0 4.5-3.4 8.3-8 9-4.6-.7-8-4.5-8-9V6l8-3z"/><path d="M8.5 12l2.5 2.5 4.5-5"/></svg>
-          <span><b>Inspector</b><small>AIPA · ONVV</small></span></label>
+          <span><b data-i="r_insp">Inspector</b><small>AIPA · ONVV</small></span></label>
         <label class="role admin"><input type="radio" name="role" value="fermier">
           <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="9" cy="10" r="2.4"/><circle cx="15" cy="10" r="2.4"/><circle cx="12" cy="14.5" r="2.4"/><circle cx="9" cy="18.5" r="2.2"/><circle cx="15" cy="18.5" r="2.2"/><path d="M12 7.5V4M12 4c2-1.5 4-1 5 0"/></svg>
-          <span><b>Administrator</b><small>Exploatația viticolă</small></span></label>
+          <span><b data-i="r_admin">Administrator</b><small data-i="r_admin_s">Exploatația viticolă</small></span></label>
       </div>
     </fieldset>
-    <label class="f">Poșta electronică<input type="email" id="email" name="email" autocomplete="username" placeholder="nume@exemplu.md" required></label>
-    <label class="f">Parolă<span class="pw"><input type="password" id="pw" name="password" autocomplete="current-password" placeholder="Parolă" required><button type="button" id="eye" aria-label="Arată parola" aria-pressed="false"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/></svg></button></span></label>
+    <label class="f"><span data-i="email">Poșta electronică</span><input type="email" id="email" name="email" autocomplete="username" placeholder="nume@exemplu.md" required></label>
+    <label class="f"><span data-i="pw">Parolă</span><span class="pw"><input type="password" id="pw" name="password" autocomplete="current-password" placeholder="Parolă" required><button type="button" id="eye" aria-label="Arată parola" aria-pressed="false"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/></svg></button></span></label>
     <p class="err" id="err" role="alert" hidden></p>
-    <button class="go" type="submit" id="go">Intră ca Inspector</button>
-    <button class="linkbtn" type="button" id="forgot">Ai uitat parola?</button>
-    <div class="or">sau</div>
-    <a class="mpass" href="https://mpass.gov.md/login/saml" rel="noopener"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="10" width="16" height="11" rx="2"/><path d="M8 10V7a4 4 0 018 0v3"/></svg>Intră cu MPass</a>
-    <a class="sim" href="mpass.html?return=app.html">Simulare MPass pentru demo</a>
+    <button class="go" type="submit" id="go" data-i="go">Intră</button>
+    <button class="linkbtn" type="button" id="forgot" data-i="forgot">Ai uitat parola?</button>
+    <div class="or" data-i="or">sau</div>
+    <a class="mpass" href="https://mpass.gov.md/login/saml" rel="noopener"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="10" width="16" height="11" rx="2"/><path d="M8 10V7a4 4 0 018 0v3"/></svg><span data-i="mpass">Intră cu MPass</span></a>
+    <a class="sim" href="mpass.html?return=app.html" data-i="sim">Simulare MPass pentru demo</a>
   </form>
-  <p class="note">MVP demonstrativ: contul demo al rolului e deja completat; parola nu pleacă din browser și nu se salvează. Revenirea din MPass cere înregistrarea platformei la Agenția de Guvernare Electronică.</p>
+  <p class="note" data-i="note">MVP demonstrativ: contul demo al rolului e deja completat; parola nu pleacă din browser și nu se salvează. Revenirea din MPass cere înregistrarea platformei la Agenția de Guvernare Electronică.</p>
 </main>
 <script>
 /* demo accounts only: checked in the browser, nothing is sent, the password is never stored */
 const ACCOUNTS = {
   inspector: {email: 'inspector@fieldplanner.demo', name: 'Inspector demo', org: 'AIPA Strășeni', label: 'Inspector'},
   fermier: {email: 'administrator@fieldplanner.demo', name: 'Administrator demo', org: 'Vie Sireți SRL', label: 'Administrator'}};
+const I18N = {
+  ru: {back: 'Назад', h1: 'Вход', as: 'Вхожу как', r_insp: 'Инспектор', r_admin: 'Администратор', r_admin_s: 'Виноградарское хозяйство', email: 'Электронная почта', pw: 'Пароль', go: 'Войти',
+       forgot: 'Забыли пароль?', or: 'или', mpass: 'Войти через MPass', sim: 'Симуляция MPass для демо',
+       note: 'Демонстрационная версия (MVP): демо-аккаунт роли уже заполнен; пароль не покидает браузер и не сохраняется. Возврат из MPass требует регистрации платформы в Агентстве электронного управления.',
+       e_empty: 'Заполните электронную почту и пароль.', e_bad: 'Почта или пароль не совпадают с демо-аккаунтом.', e_role: 'У этого аккаунта нет роли «{r}». Выберите «{o}» вверху.',
+       e_forgot: 'В демо нет сброса пароля. Аккаунт: {e}, пароль {p}.', show: 'Показать пароль', hide: 'Скрыть пароль', title: 'Вход · VinePlan', L_inspector: 'Инспектор', L_fermier: 'Администратор'},
+  en: {back: 'Back', h1: 'Sign in', as: 'Signing in as', r_insp: 'Inspector', r_admin: 'Administrator', r_admin_s: 'Vineyard holding', email: 'Email', pw: 'Password', go: 'Sign in',
+       forgot: 'Forgot your password?', or: 'or', mpass: 'Sign in with MPass', sim: 'MPass simulation for the demo',
+       note: "Demo version (MVP): the role's demo account is already filled in; the password never leaves the browser and is not stored. Returning from MPass requires registering the platform with the E-Government Agency.",
+       e_empty: 'Enter your email and password.', e_bad: 'The email or password does not match a demo account.', e_role: 'This account does not have the “{r}” role. Choose “{o}” above.',
+       e_forgot: 'There is no password reset in the demo. Account: {e}, password {p}.', show: 'Show password', hide: 'Hide password', title: 'Sign in · VinePlan', L_inspector: 'Inspector', L_fermier: 'Administrator'},
+  ro: {e_empty: 'Completează poșta electronică și parola.', e_bad: 'Poșta sau parola nu se potrivesc cu un cont demo.', e_role: 'Acest cont nu are rolul {r}. Alege „{o}” sus.',
+       e_forgot: 'În demo nu există resetare. Cont: {e}, parola {p}.', show: 'Arată parola', hide: 'Ascunde parola', title: 'Autentificare · VinePlan', L_inspector: 'Inspector', L_fermier: 'Administrator'}};
+const I18N_RO = {};
+document.querySelectorAll('[data-i]').forEach(el => { I18N_RO[el.dataset.i] = el.innerHTML; });
+let LANG = (() => { try { return JSON.parse(localStorage.getItem('fpm.lang')) || 'ro'; } catch (e) { return 'ro'; } })();
+const t = (k, v = {}) => String((I18N[LANG] && I18N[LANG][k]) ?? I18N.ro[k] ?? I18N_RO[k] ?? k).replace(/\{(\w)\}/g, (_, x) => v[x] ?? '');
+function applyLang(l) {
+  LANG = ['ro', 'ru', 'en'].includes(l) ? l : 'ro';
+  try { localStorage.setItem('fpm.lang', JSON.stringify(LANG)); } catch (e) {}
+  document.documentElement.lang = LANG; document.title = t('title');
+  document.querySelectorAll('[data-i]').forEach(el => { const v = LANG === 'ro' ? I18N_RO[el.dataset.i] : I18N[LANG][el.dataset.i]; if (v != null) el.innerHTML = v; });
+  document.querySelectorAll('[data-lang]').forEach(b => b.setAttribute('aria-pressed', b.dataset.lang === LANG));
+  document.getElementById('pw').placeholder = LANG === 'ro' ? 'Parolă' : I18N[LANG].pw;
+  const eye = document.getElementById('eye'); eye.setAttribute('aria-label', t(eye.getAttribute('aria-pressed') === 'true' ? 'hide' : 'show'));
+}
+document.addEventListener('click', e => { const b = e.target.closest('[data-lang]'); if (b) { applyLang(b.dataset.lang); document.getElementById('err').hidden = true; } });
 const DEMO_PW = 'demo2026';
 const $ = s => document.querySelector(s), f = $('#f'), err = $('#err');
 const role = () => f.role.value;
@@ -98,20 +127,19 @@ const say = (m, info) => { err.textContent = m; err.classList.toggle('info', !!i
 function syncRole() {
   const a = ACCOUNTS[role()];
   document.documentElement.style.setProperty('--c', COLORS[role()]);
-  $('#go').textContent = 'Intră ca ' + a.label;
   f.email.value = a.email; f.password.value = DEMO_PW;      // demo: the role's account is prefilled
   err.hidden = true;
 }
 f.addEventListener('change', e => { if (e.target.name === 'role') syncRole(); });
-$('#eye').addEventListener('click', e => { const b = e.currentTarget, on = b.getAttribute('aria-pressed') !== 'true'; b.setAttribute('aria-pressed', on); b.setAttribute('aria-label', on ? 'Ascunde parola' : 'Arată parola'); f.password.type = on ? 'text' : 'password'; });
-$('#forgot').addEventListener('click', () => say(`În demo nu există resetare. Cont: ${ACCOUNTS[role()].email}, parola ${DEMO_PW}.`, true));
+$('#eye').addEventListener('click', e => { const b = e.currentTarget, on = b.getAttribute('aria-pressed') !== 'true'; b.setAttribute('aria-pressed', on); b.setAttribute('aria-label', t(on ? 'hide' : 'show')); f.password.type = on ? 'text' : 'password'; });
+$('#forgot').addEventListener('click', () => say(t('e_forgot', {e: ACCOUNTS[role()].email, p: DEMO_PW}), true));
 f.addEventListener('submit', e => {
   e.preventDefault();
   const email = f.email.value.trim().toLowerCase(), pw = f.password.value;
-  if (!email || !pw) return say('Completează poșta electronică și parola.');
+  if (!email || !pw) return say(t('e_empty'));
   const owner = Object.keys(ACCOUNTS).find(k => ACCOUNTS[k].email === email);
-  if (!owner || pw !== DEMO_PW) { return say('Poșta sau parola nu se potrivesc cu un cont demo.'); }
-  if (owner !== role()) return say(`Acest cont nu are rolul ${ACCOUNTS[role()].label}. Alege „${ACCOUNTS[owner].label}” sus.`);
+  if (!owner || pw !== DEMO_PW) { return say(t('e_bad')); }
+  if (owner !== role()) return say(t('e_role', {r: t('L_' + role()), o: t('L_' + owner)}));
   const a = ACCOUNTS[owner];
   try {
     localStorage.setItem('fpm.session', JSON.stringify({role: owner, name: a.name, org: a.org, email: a.email, via: 'parola-demo', at: new Date().toISOString()}));
@@ -120,6 +148,7 @@ f.addEventListener('submit', e => {
   location.href = 'app.html#' + owner;
 });
 if (/administrator|fermier/.test(location.hash)) f.role.value = 'fermier';
+applyLang(LANG);
 syncRole();
 </script>
 </body>

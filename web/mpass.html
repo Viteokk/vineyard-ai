@@ -32,11 +32,11 @@ ol{margin:0;padding-left:20px;font-size:14px;color:var(--muted);display:flex;fle
 </style>
 </head>
 <body>
-<div class="demo" role="note">Simulare pentru demo. Aceasta nu este pagina MPass și nu cere nicio parolă. Integrarea reală cere înregistrarea Field Planner ca furnizor de servicii la Agenția de Guvernare Electronică.</div>
+<div class="demo" role="note">Simulare pentru demo. Aceasta nu este pagina MPass și nu cere nicio parolă. Integrarea reală cere înregistrarea VinePlan ca furnizor de servicii la Agenția de Guvernare Electronică.</div>
 <main id="box">
-  <div><h1>Autorizare prin MPass</h1><p class="muted">Field Planner cere acces la identitatea ta.</p></div>
+  <div><h1>Autorizare prin MPass</h1><p class="muted">VinePlan cere acces la identitatea ta.</p></div>
   <dl>
-    <dt>Furnizor de servicii</dt><dd>Field Planner (vineyard-ai)</dd>
+    <dt>Furnizor de servicii</dt><dd>VinePlan (vineyard-ai)</dd>
     <dt>Date cerute</dt><dd>IDNP, nume, organizație, rol</dd>
     <dt>Revenire la</dt><dd id="ret"></dd>
     <dt>Cerere</dt><dd id="req"></dd>
@@ -49,13 +49,13 @@ ol{margin:0;padding-left:20px;font-size:14px;color:var(--muted);display:flex;fle
   <div class="acts"><button type="button" id="ok">Autorizează</button><a class="cancel" href="login.html">Anulează</a></div>
   <details><summary class="muted">Cum arată fluxul real</summary>
     <ol style="margin-top:8px">
-      <li>Field Planner trimite o cerere de autentificare SAML 2.0 către MPass.</li>
+      <li>VinePlan trimite o cerere de autentificare SAML 2.0 către MPass.</li>
       <li>Utilizatorul se autentifică în MPass (semnătură mobilă, buletin electronic).</li>
-      <li>MPass trimite un răspuns semnat la adresa de revenire a Field Planner.</li>
-      <li>Serverul Field Planner verifică semnătura și dă rolul din lista de inspectori sau de administratori.</li>
+      <li>MPass trimite un răspuns semnat la adresa de revenire a VinePlan.</li>
+      <li>Serverul VinePlan verifică semnătura și dă rolul din lista de inspectori sau de administratori.</li>
     </ol></details>
 </main>
-<main class="done" id="done"><h1>Autorizat</h1><p class="muted">Se revine în Field Planner…</p></main>
+<main class="done" id="done"><h1>Autorizat</h1><p class="muted">Se revine în VinePlan…</p></main>
 <script>
 const q = new URLSearchParams(location.search), ret = q.get('return') || 'app.html';
 const req = 'DEMO-' + Math.random().toString(36).slice(2, 10).toUpperCase();
