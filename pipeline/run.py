@@ -5,6 +5,7 @@ Stages (each is also a CLI on its own, see the module docstrings):
   blocks    pipeline.blocks    global vineyard_id / row_id                        -> out/pre_global.xml
   targets   pipeline.targets   row gaps >= 5 m + waste                            -> out/targets.geojson
   route     pipeline.route     --mode inspector (blue) and --mode farmer (red)    -> route.geojson, route_waste.geojson
+            pipeline.tours     the inspector tour split into day tours           -> web/data/tours/
   validate  pipeline.validate  official route rules                               -> out/route_check_*.json
   measure   pipeline.measurements + pipeline.block_report                         -> measurements.csv, web/data/blocks_report.json
   export    pipeline.export_cvat  Marcaj upload ZIPs                              -> out/upload/*.zip
@@ -77,6 +78,7 @@ def main() -> None:
             for mode in ("inspector", "farmer"):
                 sh([PY, "-m", "pipeline.route", "--mode", mode, "--inp", str(global_xml), "--tiles", a.tiles,
                     "--time", str(a.route_time)])
+            sh([PY, "-m", "pipeline.tours"])                 # day tours (START -> START, <= 6 h at 4 km/h)
         elif stage == "validate":
             for mode, f in (("inspector", "route.geojson"), ("farmer", "route_waste.geojson")):
                 subprocess.run([PY, "-m", "pipeline.validate", "--route", f, "--inp", str(global_xml), "--tiles", a.tiles,
