@@ -128,6 +128,14 @@ visited, measurements per block / row, pipeline status. Data contract: `web/data
   and no credential fields, then `auth.html`, the callback that opens the session with the role. A real integration needs Field Planner registered as a SAML 2.0 service provider with the
   Agenția de Guvernare Electronică and a server-side assertion consumer endpoint that checks the signature and maps
   the IDNP to a role; a static site cannot do this.
+- **Planifică (both roles):** choose a work zone (cadastral number anywhere in Moldova via ASP, a drawn rectangle / polygon,
+  blocks or a parcel clicked on the map), a START (official, clicked on the map, or the phone's GPS) and the targets (row gaps
+  from a minimum length, annotated waste, AI waste candidates). The walking route is computed **in the browser**
+  (`web/router.js`, a Web Worker) with the same rules as `pipeline/route.py`: 0.5 m grid, only inter-rows and authorised
+  passages as cheap cells, canopies (+0.35 m) and forbidden zones blocked, targets visited within 2 m, TSP with 2-opt,
+  START → targets → START; GPX / GeoJSON export. Typical block: 1–40 s. The share outside inter-rows is shown; the
+  optional *Strict* mode drops the costliest stops to stay under the competition's 2 % (checked with `pipeline.validate`:
+  0 m through canopies and forbidden zones).
 - **Parameters:** walking speed and hours per day (times and field days update at once), minimum gap to inspect
   (precomputed routes for ≥ 5 / 8 / 10 m on the static site, `scripts/build_route_variants.py`).
 - **Field use:** GPX export of each route, GPS navigation on the phone with a chosen start and checked targets.
