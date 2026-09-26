@@ -245,7 +245,27 @@ input[type=range]{accent-color:var(--accent);width:100%}
 .chip.partial{background:rgba(59,130,246,.15);color:#2563EB}.chip.deseu,.chip.deseu_top{background:rgba(147,51,234,.15);color:#9333EA}
 .chip.lipsa{background:rgba(34,197,94,.16);color:#15803D}
 .zmodes{display:flex;gap:6px;flex-wrap:wrap}
-.pl .sec-title h2{display:flex;align-items:center;gap:8px}
+.pl{display:flex;flex-direction:column;gap:10px}
+.pl h3{display:flex;align-items:center;gap:10px;margin:0;font-size:15px;font-weight:650}
+.pl-row{display:flex;gap:8px}.pl-row .search{flex:1;min-width:0}.pl-row .btn{flex:1}
+.pl-wide{width:100%;gap:8px}
+.pl-alt{font-size:13px;color:var(--muted)}
+.pl-chosen{display:flex;align-items:center;gap:10px;justify-content:space-between;background:var(--hover);border-radius:12px;padding:10px 12px}
+.pl-chosen b{display:block;font-size:14px}.pl-chosen span{font-size:12px;color:var(--muted)}
+.pl-hint{display:flex;align-items:center;gap:8px;flex-wrap:wrap;background:rgba(249,115,22,.12);border-radius:12px;padding:10px 12px;font-size:13px}.pl-hint span{flex:1;min-width:160px}
+.pl-seg{display:grid;grid-template-columns:1fr 1fr auto;border:1px solid var(--line);border-radius:12px;overflow:hidden}
+.pl-seg button{min-height:40px;padding:0 12px;font:600 13px 'Geist',sans-serif;color:var(--muted);background:none;border:0;cursor:pointer}
+.pl-seg button+button{border-left:1px solid var(--line)}.pl-seg button.on{background:var(--accent-soft);color:var(--accent-ink)}
+.pl-chips{display:flex;gap:6px;flex-wrap:wrap}
+.pl-chip{border:1px solid var(--line);background:none;border-radius:999px;padding:0 14px;min-height:36px;font:600 13px 'Geist',sans-serif;color:var(--muted);cursor:pointer}
+.pl-chip span{opacity:.7;font-variant-numeric:tabular-nums}.pl-chip[aria-pressed="true"]{background:var(--accent);border-color:var(--accent);color:var(--on-accent)}
+.pl-set summary{cursor:pointer;font-size:13px;color:var(--muted);font-weight:600}
+.pl-set[open]{display:flex;flex-direction:column;gap:8px}.pl-set label{display:flex;gap:8px;align-items:center;font-size:13px}.pl-set select{font:inherit;border:1px solid var(--line);border-radius:6px;background:var(--solid);color:var(--ink);padding:2px 4px}
+.pl-set input[type=checkbox]{accent-color:var(--accent);width:16px;height:16px}
+.pl-go{width:100%;min-height:48px;font-size:15px}
+.pl-res{display:flex;flex-direction:column;gap:8px;border:1px solid var(--line);border-radius:14px;padding:14px}
+.pl-big{display:flex;align-items:baseline;gap:10px}.pl-big b{font:600 28px/1 var(--mono,ui-monospace);color:#10B981}.pl-big span{color:var(--muted);font-size:14px}
+.pl-res p{margin:0;font-size:14px}
 .pl-n{width:22px;height:22px;border-radius:50%;display:inline-grid;place-items:center;font:700 12px/1 'Geist',sans-serif;background:var(--hover);color:var(--muted);flex-shrink:0}
 .pl-n.ok{background:var(--accent);color:var(--on-accent)}.pl-n svg{width:13px;height:13px}
 .pl-opt{cursor:pointer;gap:10px}.pl-opt input{accent-color:var(--accent);width:16px;height:16px}.pl-opt select{font:inherit;border:1px solid var(--line);border-radius:6px;background:var(--solid);color:var(--ink);padding:1px 4px}
@@ -578,32 +598,35 @@ function refreshAnnotations() {
   for (const t of s.tiles) {
     const b = TB[t]; if (!b || !vb.intersects(bnds(b))) continue;
     const L3 = tileLayers(S.src, t);
-    if (S.layers.rows && z >= ROWS_Z) want.set(L3.rows, 1);
-    if (S.layers.inter && z >= 1) want.set(L3.inter, 1);
-    if (S.layers.canopy && z >= 1.75) want.set(L3.can, 1);
+    if (lay('rows') && z >= ROWS_Z) want.set(L3.rows, 1);
+    if (lay('inter') && z >= 1) want.set(L3.inter, 1);
+    if (lay('canopy') && z >= 1.75) want.set(L3.can, 1);
   }
-  if ((S.layers.rows || S.layers.canopy) && z < ROWS_Z) want.set(density(S.src), 1);
+  if ((lay('rows') || lay('canopy')) && z < ROWS_Z) want.set(density(S.src), 1);
   for (const [l] of shown) if (!want.has(l)) { map.removeLayer(l); shown.delete(l); }
   for (const [l] of want) if (!shown.has(l)) { l.addTo(map); shown.set(l, 1); }
   // hi-res imagery only when zoomed in
-  if (S.layers.ortho && z >= HIRES_Z) { if (!map.hasLayer(hires)) hires.addTo(map); } else if (map.hasLayer(hires)) map.removeLayer(hires);
+  if (lay('ortho') && z >= HIRES_Z) { if (!map.hasLayer(hires)) hires.addTo(map); } else if (map.hasLayer(hires)) map.removeLayer(hires);
 }
+function PLAN_ANN() { return typeof PL !== 'undefined' && PL.ann; }
+const CALM = new Set(['canopy', 'rows', 'inter', 'grid', 'passage', 'targets', 'wcand', 'md', 'cad', 'cmp', 'bstat', 'route_blue', 'route_red']);
+const lay = k => !!S.layers[k] && !(S.view === 'zona' && !PLAN_ANN() && CALM.has(k));   // Planifică: calm map unless asked
 function applyLayers() {
-  S.layers.ortho ? ortho.addTo(map) : map.removeLayer(ortho);
-  for (const k of ['study', 'passage', 'forbidden', 'grid']) S.layers[k] ? ctx[k].addTo(map) : map.removeLayer(ctx[k]);
-  for (const [k, r] of Object.entries(ROUTES)) S.layers['route_' + k] ? r.layer.addTo(map) : map.removeLayer(r.layer);
+  lay('ortho') ? ortho.addTo(map) : map.removeLayer(ortho);
+  for (const k of ['study', 'passage', 'forbidden', 'grid']) lay(k) ? ctx[k].addTo(map) : map.removeLayer(ctx[k]);
+  for (const [k, r] of Object.entries(ROUTES)) lay('route_' + k) ? r.layer.addTo(map) : map.removeLayer(r.layer);
   syncTargets();
-  if (wcLayer) S.layers.wcand ? wcLayer.addTo(map) : map.removeLayer(wcLayer);
+  if (wcLayer) lay('wcand') ? wcLayer.addTo(map) : map.removeLayer(wcLayer);
   syncMd();
-  if (cadLayer) { if (S.layers.cad) cadLayer.addTo(map); else map.removeLayer(cadLayer); }
-  if (cmpLayer) { if (S.layers.cmp) { cmpLayer.addTo(map); cmpLayer.bringToBack(); } else map.removeLayer(cmpLayer); }
-  if (bstatLayer) { if (S.layers.bstat) { bstatLayer.addTo(map); bstatLayer.bringToBack(); } else map.removeLayer(bstatLayer); }
+  if (cadLayer) { if (lay('cad')) cadLayer.addTo(map); else map.removeLayer(cadLayer); }
+  if (cmpLayer) { if (lay('cmp')) { cmpLayer.addTo(map); cmpLayer.bringToBack(); } else map.removeLayer(cmpLayer); }
+  if (bstatLayer) { if (lay('bstat')) { bstatLayer.addTo(map); bstatLayer.bringToBack(); } else map.removeLayer(bstatLayer); }
   ortho.eachLayer(l => l.setOpacity(S.op)); hires.eachLayer(l => l.setOpacity(S.op));
   refreshAnnotations();
 }
 function syncTargets() {                      // thousands of targets: only from zoom 0.5 up (~0.7 m/px)
   if (!targetsLayer) return;
-  const on = S.layers.targets && map.getZoom() >= 0.5;
+  const on = lay('targets') && map.getZoom() >= 0.5;
   if (on && !map.hasLayer(targetsLayer)) targetsLayer.addTo(map);
   if (!on && map.hasLayer(targetsLayer)) map.removeLayer(targetsLayer);
 }
@@ -1098,7 +1121,7 @@ function printZone() {
   try { window.print(); } catch (e) { toast('Tipărirea nu e disponibilă aici'); }
 }
 /* ============ Planifică: zonă + START + ținte -> traseu calculat în browser (web/router.js, aceleași reguli ca pipeline/route.py) ============ */
-const PL = {gaps: true, minGap: store.get('pl_gap', 3), waste: true, wcand: S.role === 'fermier', strict: false, busy: null, pct: 0, worker: null};
+const PL = {gaps: true, minGap: store.get('pl_gap', 3), waste: true, wcand: S.role === 'fermier', strict: false, ann: false, more: false, busy: null, pct: 0, worker: null};
 const ringsOf = g => !g ? [] : g.type === 'Polygon' ? [g.coordinates] : g.type === 'MultiPolygon' ? g.coordinates : [];
 const bbHit = (a, b) => !(a[2] < b[0] || a[0] > b[2] || a[3] < b[1] || a[1] > b[3]);
 function ringBB(r) { let a = [Infinity, Infinity, -Infinity, -Infinity]; for (const [x, y] of r) a = [Math.min(a[0], x), Math.min(a[1], y), Math.max(a[2], x), Math.max(a[3], y)]; return a; }
@@ -1153,6 +1176,7 @@ function planRoute() {
     const what = [PL.gaps && `goluri ≥ ${PL.minGap} m`, PL.waste && 'deșeuri', PL.wcand && 'candidați AI'].filter(Boolean).join(' + ');
     addLiveRoute(fc, tg, mode, PL.minGap, 'Zonă', `${what}${CST.xy ? ' · START ales' : ''}`);
     ROUTES.live.file = 'route_zona.geojson';
+    ROUTES.live.layer.addLayer(L.layerGroup(targets.map(t => L.circleMarker(ll(t.x, t.y), {renderer: R, radius: 4, weight: 1.5, color: '#fff', fillColor: vis.has(t.id) ? (t.type === 'waste' ? '#F97316' : '#10B981') : '#9CA3AF', fillOpacity: 1, interactive: false}))));
     ROUTES.live.ck = {valid: r.outside_share <= 0.02, outside_share: r.outside_share, start_m: 0, end_m: 0, canopy_m: 0, forbidden_m: 0, targets: r.targets_total, visited: r.visited.length};
     ROUTES.live.info = {snap: r.snap_m, unreachable: r.unreachable.length, dropped: r.dropped.length, ms: r.ms, res: r.res, strict: PL.strict};
     renderPanel();
@@ -1170,39 +1194,46 @@ function gpsStart() {
   }, () => toast('Nu am primit locația (permisiune refuzată?)'), {enableHighAccuracy: true, timeout: 15000});
 }
 function viewZona() {
-  const st = ZN.stats, m = ZN.mode, cnt = planCounts(), off = officialStart();
-  $('#p-head').innerHTML = head('Planifică lucrul', ZN.geom ? ZN.label : 'zonă · punct de start · traseu');
-  const btn = (k, l) => `<button class="btn sm" type="button" data-zmode="${k}" aria-pressed="${m === k}">${l}</button>`;
-  const step = (n, t, ok, extra = '') => `<div class="sec-title"><h2><span class="pl-n ${ok ? 'ok' : ''}">${ok ? IC.ok : n}</span>${t}</h2>${extra}</div>`;
-  const nT = (PL.gaps ? cnt.gaps : 0) + (PL.waste ? cnt.waste : 0) + (PL.wcand ? cnt.wcand : 0);
+  const st = ZN.stats, m = ZN.mode, cnt = planCounts();
   const rz = ROUTES.live && ROUTES.live.file === 'route_zona.geojson' ? ROUTES.live : null;
-  $('#p-body').innerHTML = `<section class="pl">${step(1, 'Zona de lucru', !!ZN.geom, ZN.geom ? `<span class="num">${fmt(st.area / 1e4, 2)} ha</span>` : '')}
-      <div style="display:flex;gap:8px;flex-wrap:wrap"><input class="search" id="zcad-q" type="search" inputmode="numeric" placeholder="Nr. cadastral, ex. 80371140153" aria-label="Număr cadastral" style="flex:1;min-width:170px"><button class="btn primary" type="button" data-act="z-cad">Caută</button></div>
-      <div class="zmodes" style="margin-top:8px"><span class="note" style="align-self:center">sau pe hartă:</span>${btn('rect', 'Dreptunghi')}${btn('poly', 'Poligon')}${m === 'poly' ? '<button class="btn sm primary" type="button" data-act="z-finish">Termină</button>' : ''}${btn('blocks', 'Blocuri')}${btn('parcel', 'Parcelă')}</div>
-      ${ZN.geom ? `<p class="note" style="margin-top:8px"><b>${ZN.label}</b> · ${fmt(st.rowIds.size)} rânduri · ${fmt(st.gaps)} goluri · ${fmt(st.waste)} deșeuri · ${fmt(st.parcels.length)} parcele <button class="linkish" type="button" data-act="z-clear">schimbă</button></p>` : ''}</section>
-    <section class="pl">${step(2, 'Punct de pornire', true, `<span class="badge" style="${CST.xy ? 'background:rgba(16,185,129,.15);color:#047857' : 'background:var(--hover);color:var(--muted)'}">${CST.xy ? 'ales' : 'oficial'}</span>`)}
-      <p class="note">${CST.xy ? `Ales: <span class="mono">${CST.xy[0].toFixed(1)}, ${CST.xy[1].toFixed(1)}</span> · traseul pornește din cel mai apropiat inter-rând sau drum (max. 80 m).` : `START-ul organizatorilor: <span class="mono">${off ? off[0].toFixed(1) + ', ' + off[1].toFixed(1) : '—'}</span>.`}</p>
-      <div class="zmodes"><button class="btn sm ${CST.picking ? 'primary' : ''}" type="button" data-act="cst-pick">${CST.picking ? 'Apasă pe hartă…' : 'Alege pe hartă'}</button><button class="btn sm" type="button" data-act="pl-gps">Locația mea (GPS)</button>${CST.xy ? '<button class="btn sm" type="button" data-act="cst-clear">START oficial</button>' : ''}</div></section>
-    <section class="pl">${step(3, 'Ce vizitezi', nT > 0, `<span class="num">${fmt(nT)} ținte</span>`)}
-      <div class="list" style="gap:2px">
-        <label class="li pl-opt"><input type="checkbox" id="pl-gaps" ${PL.gaps ? 'checked' : ''}><span>Goluri în rânduri ≥ <select id="pl-gap" aria-label="Gol minim">${[3, 5, 8, 10].map(g => `<option value="${g}" ${g === PL.minGap ? 'selected' : ''}>${g} m</option>`).join('')}</select></span><span class="r num">${ZN.geom ? fmt(cnt.gaps) : '—'}</span></label>
-        <label class="li pl-opt"><input type="checkbox" id="pl-waste" ${PL.waste ? 'checked' : ''}><span>Deșeuri adnotate</span><span class="r num">${ZN.geom ? fmt(cnt.waste) : '—'}</span></label>
-        <label class="li pl-opt"><input type="checkbox" id="pl-wcand" ${PL.wcand ? 'checked' : ''}><span>Posibile deșeuri găsite de AI <small class="note">de confirmat</small></span><span class="r num">${ZN.geom ? fmt(cnt.wcand) : '—'}</span></label>
-        <label class="li pl-opt"><input type="checkbox" id="pl-strict" ${PL.strict ? 'checked' : ''}><span>Strict: max. 2 % în afara inter-rândurilor <small class="note">regula concursului; sare țintele care o încalcă</small></span></label></div></section>
-    <section class="pl">${step(4, 'Traseul', !!rz)}
-      ${PL.busy ? `<div class="pl-prog" id="pl-prog" role="status"><span>${PL.busy}</span><div><i style="width:${PL.pct}%"></i></div></div>`
-        : `<button class="btn primary" type="button" data-act="pl-run" style="width:100%" ${!ZN.geom || !nT ? 'disabled' : ''}>${rz ? 'Recalculează traseul' : 'Calculează traseul'}</button>
-           <p class="note" style="margin-top:6px">${!ZN.geom ? 'Alege întâi zona.' : !nT ? 'Nicio țintă cu setările alese.' : 'Se calculează aici, în browser: doar pe inter-rânduri și pasaje, fără coroane și zone interzise, START → ținte → START.'}</p>`}
-      ${rz ? `${routeCard(rz)}<div class="zmodes"><button class="btn sm" type="button" data-act="gpx" data-route="live">Descarcă GPX</button><button class="btn sm" type="button" data-act="pl-geojson">GeoJSON</button><a class="btn sm" href="#traseu">Navighează în Traseu</a></div>
-        ${rz.info ? `<p class="note">${rz.info.unreachable ? `${fmt(rz.info.unreachable)} ținte nu se pot atinge pe inter-rânduri și pasaje. ` : ''}${rz.info.dropped ? `${fmt(rz.info.dropped)} ținte sărite: drumul până la ele ar trece de limita de 2 % în afara inter-rândurilor. ` : ''}${rz.ck.outside_share > 0.02 && !rz.info.strict ? `${fmt(rz.ck.outside_share * 100, 1)} % din traseu trece pe capete de rând și prin golurile din rânduri (fără coroane): bun pentru teren; pentru regula de 2 % a concursului bifează „Strict”. ` : ''}START lipit de grilă la ${fmt(rz.info.snap, 1)} m · grilă ${fmt(rz.info.res, 1)} m · ${fmt(rz.info.ms / 1000, 1)} s.</p>` : ''}` : ''}</section>
-    ${st ? `<details class="pl-more"><summary>Detalii și export pentru zonă</summary>
+  const nT = (PL.gaps ? cnt.gaps : 0) + (PL.waste ? cnt.waste : 0) + (PL.wcand ? cnt.wcand : 0);
+  $('#p-head').innerHTML = head('Planifică traseul', ZN.geom ? ZN.label : 'în 3 pași');
+  const num = (n, ok) => `<span class="pl-n ${ok ? 'ok' : ''}">${ok ? IC.ok : n}</span>`;
+  const tip = {rect: 'Apasă pe hartă două colțuri opuse ale zonei.', poly: 'Apasă colțurile pe rând; dublu-click ca să termini.', blocks: 'Apasă pe un bloc de vie.', parcel: 'Apasă pe hartă: se ia parcela de acolo.'}[m];
+  const where = ZN.geom
+    ? `<div class="pl-chosen"><div><b>${ZN.label}</b><span>${fmt(st.area / 1e4, 2)} ha · ${fmt(st.gaps)} goluri · ${fmt(st.rowIds.size)} rânduri</span></div><button class="btn sm" type="button" data-act="z-clear">Schimbă</button></div>`
+    : m ? `<div class="pl-hint"><span>${tip}</span><button class="btn sm" type="button" data-act="pl-cancel">Anulează</button>${m === 'poly' ? '<button class="btn sm primary" type="button" data-act="z-finish">Gata</button>' : ''}</div>`
+    : `<div class="pl-row"><input class="search" id="zcad-q" type="search" inputmode="numeric" placeholder="Număr cadastral" aria-label="Număr cadastral"><button class="btn primary" type="button" data-act="z-cad">Caută</button></div>
+       <button class="btn pl-wide" type="button" data-zmode="rect"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><rect x="4" y="4" width="16" height="16" rx="1" stroke-dasharray="3 3"/></svg>Desenează zona pe hartă</button>
+       <div class="pl-alt">sau: <button class="linkish" type="button" data-zmode="blocks">un bloc</button> · <button class="linkish" type="button" data-zmode="parcel">o parcelă</button> · <button class="linkish" type="button" data-zmode="poly">un poligon</button></div>`;
+  const seg = (on, act, label) => `<button type="button" class="${on ? 'on' : ''}" data-act="${act}" aria-pressed="${on}">${label}</button>`;
+  const chip = (k, label, n) => `<button type="button" class="pl-chip" data-act="pl-toggle" data-k="${k}" aria-pressed="${PL[k]}">${label}${ZN.geom ? ` <span>${fmt(n)}</span>` : ''}</button>`;
+  const min = rz ? Math.round(rz.len / (S.speed * 1000) * 60) : 0;
+  $('#p-body').innerHTML = `
+    <section class="pl"><h3>${num(1, !!ZN.geom)}Unde lucrezi?</h3>${where}</section>
+    <section class="pl"><h3>${num(2, true)}De unde pleci?</h3>
+      <div class="pl-seg">${seg(!CST.xy && !CST.picking, 'cst-clear', 'START oficial')}${seg(CST.picking || !!CST.xy, 'cst-pick', CST.picking ? 'Apasă pe hartă…' : 'Aleg pe hartă')}${seg(false, 'pl-gps', 'GPS')}</div></section>
+    <section class="pl"><h3>${num(3, nT > 0)}Ce verifici?</h3>
+      <div class="pl-chips">${chip('gaps', 'Goluri', cnt.gaps)}${chip('waste', 'Deșeuri', cnt.waste)}${chip('wcand', 'Deșeuri AI', cnt.wcand)}</div>
+      <details class="pl-set" ${PL.more ? 'open' : ''}><summary>Setări</summary>
+        <label>Gol minim <select id="pl-gap">${[3, 5, 8, 10].map(g => `<option value="${g}" ${g === PL.minGap ? 'selected' : ''}>${g} m</option>`).join('')}</select></label>
+        <label><input type="checkbox" id="pl-strict" ${PL.strict ? 'checked' : ''}> Regula concursului: max. 2 % în afara inter-rândurilor</label>
+        <label><input type="checkbox" id="pl-ann" ${PL.ann ? 'checked' : ''}> Arată adnotările pe hartă</label></details></section>
+    ${PL.busy ? `<div class="pl-prog" id="pl-prog" role="status"><span>${PL.busy}</span><div><i style="width:${PL.pct}%"></i></div></div>`
+      : `<button class="btn primary pl-go" type="button" data-act="pl-run" ${!ZN.geom || !nT ? 'disabled' : ''}>${!ZN.geom ? 'Alege întâi zona' : !nT ? 'Nicio țintă aleasă' : `${rz ? 'Recalculează' : 'Calculează'} traseul · ${fmt(nT)} ținte`}</button>`}
+    ${rz ? `<section class="pl-res">
+      <div class="pl-big"><b>${kmH(rz.len)}</b><span>${min >= 60 ? Math.floor(min / 60) + ' h ' + (min % 60) : min} min pe jos</span></div>
+      <p>${fmt(rz.p.targets_visited)} din ${fmt(rz.p.targets_total)} ținte · pleacă și revine la ${CST.xy ? 'punctul ales' : 'START'}</p>
+      ${rz.info?.unreachable || rz.info?.dropped ? `<p class="note">${fmt((rz.info.unreachable || 0) + (rz.info.dropped || 0))} ținte nu se pot atinge mergând printre rânduri.</p>` : ''}
+      <div class="pl-row"><button class="btn primary" type="button" data-act="gpx" data-route="live">Descarcă GPX</button><a class="btn" href="#traseu">Navighează</a></div>
+      <details class="pl-set"><summary>Detalii tehnice</summary>${routeCard(rz)}<button class="btn sm" type="button" data-act="pl-geojson">GeoJSON</button></details></section>` : ''}
+    ${st ? `<details class="pl-set"><summary>Date despre zonă</summary>
       <div class="stats" style="margin-top:8px">
-        <div class="stat"><div class="v num">${fmt(st.rowIds.size)}</div><div class="l">rânduri · ${kmT(st.rowLen)} · ${fmt(st.disrupted)} disrupted</div></div>
+        <div class="stat"><div class="v num">${fmt(st.rowIds.size)}</div><div class="l">rânduri · ${kmT(st.rowLen)}</div></div>
+        <div class="stat"><div class="v num">${fmt(st.gaps)}</div><div class="l">goluri · ~${fmt(st.missing)} butuci lipsă</div></div>
         <div class="stat"><div class="v num">${fmt(st.can)}</div><div class="l">coroane · ${fmt(st.canArea, 0)} m²</div></div>
-        <div class="stat"><div class="v num">${fmt(st.interArea / 1e4, 3)}<small>ha</small></div><div class="l">inter-rânduri</div></div>
-        <div class="stat"><div class="v num">${fmt(st.gaps)}</div><div class="l">goluri · ~${fmt(st.missing)} butuci lipsă</div></div></div>
-      ${st.vids.size ? `<div class="list" style="margin-top:8px">${[...st.vids].sort().map(v => { const c = CMP?.by[v]; return `<button type="button" class="li" data-cmp="${v}"><span class="dot" style="background:${c ? CMC[c.status] : '#9CA3AF'}"></span><b>${v}</b><span class="r">${c ? CMN[c.status] : ''}${BR?.by[v] ? ' · ~' + fmt(BR.by[v].missing_vines) + ' butuci lipsă în bloc' : ''}</span></button>`; }).join('')}</div>` : '<p class="note">Nicio viță detectată în zonă.</p>'}
-      <div class="zmodes" style="margin-top:10px"><button class="btn sm" type="button" data-act="z-geojson">Zonă GeoJSON</button><button class="btn sm" type="button" data-act="z-csv">Măsurători CSV</button><button class="btn sm" type="button" data-act="z-print">Raport</button><button class="btn sm" type="button" data-act="z-link">Copiază linkul</button>${btn('tiles', 'Alege tile-uri')}</div></details>` : ''}`;
+        <div class="stat"><div class="v num">${fmt(st.parcels.length)}</div><div class="l">parcele cadastrale</div></div></div>
+      <div class="zmodes" style="margin-top:8px"><button class="btn sm" type="button" data-act="z-csv">CSV</button><button class="btn sm" type="button" data-act="z-geojson">GeoJSON</button><button class="btn sm" type="button" data-act="z-print">Raport</button><button class="btn sm" type="button" data-act="z-link">Copiază linkul</button></div></details>` : ''}`;
 }
 
 /* ============ corectură Marcaj: plan pe task-uri ============ */
@@ -1249,8 +1280,8 @@ fetch('data/moldova.geojson?v=2').then(r => r.ok ? r.json() : null).then(fc => {
   map.setMaxBounds(mdBounds.pad(0.15));
   applyLayers(); renderLayers();
 }).catch(() => {});
-function syncMd() { if (!mdLayer) return; const on = S.layers.md !== false && map.getZoom() < -1; if (on && !map.hasLayer(mdLayer)) mdLayer.addTo(map); if (!on && map.hasLayer(mdLayer)) map.removeLayer(mdLayer); syncMdLabel(); }
-function syncMdLabel() { if (!mdLayer) return; const on = S.layers.md && map.getZoom() < -1; if (on && !map.hasLayer(mdLayer.lab)) mdLayer.lab.addTo(map); if (!on && map.hasLayer(mdLayer.lab)) map.removeLayer(mdLayer.lab); }
+function syncMd() { if (!mdLayer) return; const on = S.layers.md !== false && !(S.view === 'zona' && !PLAN_ANN()) && map.getZoom() < -1; if (on && !map.hasLayer(mdLayer)) mdLayer.addTo(map); if (!on && map.hasLayer(mdLayer)) map.removeLayer(mdLayer); syncMdLabel(); }
+function syncMdLabel() { if (!mdLayer) return; const on = lay('md') && map.getZoom() < -1; if (on && !map.hasLayer(mdLayer.lab)) mdLayer.lab.addTo(map); if (!on && map.hasLayer(mdLayer.lab)) map.removeLayer(mdLayer.lab); }
 /* ============ căutare după număr cadastral (local + cadastrul național ASP, WFS public cu CORS) ============ */
 const D4026 = '+proj=tmerc +lat_0=0 +lon_0=28.4 +k=0.99994 +x_0=200000 +y_0=-5000000 +ellps=GRS80 +towgs84=0,0,0,0,0,0,0 +units=m +no_defs';   // MOLDREF99 / Moldova TM
 const CAD_WFS = 'https://geodata.gov.md/geoserver/cadastru_data/wfs?service=WFS&version=2.0.0&request=GetFeature&typeNames=cadastru_data%3Aterenuri&outputFormat=application%2Fjson';
@@ -1556,7 +1587,8 @@ function show(v) {
   if (!VIEWS[v]) v = 'harta';
   const wasWide = $('#panel').classList.contains('wide');
   if (S.view !== v) S.q = '';
-  S.view = v; $$('.rail a').forEach(a => a.dataset.view === v ? a.setAttribute('aria-current', 'page') : a.removeAttribute('aria-current'));
+  const calmChange = (S.view === 'zona') !== (v === 'zona');
+  S.view = v; if (calmChange) setTimeout(applyLayers, 0); $$('.rail a').forEach(a => a.dataset.view === v ? a.setAttribute('aria-current', 'page') : a.removeAttribute('aria-current'));
   $('#panel').classList.toggle('wide', v === 'masuratori');
   if (S.collapsed) { S.collapsed = false; $('#panel').classList.remove('collapsed'); }
   renderPanel(); $('#p-body').scrollTop = 0;
@@ -1765,6 +1797,8 @@ document.addEventListener('click', e => {
     case 'z-link': return copy(location.href.split('#')[0] + '#zona=' + ZN.key, null);
     case 'z-route': case 'pl-run': return planRoute();
     case 'pl-gps': return gpsStart();
+    case 'pl-toggle': { PL[b.dataset.k] = !PL[b.dataset.k]; return renderPanel(); }
+    case 'pl-cancel': { if (ZN.mode) zoneMode(ZN.mode); return; }
     case 'pl-geojson': { const r = ROUTES.live; if (r && downloadText('route_zona.geojson', JSON.stringify(r.fc), 'application/geo+json')) toast('route_zona.geojson descărcat'); return; }
     case 'cad-search': return cadSearch($('#cad-q')?.value);
     case 'cmp-on': { S.layers.cmp = true; store.set('layers3', S.layers); applyLayers(); renderLayers(); return renderPanel(); }
@@ -1792,8 +1826,8 @@ document.addEventListener('input', e => {
   if (e.target.id === 'tile-q' || e.target.id === 'row-q') { S.q = e.target.value; const id = e.target.id, pos = e.target.selectionStart; renderPanel(); const n = $('#' + id); n.focus(); n.setSelectionRange(pos, pos); }
 });
 document.addEventListener('change', e => {
-  if (e.target.id === 'pl-gaps' || e.target.id === 'pl-waste' || e.target.id === 'pl-wcand' || e.target.id === 'pl-strict') { PL[e.target.id.slice(3)] = e.target.checked; return renderPanel(); }
-  if (e.target.id === 'pl-gap') { PL.minGap = +e.target.value; store.set('pl_gap', PL.minGap); return renderPanel(); }
+  if (e.target.id === 'pl-strict' || e.target.id === 'pl-ann') { PL[e.target.id.slice(3)] = e.target.checked; PL.more = true; if (e.target.id === 'pl-ann') applyLayers(); return renderPanel(); }
+  if (e.target.id === 'pl-gap') { PL.minGap = +e.target.value; PL.more = true; store.set('pl_gap', PL.minGap); return renderPanel(); }
   const id = e.target.id, v = +e.target.value;
   if (id === 'tif-in') { const f = e.target.files[0]; e.target.value = ''; return analyzeFile(f); }
   if (id === 'csv-in') { const f = e.target.files[0]; e.target.value = ''; return uploadRegistry(f); }
