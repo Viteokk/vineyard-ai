@@ -3,17 +3,17 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<title>Field Planner Sireț3</title>
-<meta name="description" content="Podgoriile Moldovei văzute rând cu rând: coroane, rânduri, goluri, cadastru și trasee de inspecție din zborul de la Sireți.">
+<title>VinePlan</title>
+<meta name="description" content="VinePlan: controlul și administrarea viilor din imaginea dronei. Rânduri, butuci lipsă, deșeuri, registru viticol, subvenții AIPA, trasee de control și rapoarte, aliniate la regulile UE.">
 <script>/* old app links (#V63, #zona=..., #harta) now live in app.html */
-(function () { var h = location.hash.slice(1); if (h && !/^(top|acum|standard|roluri|cum|date)$/.test(h)) location.replace('app.html#' + h); })();</script>
+(function () { var h = location.hash.slice(1); if (h && !/^(top|probleme|ce|roluri|cum|ue|date)$/.test(h)) location.replace('app.html#' + h); })();</script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,700;12..96,800&family=Geist:wght@400;500;600;700&family=Geist+Mono:wght@400;500&display=swap">
 <style>
 :root{
   color-scheme:dark;
-  --bg:#0B0F0D; --surface:#131A16; --glass:rgba(11,15,13,.74); --line:rgba(255,255,255,.12); --ink:#FFFFFF; --soft:#D5DCD7; --muted:#9FAAA3;
-  --blue:#0046AE; --yellow:#FFD200; --red:#CC092F; --leaf:#4ADE80;
+  --bg:#0B0F0D; --surface:#131A16; --surface2:#18211C; --glass:rgba(11,15,13,.74); --line:rgba(255,255,255,.12); --ink:#FFFFFF; --soft:#D5DCD7; --muted:#9FAAA3;
+  --blue:#0046AE; --blue-ink:#7FA8F0; --yellow:#FFD200; --red:#CC092F; --red-ink:#FF8A9C; --leaf:#4ADE80; --route:#F97316;
   --mono:'Geist Mono',ui-monospace,Menlo,monospace;
 }
 *{box-sizing:border-box}
@@ -22,29 +22,37 @@ body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.6 'Geist',system
 a{color:inherit}
 h1,h2,h3{font-family:'Bricolage Grotesque','Geist',sans-serif;margin:0;letter-spacing:-.02em;text-wrap:balance}
 p{margin:0}
-.wrap{max-width:1240px;margin:0 auto;padding-inline:20px}
+.wrap{max-width:1180px;margin:0 auto;padding-inline:20px}
 .btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:50px;padding:0 26px;border-radius:12px;font:600 16px/1 'Geist',sans-serif;text-decoration:none;border:1px solid var(--line);background:var(--surface);color:var(--ink);cursor:pointer}
+.btn:hover{background:var(--surface2)}
 .btn.white{background:#fff;color:#0B0F0D;border-color:transparent}
 .btn.white:hover{background:#E9EFE9}
 .btn:focus-visible,a:focus-visible,path:focus-visible{outline:2px solid var(--yellow);outline-offset:3px}
-.hero{position:relative;min-height:min(100vh,1000px);background:#1B221E url('data/hires/siret3_r021_c012.webp') center/cover;display:flex;flex-direction:column}
-.hero::before{content:'';position:absolute;inset:0;background:linear-gradient(90deg,rgba(10,14,12,.95) 0%,rgba(10,14,12,.78) 50%,rgba(10,14,12,.35) 100%)}
+.num{font-variant-numeric:tabular-nums}
+
+.mvp{background:#060908;border-bottom:1px solid var(--line);font-size:13px;color:var(--muted)}
+.mvp .wrap{display:flex;justify-content:space-between;gap:16px;padding-block:8px;flex-wrap:wrap}
+.mvp b{color:var(--soft);font-weight:600}
+
+.hero{position:relative;background:#1B221E url('data/hires/siret3_r021_c012.webp') center/cover}
+.hero::before{content:'';position:absolute;inset:0;background:linear-gradient(90deg,rgba(10,14,12,.96) 0%,rgba(10,14,12,.82) 52%,rgba(10,14,12,.4) 100%)}
 .hero > *{position:relative}
-nav{display:flex;align-items:center;gap:22px;padding-block:22px}
-.logo{display:flex;align-items:center;gap:10px;font-weight:700;font-size:18px;text-decoration:none}
+nav{display:flex;align-items:center;gap:22px;padding-block:20px}
+.logo{display:flex;align-items:center;gap:10px;font-weight:700;font-size:19px;text-decoration:none}
+.logo i{width:30px;height:30px;border-radius:9px;background:var(--leaf);color:#052312;display:grid;place-items:center}
 nav .sp{flex:1}
 nav a.link{color:var(--soft);text-decoration:none;font-size:14px}
 nav a.link:hover{color:#fff}
-.hero-grid{flex:1;display:grid;grid-template-columns:1.3fr .8fr;gap:48px;align-items:center;padding-block:40px 36px}
-.ribbon{display:flex;width:172px;height:8px;margin-bottom:26px}
+.hero-grid{display:grid;grid-template-columns:1.25fr .85fr;gap:48px;align-items:center;padding-block:36px 34px}
+.ribbon{display:flex;width:150px;height:7px;margin-bottom:24px}
 .ribbon i{flex:1}.ribbon i:nth-child(1){background:var(--blue)}.ribbon i:nth-child(2){background:var(--yellow)}.ribbon i:nth-child(3){background:var(--red)}
-.hero h1{font-size:clamp(40px,6.2vw,80px);line-height:1.02;font-weight:800}
-.hero .lead{font-size:20px;color:var(--soft);max-width:56ch;margin-top:22px}
-.ctas{display:flex;gap:16px;flex-wrap:wrap;align-items:center;margin-top:30px}
+.hero h1{font-size:clamp(38px,5.6vw,72px);line-height:1.03;font-weight:800}
+.hero .lead{font-size:19px;color:var(--soft);max-width:54ch;margin-top:20px}
+.ctas{display:flex;gap:16px;flex-wrap:wrap;align-items:center;margin-top:28px}
 .ctas a.plain{color:var(--soft);font-size:15px}
 .mapcard{background:var(--glass);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);border:1px solid var(--line);border-radius:22px;padding:20px 22px 22px;display:flex;flex-direction:column;gap:10px}
-.mapcard .eyebrow{font:600 12px/1 'Geist',sans-serif;letter-spacing:.14em;text-transform:uppercase;color:var(--yellow)}
-.mapcard svg{width:100%;height:auto;max-height:430px;display:block}
+.eyebrow{font:600 12px/1 'Geist',sans-serif;letter-spacing:.14em;text-transform:uppercase;color:var(--yellow)}
+.mapcard svg{width:100%;height:auto;max-height:400px;display:block}
 .mapcard .country{fill:none;stroke:#fff;stroke-width:3;stroke-linejoin:round;pointer-events:none}
 .mapcard .raion{fill:url(#flag);stroke:rgba(255,255,255,.35);stroke-width:.7;stroke-linejoin:round;cursor:pointer;transition:filter .15s,opacity .15s}
 .mapcard svg:hover .raion{opacity:.78}
@@ -58,261 +66,326 @@ nav a.link:hover{color:#fff}
 .mapcard .detail{font-size:13px;color:var(--muted);min-height:2.6em}
 .hint-touch{display:none}@media (hover:none){.hint-mouse{display:none}.hint-touch{display:inline}}
 .mapcard .loading{color:var(--muted);font-size:14px;padding:40px 0;text-align:center}
-.stats{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));background:var(--glass);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);border:1px solid var(--line);border-radius:18px;margin-bottom:40px}
-.stats div{padding:22px 26px;display:flex;flex-direction:column;gap:6px}
-.stats .v{font:500 clamp(26px,3vw,36px)/1 var(--mono);letter-spacing:-.02em}
+.stats{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));background:var(--glass);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);border:1px solid var(--line);border-radius:18px;margin-bottom:36px}
+.stats div{padding:20px 24px;display:flex;flex-direction:column;gap:6px;border-left:1px solid var(--line)}
+.stats div:first-child{border-left:0}
+.stats .v{font:500 clamp(24px,2.8vw,34px)/1 var(--mono);letter-spacing:-.02em}
 .stats .l{font-size:14px;color:var(--soft)}
-section{padding-block:80px}
-.sec-head{display:flex;flex-direction:column;gap:12px;max-width:680px;margin-bottom:34px}
-.sec-head .eyebrow{font:600 12px/1 'Geist',sans-serif;letter-spacing:.14em;text-transform:uppercase;color:var(--yellow)}
-.sec-head h2{font-size:clamp(28px,4vw,44px);font-weight:800;line-height:1.06}
+
+section{padding-block:76px}
+.sec-head{display:flex;flex-direction:column;gap:12px;max-width:700px;margin-bottom:32px}
+.sec-head h2{font-size:clamp(28px,3.8vw,42px);font-weight:800;line-height:1.08}
 .sec-head p{color:var(--muted);font-size:18px}
+
+/* what it does */
+.does{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:16px}
+.do{background:var(--surface);border:1px solid var(--line);border-radius:18px;padding:22px;display:flex;flex-direction:column;gap:10px}
+.do .ic{width:42px;height:42px;border-radius:12px;display:grid;place-items:center;background:rgba(74,222,128,.12);color:var(--leaf)}
+.do .n{font:500 12px/1 var(--mono);color:var(--muted)}
+.do h3{font-size:20px;font-weight:700}
+.do p{color:var(--soft);font-size:15px}
+
+/* roles */
 .roles{display:grid;grid-template-columns:1fr 1fr;gap:20px}
-.role{background:var(--surface);border:1px solid var(--line);border-radius:20px;padding:26px;display:flex;flex-direction:column;gap:14px;border-top:4px solid var(--c)}
-.role.insp{--c:var(--blue)}.role.admin{--c:var(--red)}
+.role{background:var(--surface);border:1px solid var(--line);border-top:4px solid var(--c);border-radius:20px;padding:26px;display:flex;flex-direction:column;gap:16px}
+.role.insp{--c:var(--blue);--ci:var(--blue-ink)}.role.admin{--c:var(--red);--ci:var(--red-ink)}
 .role h3{font-size:26px;font-weight:800}
-.role .who{color:var(--muted)}
-.role ul{margin:0;padding-left:20px;display:flex;flex-direction:column;gap:8px;color:var(--soft)}
-.center{display:flex;justify-content:center;margin-top:28px}
-.steps{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:16px}
-.step{background:var(--surface);border:1px solid var(--line);border-radius:18px;padding:22px;display:flex;flex-direction:column;gap:10px}
-.step .n{font:500 13px/1 var(--mono);color:var(--yellow)}
-.step h3{font-size:20px;font-weight:700}
-.step p{color:var(--muted);font-size:15px}
-.trust{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px}
-.trust div{border:1px solid var(--line);border-radius:16px;padding:20px;display:flex;flex-direction:column;gap:8px}
-.trust h3{font:700 17px/1.3 'Geist',sans-serif}
-.trust p{color:var(--muted);font-size:14px}
-.badge{align-self:flex-start;font:600 11px/1 'Geist',sans-serif;letter-spacing:.08em;text-transform:uppercase;padding:5px 8px;border-radius:6px}
+.role .who{color:var(--muted);margin-top:4px}
+.role .first{border:1px solid var(--line);border-radius:14px;padding:14px 16px;background:rgba(255,255,255,.03)}
+.role .first b{display:block;font:600 12px/1 'Geist',sans-serif;letter-spacing:.1em;text-transform:uppercase;color:var(--ci);margin-bottom:8px}
+.role .first span{color:var(--soft)}
+.role ul{margin:0;padding:0;list-style:none;display:flex;flex-direction:column;gap:10px}
+.role li{display:flex;gap:10px;color:var(--soft)}
+.role li::before{content:'';flex-shrink:0;width:8px;height:8px;border-radius:50%;background:var(--ci);margin-top:9px}
+.role .checks{display:flex;flex-wrap:wrap;gap:6px}
+.role .checks span{font-size:13px;border:1px solid var(--line);border-radius:999px;padding:4px 10px;color:var(--soft)}
+.role .go{margin-top:auto}
+
+/* how */
+.how{display:grid;grid-template-columns:1fr 1fr;gap:40px;align-items:center}
+.steps{display:flex;flex-direction:column;gap:14px;counter-reset:s}
+.step{display:grid;grid-template-columns:44px 1fr;gap:14px;align-items:start}
+.step .k{width:44px;height:44px;border-radius:50%;border:1px solid var(--line);display:grid;place-items:center;font:600 15px/1 var(--mono);color:var(--yellow)}
+.step h3{font:700 18px/1.3 'Geist',sans-serif}
+.step p{color:var(--muted);font-size:15px;margin-top:2px}
+.diagram{background:var(--surface);border:1px solid var(--line);border-radius:20px;padding:18px}
+.diagram svg{width:100%;height:auto;display:block}
+.diagram .cap{display:flex;gap:18px;flex-wrap:wrap;font-size:13px;color:var(--muted);margin-top:10px}
+.diagram .cap i{display:inline-block;width:22px;height:4px;border-radius:2px;vertical-align:middle;margin-right:8px}
+.diagram svg text{font:600 12px 'Geist',sans-serif;fill:#D5DCD7}
+
+.lang{display:flex;border:1px solid var(--line);border-radius:10px;overflow:hidden}
+.lang button{background:none;border:0;color:var(--muted);font:600 12px/1 'Geist',sans-serif;padding:9px 9px;cursor:pointer}
+.lang button[aria-pressed="true"]{background:rgba(255,255,255,.14);color:#fff}
+.cap em{font-style:normal}
+/* problems */
+.probs{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:16px}
+.prob{border:1px solid var(--line);border-radius:18px;padding:22px;display:flex;flex-direction:column;gap:10px;background:linear-gradient(180deg,rgba(204,9,47,.07),transparent 60%)}
+.prob b{font:700 18px/1.3 'Geist',sans-serif}
+.prob p{color:var(--muted);font-size:15px;flex:1}
+.prob .fix{font-size:14px;color:var(--leaf);border-top:1px solid var(--line);padding-top:10px}
+/* EU */
+.eu{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:16px}
+.eu article{background:var(--surface);border:1px solid var(--line);border-top:4px solid #003399;border-radius:18px;padding:22px;display:flex;flex-direction:column;gap:10px}
+.eu .ref{align-self:flex-start;font:500 12px/1.2 var(--mono);color:#FFCC00;background:rgba(0,51,153,.35);border-radius:6px;padding:4px 8px}
+.eu h3{font:700 18px/1.3 'Geist',sans-serif}
+.eu p{color:var(--soft);font-size:15px}
+.eu-note{color:var(--muted);font-size:14px;margin-top:18px;max-width:900px}
+.eu-note a{color:var(--soft)}
+/* now */
+#acum{padding-top:24px}
+.flight{border:1px solid var(--line);border-radius:20px;overflow:hidden}
+.flight-h{display:flex;justify-content:space-between;align-items:center;gap:16px;flex-wrap:wrap;padding:18px 22px;background:var(--surface);border-bottom:1px solid var(--line)}
+.flight-h b{font:700 18px/1.3 'Geist',sans-serif}
+.flight-h span{color:var(--muted);font-size:14px}
+.badges{display:flex;gap:6px;flex-wrap:wrap}
+.badge{font:600 11px/1 'Geist',sans-serif;letter-spacing:.08em;text-transform:uppercase;padding:5px 8px;border-radius:6px}
 .badge.real{background:rgba(74,222,128,.14);color:var(--leaf)}.badge.demo{background:rgba(255,210,0,.14);color:var(--yellow)}
-#acum{padding-block:72px 40px}
-.status{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));border:1px solid var(--line);border-radius:16px;margin-bottom:20px}
-.status > div{padding:16px 18px;display:flex;flex-direction:column;gap:6px;border-left:1px solid var(--line)}
-.status > div:first-child{border-left:0}
-.status b{font:600 15px/1.3 'Geist',sans-serif}
-.status span.s{font-size:13px;color:var(--muted)}
-.now{display:grid;grid-template-columns:1fr 1fr;gap:20px}
-.nowcard{background:var(--surface);border:1px solid var(--line);border-top:4px solid var(--c);border-radius:20px;padding:24px 26px;display:flex;flex-direction:column;gap:4px}
-.nowcard.insp{--c:var(--blue)}.nowcard.admin{--c:var(--red)}
-.nowcard header{display:flex;justify-content:space-between;align-items:baseline;gap:12px;margin-bottom:10px}
-.nowcard h3{font-size:22px;font-weight:800}
-.nowcard header a{font-size:14px;color:var(--soft);white-space:nowrap}
-.kv{display:grid;grid-template-columns:140px 1fr;gap:16px;align-items:baseline;padding-block:12px;border-top:1px solid var(--line)}
-.kv .v{font:500 clamp(22px,2.4vw,28px)/1 var(--mono);letter-spacing:-.02em;font-variant-numeric:tabular-nums;white-space:nowrap}
+.now{display:grid;grid-template-columns:1fr 1fr}
+.nowcol{padding:8px 22px 18px}
+.nowcol + .nowcol{border-left:1px solid var(--line)}
+.nowcol h3{font:700 15px/1 'Geist',sans-serif;color:var(--muted);padding:14px 0 6px;display:flex;justify-content:space-between;gap:10px}
+.nowcol h3 a{font-weight:500;color:var(--soft)}
+.kv{display:grid;grid-template-columns:120px 1fr;gap:16px;align-items:baseline;padding-block:12px;border-top:1px solid var(--line)}
+.kv:first-of-type{border-top:0}
+.kv .v{font:500 clamp(20px,2.2vw,26px)/1 var(--mono);letter-spacing:-.02em;font-variant-numeric:tabular-nums;white-space:nowrap}
 .kv .l{color:var(--soft);font-size:15px;line-height:1.45}
 .kv .l small{display:block;color:var(--muted);font-size:13px}
-.rules-h{font:700 17px/1.3 'Geist',sans-serif;margin:40px 0 14px}
-.rules{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:14px}
-.rule{border:1px solid var(--line);border-radius:16px;padding:18px;display:flex;flex-direction:column;gap:8px}
-.rule .big{font:500 24px/1 var(--mono);color:var(--yellow)}
-.rule p{color:var(--soft);font-size:14px;flex:1}
-.rule a{font-size:13px;color:var(--muted)}
-.rule a:hover{color:#fff}
-@media (max-width:960px){.now{grid-template-columns:1fr}.status,.rules{grid-template-columns:1fr 1fr}.status > div:nth-child(3){border-left:0}.status > div:nth-child(n+3){border-top:1px solid var(--line)}}
-@media (max-width:560px){.status,.rules{grid-template-columns:1fr}.status > div{border-left:0}.status > div + div{border-top:1px solid var(--line)}.nowcard{padding:20px}.kv{grid-template-columns:1fr;gap:6px}}
-.mvp{background:#060908;border-bottom:1px solid var(--line);font-size:13px;color:var(--muted)}
-.mvp .wrap{display:flex;justify-content:space-between;gap:16px;padding-block:8px;flex-wrap:wrap}
-.mvp b{color:var(--soft);font-weight:600}
-#standard{padding-block:40px 72px}
-.std{border:1px solid var(--line);border-radius:18px;overflow:hidden}
-.std-row{display:grid;grid-template-columns:minmax(0,1.1fr) minmax(0,1.4fr) minmax(0,1fr);gap:24px;padding:20px 24px;border-top:1px solid var(--line);align-items:start}
-.std-row:first-child{border-top:0}
-.std-row.head{background:var(--surface);padding-block:12px;font:600 12px/1 'Geist',sans-serif;letter-spacing:.1em;text-transform:uppercase;color:var(--muted)}
-.std h3{font:700 17px/1.3 'Geist',sans-serif}
-.std .req{color:var(--soft);font-size:15px}
-.std .req code,.std .val code{font:500 13px var(--mono);background:rgba(255,255,255,.07);padding:1px 6px;border-radius:5px;color:#fff}
-.std .val{display:flex;flex-direction:column;gap:6px;font-size:14px;color:var(--soft)}
-.std .val .n{font:500 20px/1.2 var(--mono);color:#fff;font-variant-numeric:tabular-nums}
-.ok{align-self:flex-start;display:inline-flex;align-items:center;gap:6px;font:600 11px/1 'Geist',sans-serif;letter-spacing:.08em;text-transform:uppercase;padding:5px 8px;border-radius:6px;background:rgba(74,222,128,.14);color:var(--leaf)}
-.ok.wip{background:rgba(255,210,0,.14);color:var(--yellow)}
-.labels{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}
-.labels span{font:500 12px var(--mono);border:1px solid var(--line);border-radius:6px;padding:3px 7px;color:var(--soft)}
-.deliv{display:flex;flex-wrap:wrap;gap:8px;margin-top:18px}
-.deliv a{display:inline-flex;align-items:center;gap:8px;border:1px solid var(--line);border-radius:10px;padding:8px 12px;font:500 13px var(--mono);text-decoration:none;color:var(--soft)}
-.deliv a:hover{color:#fff;border-color:rgba(255,255,255,.3)}
-@media (max-width:860px){.std-row{grid-template-columns:1fr;gap:10px}.std-row.head{display:none}}
-footer{border-top:1px solid var(--line);padding-block:28px 40px;color:var(--muted);font-size:14px;display:flex;gap:16px;flex-wrap:wrap;justify-content:space-between}
-@media (max-width:960px){.hero-grid,.roles{grid-template-columns:1fr}.steps{grid-template-columns:1fr 1fr}.trust{grid-template-columns:1fr}.stats{grid-template-columns:1fr 1fr}.mapcard{max-width:460px}}
-@media (max-width:960px){.hero{min-height:0}.hero-grid{padding-block:24px 28px;gap:28px}.mapcard{max-width:none}.mapcard svg{max-height:380px}}
-@media (max-width:560px){nav a.link{display:none}.steps{grid-template-columns:1fr}.stats{grid-template-columns:1fr 1fr}.stats div{padding:16px 18px}.hero::before{background:rgba(10,14,12,.85)}.hero .lead{font-size:17px}section{padding-block:56px}.btn{min-height:48px}}
+
+.trust{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px}
+.trust div{border:1px solid var(--line);border-radius:16px;padding:20px;display:flex;flex-direction:column;gap:8px}
+.trust .badge{align-self:flex-start}
+.trust h3{font:700 17px/1.3 'Geist',sans-serif}
+.trust p{color:var(--muted);font-size:14px}
+
+.cta{background:linear-gradient(135deg,#13241A,#0F1A14);border:1px solid var(--line);border-radius:24px;padding:36px;display:flex;justify-content:space-between;align-items:center;gap:24px;flex-wrap:wrap;margin-bottom:64px}
+.cta h2{font-size:clamp(24px,3vw,34px);font-weight:800}
+.cta p{color:var(--soft);margin-top:6px}
+footer{border-top:1px solid var(--line);padding-block:26px 40px;color:var(--muted);font-size:14px;display:flex;gap:16px;flex-wrap:wrap;justify-content:space-between}
+footer a{color:var(--soft)}
+
+@media (max-width:1000px){.does,.probs,.eu{grid-template-columns:1fr 1fr}.how{grid-template-columns:1fr}}
+@media (max-width:960px){.hero-grid,.roles{grid-template-columns:1fr}.hero-grid{padding-block:22px 28px;gap:28px}.stats{grid-template-columns:1fr 1fr}.stats div:nth-child(3){border-left:0}.stats div:nth-child(n+3){border-top:1px solid var(--line)}.trust{grid-template-columns:1fr}.now{grid-template-columns:1fr}.nowcol + .nowcol{border-left:0;border-top:1px solid var(--line)}}
+@media (max-width:560px){nav a.link{display:none}.does,.probs,.eu{grid-template-columns:1fr}.hero::before{background:rgba(10,14,12,.86)}.hero .lead{font-size:17px}section{padding-block:52px}.btn{min-height:48px}.stats div{padding:16px 18px}.kv{grid-template-columns:1fr;gap:6px}.cta{padding:24px}.role{padding:20px}}
 @media (prefers-reduced-motion:reduce){html{scroll-behavior:auto}.mapcard .pulse{animation:none;opacity:0}}
 </style>
 </head>
 <body>
-<div class="mvp"><div class="wrap"><span><b>MVP demonstrativ</b> · Marcaj Vineyard AI Field Challenge · DeepTech GigaHack 2026, Chișinău</span><span class="mvp-r">Date: Sireț3, OpenAerialMap, CC BY 4.0</span></div></div>
+<div class="mvp"><div class="wrap"><span data-i="mvp1"><b>Versiune demonstrativă (MVP)</b> · în demo, registrul viticol și cererile de subvenție sunt date de test</span><span data-i="mvp2">Imagini: OpenAerialMap, CC BY 4.0 · Cadastru: ASP</span></div></div>
+
 <header class="hero" id="top">
-  <div class="wrap" style="width:100%">
+  <div class="wrap">
     <nav aria-label="Principal">
-      <a class="logo" href="#top">Field Planner</a>
+      <a class="logo" href="#top"><i aria-hidden="true"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"><path d="M5 20V9M10 20V4M15 20V9M20 20V4"/></svg></i>VinePlan</a>
       <span class="sp"></span>
-      <a class="link" href="#acum">Acum</a>
-      <a class="link" href="#standard">Standarde</a>
-      <a class="link" href="#roluri">Roluri</a>
-      <a class="link" href="#cum">Cum funcționează</a>
-      <a class="link" href="#date">Date</a>
-      <a class="btn white" href="login.html" style="min-height:44px;padding:0 20px">Intră</a>
+            <a class="link" href="#roluri" data-i="nav_roles">Pentru cine</a>
+      <a class="link" href="#probleme" data-i="nav_prob">Ce rezolvă</a>
+      <a class="link" href="#cum" data-i="nav_how">Cum funcționează</a>
+      <a class="link" href="#ue" data-i="nav_eu">Integrare UE</a>
+      <div class="lang" role="group" aria-label="Limba / Язык / Language"><button type="button" data-lang="ro">RO</button><button type="button" data-lang="ru">RU</button><button type="button" data-lang="en">EN</button></div>
+      <a class="btn white" href="login.html" style="min-height:44px;padding:0 20px" data-i="nav_login">Autentificare</a>
     </nav>
   </div>
-  <div class="wrap hero-grid" style="width:100%">
+  <div class="wrap hero-grid">
     <div>
       <div class="ribbon" aria-hidden="true"><i></i><i></i><i></i></div>
-      <h1>Podgoriile Moldovei, văzute rând cu rând.</h1>
-      <p class="lead">Imaginea de fundal e zborul real de la Sireți, 2,5 cm pe pixel. Din ea platforma scoate fiecare coroană, rând și gol, le leagă de cadastru și planifică traseul pe jos.</p>
+      <h1 data-i="h1">Vezi fiecare rând de vie. Mergi doar unde trebuie.</h1>
+      <p class="lead" data-i="lead">VinePlan este o platformă pentru controlul și administrarea viilor din Moldova. Citește imaginea dronei, găsește rândurile, butucii lipsă și deșeurile, le compară cu registrul viticol și cu cererile de subvenție și îți dă traseul cel mai scurt pe jos și raportul gata de semnat.</p>
       <div class="ctas">
-        <a class="btn white" href="login.html">Intră</a>
-        <a class="plain" href="app.html">sau deschide harta fără cont →</a>
+        <a class="btn white" href="login.html" data-i="cta_login">Autentificare</a>
+        <a class="plain" href="app.html" data-i="cta_map">sau deschide harta fără cont →</a>
       </div>
     </div>
     <aside class="mapcard" aria-label="Harta Moldovei pe raioane">
-      <span class="eyebrow">Unde suntem</span>
-      <div id="md" class="loading">Se încarcă harta…</div>
-      <div class="place" id="place">Sireți, r. Strășeni · IGP Codru</div>
-      <div class="detail" id="detail">145 ha zburate · 70 de blocuri · 676 parcele. <span class="hint-mouse">Treci cu cursorul peste raioane.</span><span class="hint-touch">Atinge un raion.</span></div>
+      <span class="eyebrow" data-i="map_eb">Gândit pentru toată țara</span>
+      <div id="md" class="loading" data-i="map_loading">Se încarcă harta…</div>
+      <div class="place" id="place" data-i="place">Republica Moldova, raion cu raion</div>
+      <div class="detail" id="detail" data-i="detail">Orice zbor cu drona se încarcă la fel, în sistemul oficial de coordonate. <span class="hint-mouse">Treci cu cursorul peste raioane.</span><span class="hint-touch">Atinge un raion.</span></div>
     </aside>
   </div>
-  <div class="wrap" style="width:100%">
-    <div class="stats" aria-label="Rezultate pe Sireț3">
-      <div><span class="v">145 ha</span><span class="l">dintr-un singur zbor</span></div>
-      <div><span class="v">9,1 km</span><span class="l">traseu de control, nu 38,5</span></div>
-      <div><span class="v">676</span><span class="l">parcele cadastrale reale</span></div>
-      <div><span class="v">&lt; 2 %</span><span class="l">traseu în afara zonei permise</span></div>
+  <div class="wrap">
+    <div class="stats" aria-label="Viticultura în cifre">
+      <div><span class="v num" data-i="s1v">52–80 mii</span><span class="l" data-i="s1l">lei pe an costă întreținerea unui hectar de vie (MAIA, 2026)</span></div>
+      <div><span class="v num" data-i="s2v">0,15 ha</span><span class="l" data-i="s2l">peste acest prag, via se înscrie în Registrul vitivinicol</span></div>
+      <div><span class="v num">5 %</span><span class="l" data-i="s3l">din viticultori au control pe teren în fiecare an, în UE</span></div>
+      <div><span class="v num" data-i="s4v">2,5 cm</span><span class="l" data-i="s4l">pe pixel: din dronă se vede fiecare butuc</span></div>
     </div>
   </div>
 </header>
 
 <main class="wrap">
-<section id="acum" aria-labelledby="acum-h">
+<section id="probleme" aria-labelledby="pr-h">
   <div class="sec-head">
-    <span class="eyebrow">Acum pe platformă</span>
-    <h2 id="acum-h">Ce e de făcut în Sireț3</h2>
-    <p id="now-meta">Zbor din 20 mai 2025, 145 ha la 2,5 cm/px.</p>
+    <span class="eyebrow" data-i="pr_eb">Ce rezolvă</span>
+    <h2 id="pr-h" data-i="pr_h">Controlul viei se face încă cu ruleta, pe hârtie și la întâmplare</h2>
+    <p data-i="pr_p">Inspectorii și fermierii pierd zile pe teren ca să afle lucruri pe care o imagine din dronă le arată în câteva minute.</p>
   </div>
-  <div class="status" aria-label="Starea datelor">
-    <div><span class="badge real">real</span><b>Ortofoto</b><span class="s">20 mai 2025 · 2,5 cm/px</span></div>
-    <div><span class="badge demo">în validare</span><b>Adnotări</b><span class="s">Verificare umană în Marcaj; cifrele se actualizează după export</span></div>
-    <div><span class="badge real">real</span><b>Cadastru ASP</b><span class="s">Parcele la 01.01.2026, geodata.gov.md</span></div>
-    <div><span class="badge demo">demo</span><b>Registru RVV, cereri AIPA</b><span class="s">Înregistrări sintetice, marcate ca atare</span></div>
-  </div>
-  <div class="now">
-    <article class="nowcard insp">
-      <header><h3>Pentru inspector</h3><a href="login.html">Deschide →</a></header>
-      <div class="kv"><span class="v" data-k="visit">…</span><span class="l">blocuri de vizitat<small data-k="visit_s">&nbsp;</small></span></div>
-      <div class="kv"><span class="v" data-k="croute">…</span><span class="l">traseu de control prin ele<small data-k="croute_s">&nbsp;</small></span></div>
-      <div class="kv"><span class="v" data-k="rvv">…</span><span class="l">parcele cu peste 0,15 ha de vie<small>înregistrarea în RVV e obligatorie</small></span></div>
-      <div class="kv"><span class="v" data-k="landuse">…</span><span class="l">parcele pentru construcții cu vie detectată<small>de verificat pe teren</small></span></div>
-    </article>
-    <article class="nowcard admin">
-      <header><h3>Pentru administrator</h3><a href="login.html">Deschide →</a></header>
-      <div class="kv"><span class="v" data-k="red">…</span><span class="l">blocuri în stare critică<small data-k="red_s">&nbsp;</small></span></div>
-      <div class="kv"><span class="v" data-k="missing">…</span><span class="l">butuci lipsă (estimare)<small data-k="missing_s">&nbsp;</small></span></div>
-      <div class="kv"><span class="v" data-k="cost">…</span><span class="l">lei pentru butași de replantare<small data-k="cost_s">&nbsp;</small></span></div>
-      <div class="kv"><span class="v" data-k="waste">…</span><span class="l">posibile deșeuri găsite de AI<small>de confirmat înainte de colectare</small></span></div>
-    </article>
-  </div>
-  <h3 class="rules-h">Reguli de reținut</h3>
-  <div class="rules">
-    <div class="rule"><span class="big">0,15 ha</span><p>Peste acest prag, parcela cu vie se înregistrează în Registrul vitivinicol (Legea 57/2006, art. 21).</p><a href="https://rvv.gov.md/publicpart/check.jsf" target="_blank" rel="noopener">Verifică o parcelă în RVV ↗</a></div>
-    <div class="rule"><span class="big">≥ 90 %</span><p>Prinderea cerută la recepția plantației în primul an, pentru sprijinul AIPA pe viță (măsura SP_2.5).</p><a href="https://aipa.gov.md/masura-sp-2-5-investitii-in-exploatatii-din-sectorul-viticol/" target="_blank" rel="noopener">Condițiile AIPA ↗</a></div>
-    <div class="rule"><span class="big">+20 000</span><p>Lei pe hectar în plus la AIPA pentru membrii IGP. Sireți, r. Strășeni, e în aria IGP Codru.</p><a href="https://wineofmoldova.com/ro/regiuni-vitivinicole/" target="_blank" rel="noopener">Regiunile vitivinicole ↗</a></div>
-    <div class="rule"><span class="big">5 %</span><p>În UE, cel puțin atâția viticultori au control pe teren în fiecare an; vița fără dosar se verifică sistematic.</p><a href="https://github.com/Viteokk/vineyard-ai/blob/main/docs/EU.md" target="_blank" rel="noopener">Ce cere UE ↗</a></div>
+  <div class="probs">
+    <article class="prob"><b data-i="p1b">Registrul viticol nu e la zi</b><p data-i="p1p">Vii plantate care nu apar în registru și parcele „plantate” pe hârtie care au fost defrișate sau abandonate. Fără o imagine recentă, diferențele se află doar la control.</p><span class="fix" data-i="p1f">VinePlan compară registrul cu ce vede drona și arată doar locurile care nu se potrivesc.</span></article>
+    <article class="prob"><b data-i="p2b">Subvențiile se verifică pe declarații</b><p data-i="p2p">Suprafața și densitatea declarate în cererea AIPA se verifică manual, parcelă cu parcelă, sau deloc.</p><span class="fix" data-i="p2f">Suprafața, rândurile și golurile se măsoară pe imagine; suma eligibilă se recalculează.</span></article>
+    <article class="prob"><b data-i="p3b">Controlul pe teren durează</b><p data-i="p3p">Inspectorul nu știe dinainte unde sunt problemele, așa că străbate toată plantația.</p><span class="fix" data-i="p3f">Traseul cel mai scurt trece doar pe lângă locurile de verificat, pe lungul rândurilor, cu GPS pe telefon.</span></article>
+    <article class="prob"><b data-i="p4b">Fermierul nu știe exact ce îl costă</b><p data-i="p4p">Câți butuci lipsesc, unde, cât costă replantarea și unde sunt deșeurile de strâns.</p><span class="fix" data-i="p4f">Cifrele sunt pe fiecare bloc, cu costul butașilor și un raport de mediu pentru ISO 14001.</span></article>
   </div>
 </section>
 
-<section id="standard" aria-labelledby="std-h">
+<section id="ce" aria-labelledby="ce-h">
   <div class="sec-head">
-    <span class="eyebrow">Standarde respectate</span>
-    <h2 id="std-h">Aceleași reguli ca în caietul de sarcini</h2>
-    <p>Cerințele Marcaj Vineyard AI Field Challenge și ce livrează platforma pentru fiecare. Valorile se citesc din datele publicate.</p>
+    <span class="eyebrow" data-i="ce_eb">Ce face</span>
+    <h2 id="ce-h" data-i="ce_h">De la imaginea dronei la controlul pe teren, în patru pași</h2>
+    <p data-i="ce_p">Nu mai măsori cu ruleta și nu mai mergi la întâmplare prin vie. Lucrezi pe zona ta, iar calculele se fac doar acolo, în câteva secunde.</p>
   </div>
-  <div class="std" role="table" aria-label="Cerințe și rezultate">
-    <div class="std-row head" role="row"><span role="columnheader">Cerință</span><span role="columnheader">Regula</span><span role="columnheader">Pe Sireț3</span></div>
-    <div class="std-row" role="row">
-      <h3 role="cell">Georeferențiere</h3>
-      <p class="req" role="cell">Toate geometriile, traseul și tabelele în <code>EPSG:32635</code> (WGS 84 / UTM 35N, metri). Măsurători orizontale, fără corecție de teren.</p>
-      <div class="val" role="cell"><span class="ok">respectat</span><span>311 tile-uri GeoTIFF, 2048 px la 2,5 cm/px</span></div>
-    </div>
-    <div class="std-row" role="row">
-      <h3 role="cell">Obiecte adnotate</h3>
-      <div class="req" role="cell">Coroane separate pe butuc, deșeuri vizibile, axa fiecărui rând, suprafețele dintre rânduri; fiecare obiect legat de blocul lui.
-        <div class="labels"><span>vineyard · poligon</span><span>waste · cutie</span><span>row · row_id, row_structure</span><span>interrow_area · interrow_cover</span><span>vineyard_id pe toate</span></div></div>
-      <div class="val" role="cell"><span class="ok">respectat</span><span><span class="n" data-k="s_blocks">…</span> blocuri, <span data-k="s_rows">…</span> rânduri</span><span>ID-uri păstrate peste marginile tile-urilor</span></div>
-    </div>
-    <div class="std-row" role="row">
-      <h3 role="cell">Măsurători</h3>
-      <p class="req" role="cell">Număr de blocuri și rânduri, lungimea fiecărui rând și totală (m), suprafața coroanelor din uniunea poligoanelor și suprafața dintre rânduri (m² și ha).</p>
-      <div class="val" role="cell"><span class="ok">respectat</span><span><span class="n" data-k="s_len">…</span> lungime totală a rândurilor</span><span><span data-k="s_canopy">…</span> coroane · <span data-k="s_inter">…</span> între rânduri</span></div>
-    </div>
-    <div class="std-row" role="row">
-      <h3 role="cell">Traseu pe jos</h3>
-      <p class="req" role="cell">Pornește din punctul oficial și revine în el (toleranță 5 m); merge doar pe inter-rânduri și pasaje autorizate, cel mult 2 % în afara lor; o țintă e vizitată la cel mult 2 m.</p>
-      <div class="val" role="cell"><span class="ok" data-k="s_valid">…</span><span><span class="n" data-k="s_route">…</span> traseu de inspecție</span><span><span data-k="s_out">…</span> în afara zonei trecabile · revine la <span data-k="s_end">…</span> de start</span></div>
-    </div>
-    <div class="std-row" role="row">
-      <h3 role="cell">Validare umană</h3>
-      <p class="req" role="cell">Pre-adnotările AI se importă în Marcaj; geometria și atributele se corectează manual doar acolo, apoi se trimit.</p>
-      <div class="val" role="cell"><span class="ok wip">în validare</span><span>Proiect Marcaj publicat, 311 fișiere</span></div>
-    </div>
-    <div class="std-row" role="row">
-      <h3 role="cell">Model AI</h3>
-      <p class="req" role="cell">Rețea neuronală antrenată sau adaptată pe date deschise cu licență verificată; greutățile disponibile printr-un link.</p>
-      <div class="val" role="cell"><span class="ok">respectat</span><span>YOLO11n-seg, 2 clase (vineyard, waste)</span><span>DroneWaste, UAVVaste: CC BY 4.0</span></div>
-    </div>
-  </div>
-  <div class="deliv" aria-label="Livrabile">
-    <a href="https://github.com/Viteokk/vineyard-ai/blob/main/route.geojson" target="_blank" rel="noopener">route.geojson ↗</a>
-    <a href="https://github.com/Viteokk/vineyard-ai/blob/main/measurements.csv" target="_blank" rel="noopener">measurements.csv ↗</a>
-    <a href="https://github.com/Viteokk/vineyard-ai#readme" target="_blank" rel="noopener">README: instalare și rulare ↗</a>
-    <a href="https://github.com/Viteokk/vineyard-ai/releases/tag/v0.2-weights" target="_blank" rel="noopener">greutăți model ↗</a>
+  <div class="does">
+    <article class="do"><span class="ic" aria-hidden="true"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7l5-3 6 3 5-3v13l-5 3-6-3-5 3z" stroke-dasharray="3 2"/><path d="M9 4v13M15 7v13"/></svg></span><span class="n">1</span>
+      <h3 data-i="do1h">Alegi zona</h3><p data-i="do1p">Desenezi pe hartă, apeși pe un bloc de vie sau scrii numărul cadastral al parcelei.</p></article>
+    <article class="do"><span class="ic" aria-hidden="true"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M5 20V9M10 20V4M15 20V9M20 20V4"/></svg></span><span class="n">2</span>
+      <h3 data-i="do2h">Vezi ce e pe teren</h3><p data-i="do2p">Rândurile și lungimea lor, butucii lipsă, solul dintre rânduri, deșeurile, suprafețele în m² și hectare.</p></article>
+    <article class="do"><span class="ic" aria-hidden="true"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="6" cy="19" r="2"/><circle cx="18" cy="5" r="2"/><path d="M8 19h6a4 4 0 000-8h-4a4 4 0 010-8h6"/></svg></span><span class="n">3</span>
+      <h3 data-i="do3h">Primești traseul</h3><p data-i="do3p">Cel mai scurt drum pe jos prin toate locurile de verificat, pe lungul rândurilor. Îl iei pe telefon, cu GPS.</p></article>
+    <article class="do"><span class="ic" aria-hidden="true"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 3H7a2 2 0 00-2 2v14a2 2 0 002 2h10a2 2 0 002-2V8z"/><path d="M14 3v5h5M9 13h6M9 17h4"/></svg></span><span class="n">4</span>
+      <h3 data-i="do4h">Închei cu raportul</h3><p data-i="do4p">Proces-verbal de control, extras din registrul viticol, tabel cu măsurători și indicatori de mediu.</p></article>
   </div>
 </section>
 
-<section id="roluri">
+<section id="roluri" aria-labelledby="roluri-h">
   <div class="sec-head">
-    <span class="eyebrow">Două roluri</span>
-    <h2>Fiecare vede doar ce îi trebuie</h2>
-    <p>Aceeași hartă și aceleași măsurători. Alegi rolul la intrare.</p>
+    <span class="eyebrow" data-i="ro_eb">Pentru cine</span>
+    <h2 id="roluri-h" data-i="ro_h">Două roluri, fiecare cu ce îi trebuie</h2>
+    <p data-i="ro_p">Aceeași hartă și aceleași măsurători. Contul tău decide ce vezi primul.</p>
   </div>
   <div class="roles">
-    <article class="role insp"><h3>Inspector de stat</h3><p class="who">AIPA, ONVV, MAIA</p>
-      <ul><li>Conformitate pe bloc: registru și cerere AIPA față de dronă</li><li>Căutare după număr cadastral în toată Moldova</li><li>Traseu de control, GPX și proces-verbal</li></ul></article>
-    <article class="role admin"><h3>Administrator (fermier)</h3><p class="who">Exploatația viticolă</p>
-      <ul><li>Starea blocurilor, butuci de replantat, costuri</li><li>Deșeuri și traseul de colectare, ture pe zile</li><li>Zone, START ales pe hartă, analiză de tile nou</li></ul></article>
+    <article class="role insp">
+      <div><h3 data-i="ri_h">Inspector de stat</h3><p class="who">AIPA, ONVV, MAIA</p></div>
+      <div class="first"><b data-i="ri_fb">Vezi primul</b><span data-i="ri_first">Ce e de controlat azi: blocurile care nu corespund cu registrul sau cu cererea de subvenție și posibilele plantări neautorizate.</span></div>
+      <ul>
+        <li data-i="ri_l1">Compari ce e declarat în registru și în cererea AIPA cu ce vede drona: suprafață, densitate, goluri.</li>
+        <li data-i="ri_l2">Pleci pe un traseu doar prin locurile cu probleme, cu GPS pe telefon.</li>
+        <li data-i="ri_l3">Procesul-verbal se completează singur; tu doar verifici și semnezi.</li>
+      </ul>
+      <div class="checks" aria-label="Ce verifică automat"><span data-i="ri_c1">prag RVV 0,15 ha</span><span data-i="ri_c2">autorizație de plantare</span><span data-i="ri_c3">suprafață și densitate</span><span data-i="ri_c4">zona DOP / IGP</span></div>
+      <a class="btn go" href="login.html#inspector" data-i="cta_login_i">Autentificare</a>
+    </article>
+    <article class="role admin">
+      <div><h3 data-i="ra_h">Administrator de plantație</h3><p class="who" data-i="ra_who">Fermier, exploatație viticolă</p></div>
+      <div class="first"><b data-i="ra_fb">Vezi primul</b><span data-i="ra_first">Plantația ta: blocurile în stare bună, medie sau critică, butucii de replantat și deșeurile de strâns.</span></div>
+      <ul>
+        <li data-i="ra_l1">Știi câți butuci lipsesc, unde anume și cât te costă butașii.</li>
+        <li data-i="ra_l2">Primești traseul de strâns deșeurile și turele de lucru pe zile.</li>
+        <li data-i="ra_l3">Ai raportul de mediu pentru certificarea ISO 14001 și extrasul pentru registru.</li>
+      </ul>
+      <div class="checks" aria-label="Ce urmărește automat"><span data-i="ra_c1">butuci lipsă</span><span data-i="ra_c2">sol gol între rânduri</span><span data-i="ra_c3">deșeuri</span><span data-i="ra_c4">costuri pe an</span></div>
+      <a class="btn go" href="login.html#administrator" data-i="cta_login_a">Autentificare</a>
+    </article>
   </div>
-  <div class="center"><a class="btn white" href="login.html">Intră</a></div>
 </section>
 
-<section id="cum">
-  <div class="sec-head"><span class="eyebrow">De la zbor la teren</span><h2>Patru pași, un singur flux</h2></div>
-  <div class="steps">
-    <div class="step"><span class="n">01 · zbor</span><h3>Ortofoto UAV</h3><p>GeoTIFF la 2,5 cm/px, în sistemul oficial EPSG:32635.</p></div>
-    <div class="step"><span class="n">02 · AI</span><h3>Coroane, rânduri, goluri</h3><p>Model YOLO pentru coroane și deșeuri, geometrie pentru rândurile paralele.</p></div>
-    <div class="step"><span class="n">03 · om</span><h3>Corectură în Marcaj</h3><p>Adnotările se verifică de oameni; exportul corectat recalculează totul.</p></div>
-    <div class="step"><span class="n">04 · teren</span><h3>Hartă, cifre, trasee</h3><p>Măsurători, conformitate și traseul cel mai scurt, sub 2 % în afara zonei permise.</p></div>
+<section id="cum" aria-labelledby="cum-h">
+  <div class="sec-head">
+    <span class="eyebrow" data-i="cum_eb">Cum funcționează</span>
+    <h2 id="cum-h" data-i="cum_h">Drona fotografiază, AI-ul citește, oamenii verifică</h2>
+  </div>
+  <div class="how">
+    <div class="steps">
+      <div class="step"><span class="k">1</span><div><h3 data-i="st1h">Zborul cu drona</h3><p data-i="st1p">O dronă fotografiază plantația de sus, la 2,5 cm pe pixel. Imaginea are coordonate reale, deci fiecare metru măsurat pe ea e un metru pe teren.</p></div></div>
+      <div class="step"><span class="k">2</span><div><h3 data-i="st2h">AI-ul citește imaginea</h3><p data-i="st2p">Găsește fiecare rând, fiecare butuc și golurile dintre ei, starea solului și deșeurile. Unde nu e sigur, marchează locul pentru verificare.</p></div></div>
+      <div class="step"><span class="k">3</span><div><h3 data-i="st3h">Specialiștii verifică</h3><p data-i="st3p">Rezultatele sunt corectate de oameni înainte să ajungă la tine. Cifrele din platformă se recalculează după fiecare corectură.</p></div></div>
+      <div class="step"><span class="k">4</span><div><h3 data-i="st4h">Tu alegi zona și pleci pe teren</h3><p data-i="st4p">Primești cifrele, traseul și raportul pentru zona ta. Traseul merge pe lungul rândurilor și schimbă rândul doar la capete, ca în realitate.</p></div></div>
+    </div>
+    <figure class="diagram" style="margin:0" aria-label="Schemă: traseul merge pe lungul rândurilor și ocolește capetele, nu trece prin golurile din rând">
+      <svg viewBox="0 0 560 330" role="img" aria-labelledby="dg-t">
+        <title id="dg-t">Traseul pleacă din START, merge printre rânduri, trece pe lângă golurile de verificat și schimbă rândul doar la capăt</title>
+        <rect x="0" y="0" width="560" height="330" rx="14" fill="#2A2319"/>
+        <rect x="18" y="20" width="44" height="300" rx="6" fill="rgba(255,255,255,.1)"/>
+        <text x="40" y="38" text-anchor="middle" data-i="dg_road">drum</text>
+        <g id="dg-rows"></g>
+        <path d="M290 90 L290 210" stroke="#9FAAA3" stroke-width="3" stroke-dasharray="4 6" fill="none"/>
+        <circle cx="290" cy="150" r="13" fill="#2A2319" stroke="#FF6B6B" stroke-width="2.5"/>
+        <path d="M284 144 L296 156 M296 144 L284 156" stroke="#FF6B6B" stroke-width="2.5" stroke-linecap="round"/>
+        <path d="M40 300 L40 90 L500 90 L500 210 L40 210 L40 300" stroke="#fff" stroke-width="7" stroke-opacity=".85" fill="none" stroke-linejoin="round"/>
+        <path d="M40 300 L40 90 L500 90 L500 210 L40 210 L40 300" stroke="#F97316" stroke-width="4" fill="none" stroke-linejoin="round"/>
+        <circle cx="40" cy="300" r="9" fill="#101713" stroke="#fff" stroke-width="3"/>
+        <text x="58" y="304">START</text>
+        <text x="508" y="154" transform="rotate(90 508 154)" text-anchor="middle" data-i="dg_end">capăt de rând</text>
+      </svg>
+      <figcaption class="cap"><span><i style="background:#F97316"></i><em data-i="cap1">traseul VinePlan</em></span><span><i style="background:#FF6B6B"></i><em data-i="cap2">gol în rând (butuci lipsă)</em></span><span><i style="background:repeating-linear-gradient(90deg,#9FAAA3 0 4px,transparent 4px 8px)"></i><em data-i="cap3">scurtătură interzisă: sârmele spalierului</em></span></figcaption>
+    </figure>
   </div>
 </section>
 
-<section id="date">
-  <div class="sec-head"><span class="eyebrow">Transparență</span><h2>Ce e real și ce e demonstrativ</h2></div>
+<section id="ue" aria-labelledby="ue-h">
+  <div class="sec-head">
+    <span class="eyebrow" data-i="ue_eb">Integrare europeană</span>
+    <h2 id="ue-h" data-i="ue_h">Pregătit pentru regulile UE despre vie</h2>
+    <p data-i="ue_p">Moldova e țară candidată la UE, iar sectorul vitivinicol trebuie aliniat la aceleași reguli ca statele membre. VinePlan produce datele pe care aceste reguli le cer.</p>
+  </div>
+  <div class="eu">
+    <article><span class="ref" data-i="eu1r">Reg. (UE) 2018/273, art. 7</span><h3 data-i="eu1h">Registrul viticol pe hartă</h3><p data-i="eu1p">Fiecare parcelă identificată pe hartă sau în cadastru, cu GIS și ortofoto la cel puțin 1:5 000. Imaginea din dronă are 2,5 cm pe pixel, mult peste cerință.</p></article>
+    <article><span class="ref" data-i="eu2r">Reg. (UE) 2018/274, art. 31</span><h3 data-i="eu2h">Control la 5 % din viticultori</h3><p data-i="eu2p">Controlul pe teren e obligatoriu la cel puțin 5 % din viticultori pe an, plus verificarea sistematică a viilor care nu apar în niciun dosar. VinePlan le găsește pe imagine.</p></article>
+    <article><span class="ref" data-i="eu3r">Reg. (UE) 1308/2013, art. 62 și 71</span><h3 data-i="eu3h">Autorizații de plantare</h3><p data-i="eu3p">Via se plantează doar cu autorizație; plantările neautorizate se smulg și nu primesc sprijin. Platforma semnalează via fără parcelă autorizată.</p></article>
+    <article><span class="ref" data-i="eu4r">Reg. (UE) 2022/1173 (IACS)</span><h3 data-i="eu4h">Monitorizare din imagini</h3><p data-i="eu4p">Sistemul integrat de control al subvențiilor verifică suprafețele din imagini și fotografii geo-etichetate. Zborul cu drona dă aceleași date la rezoluție mai mare.</p></article>
+  </div>
+  <p class="eu-note" data-i="eu_note">În producție, registrul și cererile vin de la ONVV și AIPA prin MConnect, iar parcelele din cadastrul ASP. Standardul de mediu ISO 14001 (clauza 9.1) e acoperit de indicatorii pe bloc. Detalii și surse: <a href="https://github.com/Viteokk/vineyard-ai/blob/main/docs/EU.md" target="_blank" rel="noopener">documentul de aliniere la UE ↗</a></p>
+</section>
+
+<section id="date" aria-labelledby="date-h">
+  <div class="sec-head"><span class="eyebrow" data-i="date_eb">De unde vin datele</span><h2 id="date-h" data-i="date_h">Surse oficiale, în coordonatele oficiale</h2></div>
   <div class="trust">
-    <div><span class="badge real">real</span><h3>Imagine și măsurători</h3><p>Ortofoto Sireț3 (3DATA COLLECT, OpenAerialMap, CC BY 4.0); coroane, rânduri, suprafețe și trasee din pipeline-ul nostru.</p></div>
-    <div><span class="badge real">real</span><h3>Cadastru și hotare</h3><p>Parcele și raioane din cadastrul ASP (geodata.gov.md), conturul țării din Natural Earth. Fără date despre proprietari.</p></div>
-    <div><span class="badge demo">demo</span><h3>Registru și subvenții</h3><p>Registrul viticol și cererile AIPA nu au API public; înregistrările sunt sintetice și marcate. În producție: schimb de date prin MConnect.</p></div>
+    <div><span class="badge real" data-i="d1b">zbor cu drona</span><h3 data-i="d1h">Imaginea și măsurătorile</h3><p data-i="d1p">Ortofoto georeferențiat, în sistemul oficial de coordonate. Rândurile, butucii, suprafețele și traseele sunt calculate de VinePlan din el și verificate de specialiști.</p></div>
+    <div><span class="badge real" data-i="d2b">public</span><h3 data-i="d2h">Cadastrul și hotarele</h3><p data-i="d2p">Parcelele și raioanele din cadastrul ASP (geodata.gov.md), căutare după număr cadastral în toată țara. Fără date despre proprietari.</p></div>
+    <div><span class="badge demo" data-i="d3b">prin MConnect</span><h3 data-i="d3h">Registrul și subvențiile</h3><p data-i="d3p">Registrul viticol (ONVV) și cererile AIPA nu au acces public; în producție vin prin schimbul de date guvernamental MConnect. În versiunea demonstrativă sunt date de test, marcate peste tot.</p></div>
   </div>
 </section>
+
+<div class="cta">
+  <div><h2 data-i="cta_h">Încearcă versiunea demonstrativă</h2><p data-i="cta_p">Rulează pe un zbor real de dronă. Contul demo e deja completat: alegi rolul și intri.</p></div>
+  <div class="ctas" style="margin-top:0"><a class="btn white" href="login.html" data-i="cta_login2">Autentificare</a><a class="plain" href="app.html" data-i="cta_map2">sau harta fără cont →</a></div>
+</div>
 
 <footer>
-  <span>vineyard-ai · Marcaj Vineyard AI Field Challenge · DeepTech GigaHack 2026, Chișinău</span>
-  <span><a href="app.html">Harta</a> · <a href="login.html">Intră</a> · <a href="https://github.com/Viteokk/vineyard-ai" target="_blank" rel="noopener">Cod sursă</a></span>
+  <span data-i="f1">VinePlan · realizat la DeepTech GigaHack 2026, Chișinău (Marcaj Vineyard AI Field Challenge)</span>
+  <span data-i="f2"><a href="app.html">Harta</a> · <a href="login.html">Autentificare</a> · <a href="https://github.com/Viteokk/vineyard-ai#readme" target="_blank" rel="noopener">Pentru juriu: cod, livrabile, reproducere ↗</a></span>
 </footer>
 </main>
 
 <script>
-/* interactive Moldova: raions from data/moldova.geojson (EPSG:32635); hover highlights and names them */
+/* RO / RU / EN: Romanian is in the page; the other two swap the marked elements (choice kept for the app as well) */
+const I18N = {"nav_login": {"ru": "Вход","en": "Sign in"},"cta_login": {"ru": "Вход","en": "Sign in"},"cta_login_i": {"ru": "Вход","en": "Sign in"},"cta_login_a": {"ru": "Вход","en": "Sign in"},"cta_login2": {"ru": "Вход","en": "Sign in"},"cta_map": {"ru": "или откройте карту без входа →","en": "or open the map without an account →"},"cta_map2": {"ru": "или карта без входа →","en": "or the map without an account →"},"cap1": {"ru": "маршрут VinePlan","en": "the VinePlan route"},"cap2": {"ru": "пропуск в ряду (нет кустов)","en": "gap in a row (missing vines)"},"cap3": {"ru": "запрещённый срез: проволока шпалеры","en": "forbidden shortcut: the trellis wires"},"dg_road": {"ru": "дорога","en": "road"},"dg_end": {"ru": "конец ряда","en": "row end"},"mh_left": {"ru": "Левобережье Днестра: кадастр ASP его пока не охватывает.","en": "The left bank of the Dniester: the ASP cadastre does not cover it yet."},"mh_demo": {"ru": "Здесь полёт, использованный в демо-версии. Нажмите, чтобы войти.","en": "This is the flight used in the demo. Click to sign in."},"mh_other": {"ru": "Любой полёт дрона в районе анализируется так же: ряды, пропуски, кадастр, маршруты.","en": "Any drone flight in the district is analysed the same way: rows, gaps, cadastre, routes."},"map_err": {"ru": "Не удалось загрузить карту.","en": "The map could not be loaded."},"mvp1": {"ru": "<b>Демонстрационная версия (MVP)</b> · в демо реестр виноградников и заявки на субсидии — тестовые данные","en": "<b>Demo version (MVP)</b> · in the demo, the vineyard register and subsidy applications are test data"},"mvp2": {"ru": "Снимки: OpenAerialMap, CC BY 4.0 · Кадастр: ASP","en": "Imagery: OpenAerialMap, CC BY 4.0 · Cadastre: ASP"},"nav_roles": {"ru": "Для кого","en": "Who it is for"},"nav_prob": {"ru": "Что решает","en": "What it solves"},"nav_how": {"ru": "Как это работает","en": "How it works"},"nav_eu": {"ru": "Интеграция с ЕС","en": "EU integration"},"h1": {"ru": "Каждый ряд виноградника — на виду. Идите только туда, где нужно.","en": "See every vine row. Walk only where it matters."},"lead": {"ru": "VinePlan — платформа для контроля и управления виноградниками Молдовы. Она читает снимок с дрона, находит ряды, недостающие кусты и мусор, сравнивает их с реестром виноградников и заявками на субсидии и выдаёт кратчайший пеший маршрут и готовый к подписи отчёт.","en": "VinePlan is a platform for inspecting and managing Moldova's vineyards. It reads the drone image, finds the rows, missing vines and waste, compares them with the vineyard register and subsidy applications, and gives you the shortest walking route and a report ready to sign."},"map_eb": {"ru": "Для всей страны","en": "Built for the whole country"},"map_loading": {"ru": "Загрузка карты…","en": "Loading the map…"},"place": {"ru": "Республика Молдова, район за районом","en": "Republic of Moldova, district by district"},"detail": {"ru": "Любой полёт дрона загружается одинаково, в официальной системе координат. <span class=\"hint-mouse\">Наведите курсор на районы.</span><span class=\"hint-touch\">Коснитесь района.</span>","en": "Any drone flight loads the same way, in the official coordinate system. <span class=\"hint-mouse\">Hover over the districts.</span><span class=\"hint-touch\">Tap a district.</span>"},"s1v": {"ru": "52–80 тыс.","en": "52–80k"},"s1l": {"ru": "леев в год стоит содержание гектара виноградника (MAIA, 2026)","en": "lei a year to maintain one hectare of vineyard (MAIA, 2026)"},"s2v": {"ru": "0,15 га","en": "0.15 ha"},"s2l": {"ru": "выше этого порога виноградник вносится в реестр виноградарства и виноделия","en": "above this threshold, a vineyard must be entered in the vine and wine register"},"s3l": {"ru": "виноградарей в ЕС ежегодно проходят проверку на месте","en": "of EU winegrowers get an on-the-spot check every year"},"s4v": {"ru": "2,5 см","en": "2.5 cm"},"s4l": {"ru": "на пиксель: с дрона виден каждый куст","en": "per pixel: every vine is visible from the drone"},"pr_eb": {"ru": "Что решает","en": "What it solves"},"pr_h": {"ru": "Виноградники до сих пор проверяют рулеткой, на бумаге и наугад","en": "Vineyard checks are still done with a tape measure, on paper and at random"},"pr_p": {"ru": "Инспекторы и фермеры тратят дни в поле, чтобы узнать то, что снимок с дрона показывает за несколько минут.","en": "Inspectors and farmers spend days in the field to learn what a drone image shows in minutes."},"p1b": {"ru": "Реестр виноградников устарел","en": "The vineyard register is out of date"},"p1p": {"ru": "Посаженные виноградники, которых нет в реестре, и «засаженные» на бумаге участки, которые давно раскорчёваны или заброшены. Без свежего снимка расхождения выясняются только при проверке.","en": "Planted vineyards missing from the register, and plots “planted” on paper that were grubbed up or abandoned. Without a recent image, the differences only show up during an inspection."},"p1f": {"ru": "VinePlan сравнивает реестр с тем, что видит дрон, и показывает только места с расхождениями.","en": "VinePlan compares the register with what the drone sees and shows only the places that don't match."},"p2b": {"ru": "Субсидии проверяются по декларациям","en": "Subsidies are checked against declarations"},"p2p": {"ru": "Площадь и плотность посадки, заявленные в заявке AIPA, проверяются вручную, участок за участком, или не проверяются вовсе.","en": "The area and planting density declared in the AIPA application are checked by hand, plot by plot, or not at all."},"p2f": {"ru": "Площадь, ряды и пропуски измеряются по снимку; сумма к выплате пересчитывается.","en": "Area, rows and gaps are measured on the image; the eligible amount is recalculated."},"p3b": {"ru": "Проверка на месте занимает время","en": "On-the-spot checks take time"},"p3p": {"ru": "Инспектор заранее не знает, где проблемы, поэтому обходит всю плантацию.","en": "The inspector doesn't know in advance where the problems are, so they walk the whole plantation."},"p3f": {"ru": "Кратчайший маршрут проходит только мимо мест для проверки, вдоль рядов, с GPS на телефоне.","en": "The shortest route passes only the places to check, along the rows, with GPS on the phone."},"p4b": {"ru": "Фермер не знает точно, во что ему это обходится","en": "The farmer doesn't know exactly what it costs"},"p4p": {"ru": "Сколько кустов не хватает, где именно, сколько стоит подсадка и где собирать мусор.","en": "How many vines are missing, where, what replanting costs and where the waste to collect is."},"p4f": {"ru": "Цифры по каждому кварталу, со стоимостью саженцев и экологическим отчётом для ISO 14001.","en": "Figures for every block, with the cost of cuttings and an environmental report for ISO 14001."},"ce_eb": {"ru": "Что делает","en": "What it does"},"ce_h": {"ru": "От снимка дрона до проверки на месте — за четыре шага","en": "From the drone image to the field check, in four steps"},"ce_p": {"ru": "Больше не нужно мерить рулеткой и ходить по винограднику наугад. Вы работаете со своей зоной, а расчёты делаются только для неё, за несколько секунд.","en": "No more tape measures and no more walking the vineyard at random. You work on your zone, and the calculations run only there, in seconds."},"do1h": {"ru": "Выбираете зону","en": "Choose the zone"},"do1p": {"ru": "Рисуете на карте, нажимаете на квартал виноградника или вводите кадастровый номер участка.","en": "Draw on the map, click a vineyard block or type the plot's cadastral number."},"do2h": {"ru": "Видите, что на месте","en": "See what's on the ground"},"do2p": {"ru": "Ряды и их длина, недостающие кусты, почва между рядами, мусор, площади в м² и гектарах.","en": "Rows and their length, missing vines, the soil between rows, waste, areas in m² and hectares."},"do3h": {"ru": "Получаете маршрут","en": "Get the route"},"do3p": {"ru": "Кратчайший пеший путь через все места для проверки, вдоль рядов. Берёте его в телефон, с GPS.","en": "The shortest walking path through every place to check, along the rows. Take it on your phone, with GPS."},"do4h": {"ru": "Завершаете отчётом","en": "Finish with the report"},"do4p": {"ru": "Акт проверки, выписка из реестра виноградников, таблица измерений и экологические показатели.","en": "Inspection report, vineyard register extract, measurement table and environmental indicators."},"ro_eb": {"ru": "Для кого","en": "Who it is for"},"ro_h": {"ru": "Две роли, у каждой — то, что ей нужно","en": "Two roles, each with what it needs"},"ro_p": {"ru": "Одна карта и одни измерения. Ваш аккаунт определяет, что вы видите первым.","en": "The same map and the same measurements. Your account decides what you see first."},"ri_h": {"ru": "Государственный инспектор","en": "State inspector"},"ri_fb": {"ru": "Сначала вы видите","en": "You see first"},"ri_first": {"ru": "Что проверять сегодня: кварталы, не совпадающие с реестром или заявкой на субсидию, и возможные несанкционированные посадки.","en": "What to check today: blocks that don't match the register or the subsidy application, and possible unauthorised plantings."},"ri_l1": {"ru": "Сравниваете заявленное в реестре и в заявке AIPA с тем, что видит дрон: площадь, плотность, пропуски.","en": "Compare what is declared in the register and the AIPA application with what the drone sees: area, density, gaps."},"ri_l2": {"ru": "Идёте по маршруту только через проблемные места, с GPS на телефоне.","en": "Walk a route through the problem spots only, with GPS on your phone."},"ri_l3": {"ru": "Акт проверки заполняется сам; вы только проверяете и подписываете.","en": "The inspection report fills itself in; you only check it and sign."},"ri_c1": {"ru": "порог реестра 0,15 га","en": "register threshold 0.15 ha"},"ri_c2": {"ru": "разрешение на посадку","en": "planting authorisation"},"ri_c3": {"ru": "площадь и плотность","en": "area and density"},"ri_c4": {"ru": "зона DOP / IGP","en": "PDO / PGI area"},"ra_h": {"ru": "Администратор плантации","en": "Plantation manager"},"ra_who": {"ru": "Фермер, виноградарское хозяйство","en": "Farmer, vineyard holding"},"ra_fb": {"ru": "Сначала вы видите","en": "You see first"},"ra_first": {"ru": "Ваша плантация: кварталы в хорошем, среднем или критическом состоянии, кусты для подсадки и мусор для уборки.","en": "Your plantation: blocks in good, fair or critical condition, vines to replant and waste to collect."},"ra_l1": {"ru": "Знаете, сколько кустов не хватает, где именно и сколько стоят саженцы.","en": "Know how many vines are missing, exactly where, and what the cuttings cost."},"ra_l2": {"ru": "Получаете маршрут уборки мусора и рабочие обходы по дням.","en": "Get the waste collection route and daily work rounds."},"ra_l3": {"ru": "Экологический отчёт для сертификации ISO 14001 и выписка для реестра.","en": "An environmental report for ISO 14001 certification and the register extract."},"ra_c1": {"ru": "недостающие кусты","en": "missing vines"},"ra_c2": {"ru": "голая почва между рядами","en": "bare soil between rows"},"ra_c3": {"ru": "мусор","en": "waste"},"ra_c4": {"ru": "затраты за год","en": "yearly costs"},"cum_eb": {"ru": "Как это работает","en": "How it works"},"cum_h": {"ru": "Дрон снимает, ИИ читает, люди проверяют","en": "The drone photographs, the AI reads, people check"},"st1h": {"ru": "Полёт дрона","en": "The drone flight"},"st1p": {"ru": "Дрон снимает плантацию сверху, 2,5 см на пиксель. У снимка реальные координаты, поэтому каждый метр на нём — метр на местности.","en": "A drone photographs the plantation from above at 2.5 cm per pixel. The image has real coordinates, so every metre measured on it is a metre on the ground."},"st2h": {"ru": "ИИ читает снимок","en": "The AI reads the image"},"st2p": {"ru": "Находит каждый ряд, каждый куст и пропуски между ними, состояние почвы и мусор. Где не уверен — отмечает место для проверки.","en": "It finds every row, every vine and the gaps between them, the state of the soil and the waste. Where it is unsure, it flags the spot for checking."},"st3h": {"ru": "Специалисты проверяют","en": "Specialists check"},"st3p": {"ru": "Результаты исправляются людьми, прежде чем попадут к вам. Цифры на платформе пересчитываются после каждой правки.","en": "People correct the results before they reach you. The figures in the platform are recalculated after every correction."},"st4h": {"ru": "Вы выбираете зону и выходите в поле","en": "You choose the zone and head out"},"st4p": {"ru": "Вы получаете цифры, маршрут и отчёт для своей зоны. Маршрут идёт вдоль рядов и меняет ряд только в их концах, как в реальности.","en": "You get the figures, the route and the report for your zone. The route follows the rows and changes row only at their ends, as in reality."},"ue_eb": {"ru": "Европейская интеграция","en": "European integration"},"ue_h": {"ru": "Готово к правилам ЕС для виноградарства","en": "Ready for the EU vineyard rules"},"ue_p": {"ru": "Молдова — страна-кандидат в ЕС, и винодельческий сектор должен перейти на те же правила, что и государства-члены. VinePlan производит данные, которых требуют эти правила.","en": "Moldova is an EU candidate country, and the wine sector must align with the same rules as the member states. VinePlan produces the data these rules require."},"eu1r": {"ru": "Рег. (ЕС) 2018/273, ст. 7","en": "Reg. (EU) 2018/273, art. 7"},"eu1h": {"ru": "Реестр виноградников на карте","en": "The vineyard register on a map"},"eu1p": {"ru": "Каждый участок идентифицирован на карте или в кадастре, с ГИС и ортофото не хуже 1:5 000. Снимок с дрона — 2,5 см на пиксель, намного точнее требования.","en": "Every plot identified on a map or in the cadastre, with GIS and orthophoto at 1:5,000 or better. The drone image has 2.5 cm per pixel, far beyond the requirement."},"eu2r": {"ru": "Рег. (ЕС) 2018/274, ст. 31","en": "Reg. (EU) 2018/274, art. 31"},"eu2h": {"ru": "Проверка 5 % виноградарей","en": "Checks on 5 % of winegrowers"},"eu2p": {"ru": "Проверка на месте обязательна не менее чем для 5 % виноградарей в год, плюс систематическая проверка виноградников, которых нет ни в одном досье. VinePlan находит их на снимке.","en": "On-the-spot checks are mandatory for at least 5 % of winegrowers a year, plus a systematic check of vineyards that appear in no file. VinePlan finds them on the image."},"eu3r": {"ru": "Рег. (ЕС) 1308/2013, ст. 62 и 71","en": "Reg. (EU) 1308/2013, arts. 62 and 71"},"eu3h": {"ru": "Разрешения на посадку","en": "Planting authorisations"},"eu3p": {"ru": "Виноград сажают только по разрешению; несанкционированные посадки раскорчёвываются и не получают поддержки. Платформа отмечает виноградники без разрешённого участка.","en": "Vines may be planted only with an authorisation; unauthorised plantings are grubbed up and get no support. The platform flags vines without an authorised plot."},"eu4r": {"ru": "Рег. (ЕС) 2022/1173 (IACS)","en": "Reg. (EU) 2022/1173 (IACS)"},"eu4h": {"ru": "Мониторинг по снимкам","en": "Monitoring from images"},"eu4p": {"ru": "Интегрированная система контроля субсидий проверяет площади по снимкам и фотографиям с геометками. Полёт дрона даёт те же данные в более высоком разрешении.","en": "The integrated subsidy control system checks areas from images and geotagged photos. A drone flight gives the same data at a higher resolution."},"eu_note": {"ru": "В рабочей версии реестр и заявки поступают от ONVV и AIPA через MConnect, а участки — из кадастра ASP. Экологический стандарт ISO 14001 (п. 9.1) покрывается показателями по кварталам. Подробности и источники: <a href=\"https://github.com/Viteokk/vineyard-ai/blob/main/docs/EU.md\" target=\"_blank\" rel=\"noopener\">документ о соответствии ЕС ↗</a>","en": "In production, the register and applications come from ONVV and AIPA through MConnect, and the plots from the ASP cadastre. The environmental standard ISO 14001 (clause 9.1) is covered by the per-block indicators. Details and sources: <a href=\"https://github.com/Viteokk/vineyard-ai/blob/main/docs/EU.md\" target=\"_blank\" rel=\"noopener\">the EU alignment document ↗</a>"},"date_eb": {"ru": "Откуда данные","en": "Where the data comes from"},"date_h": {"ru": "Официальные источники в официальных координатах","en": "Official sources, in official coordinates"},"d1b": {"ru": "полёт дрона","en": "drone flight"},"d1h": {"ru": "Снимок и измерения","en": "The image and the measurements"},"d1p": {"ru": "Геопривязанное ортофото в официальной системе координат. Ряды, кусты, площади и маршруты рассчитывает по нему VinePlan, а проверяют специалисты.","en": "A georeferenced orthophoto in the official coordinate system. Rows, vines, areas and routes are calculated from it by VinePlan and checked by specialists."},"d2b": {"ru": "открытые данные","en": "public"},"d2h": {"ru": "Кадастр и границы","en": "Cadastre and boundaries"},"d2p": {"ru": "Участки и районы из кадастра ASP (geodata.gov.md), поиск по кадастровому номеру по всей стране. Без данных о владельцах.","en": "Plots and districts from the ASP cadastre (geodata.gov.md), with search by cadastral number across the country. No owner data."},"d3b": {"ru": "через MConnect","en": "via MConnect"},"d3h": {"ru": "Реестр и субсидии","en": "The register and subsidies"},"d3p": {"ru": "Реестр виноградников (ONVV) и заявки AIPA не находятся в открытом доступе; в рабочей версии они поступают через государственный обмен данными MConnect. В демо-версии это тестовые данные, везде отмеченные.","en": "The vineyard register (ONVV) and AIPA applications are not public; in production they come through the MConnect government data exchange. In the demo they are test data, marked everywhere."},"cta_h": {"ru": "Попробуйте демо-версию","en": "Try the demo"},"cta_p": {"ru": "Работает на реальном полёте дрона. Демо-аккаунт уже заполнен: выберите роль и войдите.","en": "It runs on a real drone flight. The demo account is already filled in: choose a role and sign in."},"f1": {"ru": "VinePlan · создано на DeepTech GigaHack 2026, Кишинёв (Marcaj Vineyard AI Field Challenge)","en": "VinePlan · built at DeepTech GigaHack 2026, Chișinău (Marcaj Vineyard AI Field Challenge)"},"f2": {"ru": "<a href=\"app.html\">Карта</a> · <a href=\"login.html\">Вход</a> · <a href=\"https://github.com/Viteokk/vineyard-ai#readme\" target=\"_blank\" rel=\"noopener\">Для жюри: код, результаты, воспроизведение ↗</a>","en": "<a href=\"app.html\">Map</a> · <a href=\"login.html\">Sign in</a> · <a href=\"https://github.com/Viteokk/vineyard-ai#readme\" target=\"_blank\" rel=\"noopener\">For the jury: code, deliverables, reproduction ↗</a>"}};
+const I18N_RO = {};
+document.querySelectorAll('[data-i]').forEach(el => { I18N_RO[el.dataset.i] = el.innerHTML; });
+let LANG = (() => { try { return JSON.parse(localStorage.getItem('fpm.lang')) || 'ro'; } catch (e) { return 'ro'; } })();
+const t = k => (LANG !== 'ro' && I18N[k] && I18N[k][LANG]) || I18N_RO[k] || (I18N[k] && I18N[k].ro_js) || k;
+function applyLang(l) {
+  LANG = ['ro', 'ru', 'en'].includes(l) ? l : 'ro';
+  try { localStorage.setItem('fpm.lang', JSON.stringify(LANG)); } catch (e) {}
+  document.documentElement.lang = LANG;
+  document.querySelectorAll('[data-i]').forEach(el => { const v = LANG === 'ro' ? I18N_RO[el.dataset.i] : I18N[el.dataset.i]?.[LANG]; if (v != null) el.innerHTML = v; });
+  document.querySelectorAll('[data-lang]').forEach(b => b.setAttribute('aria-pressed', b.dataset.lang === LANG));
+  document.dispatchEvent(new Event('langchange'));
+}
+document.addEventListener('click', e => { const b = e.target.closest('[data-lang]'); if (b) applyLang(b.dataset.lang); });
+applyLang(LANG);
+</script>
+<script>
+/* route diagram: vines along six rows, three planting gaps */
+(function () {
+  const g = document.getElementById('dg-rows'); if (!g) return;
+  const rows = [70, 110, 150, 190, 230, 270], gaps = {110: [250, 330], 190: [150, 205], 230: [380, 430]}, out = [];
+  for (const y of rows) {
+    out.push(`<line x1="86" y1="${y}" x2="474" y2="${y}" stroke="#6B5B45" stroke-width="2"/>`);
+    for (let x = 90; x <= 470; x += 16) {
+      const gp = gaps[y]; if (gp && x > gp[0] && x < gp[1]) continue;
+      out.push(`<circle cx="${x}" cy="${y}" r="5.5" fill="#4ADE80"/>`);
+    }
+    const gp = gaps[y]; if (gp) out.push(`<line x1="${gp[0] + 6}" y1="${y}" x2="${gp[1] - 6}" y2="${y}" stroke="#FF6B6B" stroke-width="4" stroke-linecap="round" stroke-dasharray="2 6"/>`);
+  }
+  g.innerHTML = out.join('');
+})();
+</script>
+<script>
+/* Moldova map: raions from data/moldova.geojson (EPSG:32635); hover highlights and names them */
 (async function () {
   const box = document.getElementById('md'), place = document.getElementById('place'), detail = document.getElementById('detail');
-  const def = {p: place.textContent, d: detail.innerHTML};
   let fc;
-  try { fc = await fetch('data/moldova.geojson?v=2').then(r => r.json()); } catch (e) { box.textContent = 'Harta nu s-a putut încărca.'; return; }
+  try { fc = await fetch('data/moldova.geojson?v=2').then(r => r.json()); } catch (e) { box.textContent = t('map_err'); return; }
   const country = fc.features.find(f => f.properties.kind === 'country'), raions = fc.features.filter(f => f.properties.kind === 'raion'), com = fc.features.find(f => f.properties.kind === 'commune');
   const polys = g => g.type === 'Polygon' ? [g.coordinates] : g.coordinates;
   let x0 = Infinity, y0 = Infinity, x1 = -Infinity, y1 = -Infinity;
@@ -323,7 +396,7 @@ footer{border-top:1px solid var(--line);padding-block:28px 40px;color:var(--mute
   const inside = (pt, g) => polys(g).some(p => { const r = p[0]; let c = false; for (let i = 0, j = r.length - 1; i < r.length; j = i++) { const [xi, yi] = r[i], [xj, yj] = r[j]; if ((yi > pt[1]) !== (yj > pt[1]) && pt[0] < (xj - xi) * (pt[1] - yi) / (yj - yi) + xi) c = !c; } return c; });
   const cr = polys(com.geometry)[0][0], cc = cr.reduce((a, q) => [a[0] + q[0] / cr.length, a[1] + q[1] / cr.length], [0, 0]);
   const clean = n => n.replace(/^r-nul\s+/, '');
-  const svg = [`<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="Moldova în culorile drapelului, pe raioane; Strășeni evidențiat, satul Sireți marcat">`,
+  const svg = [`<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="Moldova în culorile drapelului, pe raioane">`,
     `<defs><linearGradient id="flag" gradientUnits="userSpaceOnUse" x1="0" y1="0" x2="${W}" y2="0"><stop offset=".333" stop-color="#0046AE"/><stop offset=".333" stop-color="#FFD200"/><stop offset=".667" stop-color="#FFD200"/><stop offset=".667" stop-color="#CC092F"/></linearGradient></defs>`];
   raions.forEach((f, i) => {
     const study = inside(cc, f.geometry);
@@ -332,14 +405,14 @@ footer{border-top:1px solid var(--line);padding-block:28px 40px;color:var(--mute
   svg.push(`<path class="country" d="${d(country.geometry)}"/>`, `<path class="commune" d="${d(com.geometry)}"/>`);
   const [cx, cy] = P(cc).split(' ');
   svg.push(`<circle class="pulse" cx="${cx}" cy="${cy}" r="6"/>`, `<circle class="dot" cx="${cx}" cy="${cy}" r="6"/>`, '</svg>');
-  box.className = ''; box.innerHTML = svg.join('');
+  box.className = ''; box.removeAttribute('data-i'); box.innerHTML = svg.join('');   // the map is not text: a language change must not wipe it
   const show = el => {
     box.querySelectorAll('.raion.on').forEach(x => x.classList.remove('on'));
-    if (!el) { place.textContent = def.p; detail.innerHTML = def.d; return; }
+    if (!el) { place.innerHTML = t('place'); detail.innerHTML = t('detail'); return; }
     el.classList.add('on');
     const f = raions[+el.dataset.i];
     place.textContent = clean(f.properties.name);
-    detail.textContent = el.classList.contains('study') ? (matchMedia('(hover: none)').matches ? 'Aici e Sireț3: 145 ha zburate cu drona. Atinge din nou ca să intri.' : 'Aici e Sireț3: 145 ha zburate cu drona. Apasă ca să intri.') : f.properties.left_bank ? 'Regiunea din stânga Nistrului. Cadastrul ASP nu o acoperă încă; nezburată.' : 'Încă nezburat. Același pipeline merge pe orice zbor nou din raion.';
+    detail.textContent = t(f.properties.left_bank ? 'mh_left' : el.classList.contains('study') ? 'mh_demo' : 'mh_other');
   };
   box.addEventListener('mouseover', e => { const el = e.target.closest('.raion'); if (el) show(el); });
   box.addEventListener('mouseleave', () => { if (!matchMedia('(hover: none)').matches) show(null); });
@@ -351,42 +424,6 @@ footer{border-top:1px solid var(--line);padding-block:28px 40px;color:var(--mute
     if (el.classList.contains('study')) location.href = 'login.html';
   });
   box.addEventListener('keydown', e => { if (e.key === 'Enter' && e.target.closest('.raion.study')) location.href = 'login.html'; });
-})();
-</script>
-<script>
-/* "Acum pe platformă": current figures read from the published data, nothing hardcoded */
-(async function () {
-  const nf = (n, d = 0) => Number(n).toLocaleString('ro-RO', {minimumFractionDigits: d, maximumFractionDigits: d});
-  const get = async u => { const r = await fetch(u); if (!r.ok) throw new Error(u); return {j: await r.json(), lm: r.headers.get('last-modified')}; };
-  const set = (k, v) => document.querySelectorAll(`[data-k="${k}"]`).forEach(el => { el.textContent = v; });
-  const [cmp, blk, rte, cad, wc] = await Promise.allSettled(['data/compliance.json', 'data/blocks_report.json', 'data/variants/route_compliance.geojson', 'data/cadastre.geojson', 'data/waste_candidates.geojson'].map(get));
-  const ok = x => x.status === 'fulfilled' ? x.value : null;
-  const c = ok(cmp), b = ok(blk), r = ok(rte), k = ok(cad), w = ok(wc);
-  if (c) { const st = c.j.summary.status; set('visit', nf(c.j.summary.visit.length)); set('visit_s', `${nf(st.neconform)} neconforme, ${nf(st.verificare)} de verificat${c.j.summary.demo_registry ? ' (registru demo)' : ''}`); }
-  if (r) { const f = r.j.features.find(x => x.geometry.type !== 'Point'); if (f) { const m = Math.round(f.properties.minutes_at_4kmh); set('croute', nf(f.properties.length_m / 1000, 1) + ' km'); set('croute_s', `≈ ${Math.floor(m / 60)} h ${m % 60} min pe jos, cu GPX`); } }
-  if (k) { const n = fl => k.j.features.filter(x => (x.properties.flags || []).includes(fl)).length; set('rvv', nf(n('rvv'))); set('landuse', nf(n('landuse'))); }
-  if (b) { const s = b.j.summary; set('red', `${nf(s.status.red)}`); set('red_s', `din ${nf(s.blocks)}: peste 30 % din rânduri au goluri`);
-    set('missing', nf(Math.round(s.missing_vines / 100) * 100)); set('missing_s', `${nf(s.gap_length_m / 1000, 1)} km de goluri ÷ ${nf(s.vine_spacing_m, 1)} m între butuci`);
-    set('cost', nf(Math.round(s.missing_vines * s.cutting_price_mdl / 1000)) + ' mii'); set('cost_s', `la ${nf(s.cutting_price_mdl)} lei butașul, fără manoperă`); }
-  if (w) set('waste', nf(w.j.features.length));
-  const lm = [c, b].map(x => x && x.lm && new Date(x.lm)).filter(d => d && !isNaN(d)).sort((a, z) => z - a)[0];
-  if (lm) document.getElementById('now-meta').textContent += ` Date procesate: ${lm.toLocaleDateString('ro-RO', {day: 'numeric', month: 'long', year: 'numeric'})}.`;
-  document.querySelectorAll('.nowcard .v').forEach(el => { if (el.textContent === '…') el.textContent = '—'; });
-})();
-</script>
-<script>
-/* "Standarde respectate": values from the published outputs */
-(async function () {
-  const nf = (n, d = 0) => Number(n).toLocaleString('ro-RO', {minimumFractionDigits: d, maximumFractionDigits: d});
-  const set = (k, v) => document.querySelectorAll(`[data-k="${k}"]`).forEach(el => { el.textContent = v; });
-  const get = u => fetch(u).then(r => { if (!r.ok) throw new Error(u); return r.json(); });
-  const [b, rc] = await Promise.allSettled([get('data/blocks_report.json'), get('data/route_check_inspector.json')]).then(a => a.map(x => x.status === 'fulfilled' ? x.value : null));
-  if (b) { const s = b.summary; set('s_blocks', nf(s.blocks)); set('s_rows', nf(s.rows)); set('s_len', nf(s.row_length_m / 1000, 1) + ' km');
-    set('s_canopy', nf(s.canopy_m2 / 1e4, 2) + ' ha'); set('s_inter', nf(s.interrow_m2 / 1e4, 2) + ' ha'); }
-  if (rc) { set('s_valid', rc.valid ? 'respectat' : 'de verificat'); set('s_route', nf(rc.length_m / 1000, 1) + ' km'); set('s_out', nf(rc.outside_share * 100, 2) + ' %');
-    set('s_end', nf(Math.max(rc.start_m, rc.end_m), 1) + ' m');
-    if (!rc.valid) document.querySelector('[data-k="s_valid"]').classList.add('wip'); }
-  document.querySelectorAll('#standard [data-k]').forEach(el => { if (el.textContent === '…') el.textContent = '—'; });
 })();
 </script>
 </body>
