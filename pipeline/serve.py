@@ -5,7 +5,8 @@
   POST /api/analyze       body = one GeoTIFF (header X-Filename; ?canopy=classical|model)
                           -> classical detector + the AI model on that tile -> GeoJSON layers in the tile's CRS,
                              a preview image with its bounds, counts / lengths / areas and the processing time
-  POST /api/route         {"mode": "inspector"|"farmer", "min_gap": 3.0, "time": 20, "start": [x, y] (optional)}
+  POST /api/route         {"mode": "inspector"|"farmer", "min_gap": 3.0, "time": 20, "start": [x, y], "zone": GeoJSON geometry}
+                          (start and zone optional: a custom START, and only the targets inside the zone)
                           -> {"job": id}: pipeline.route on the targets that pass the filters (cached distances)
   GET  /api/job/<id>      {"state": "running"|"done"|"error", "log": [...], "route": ..., "targets": ..., "seconds"}
   POST /api/compliance    body = registry extract as CSV (registry/rvv_template.csv columns)
@@ -107,12 +108,17 @@ def analyze(data: bytes, name: str, canopy: str) -> dict:
             "seconds": {"classical": round(t_classic, 1), "model": round(t_model, 1), "total": round(time.time() - t0, 1)}}
 
 
-def run_route(job: dict, mode: str, min_gap: float, tlimit: int, start=None) -> None:
+def run_route(job: dict, mode: str, min_gap: float, tlimit: int, start=None, zone=None) -> None:
     d = LIVE / job["id"]
     d.mkdir(parents=True, exist_ok=True)
     feats = json.loads((C.OUT / "targets.geojson").read_text())["features"]
     keep = [f for f in feats if f["properties"]["type"] in TYPES[mode]
             and (f["properties"]["type"] == "waste" or f["properties"].get("gap_m", 0) >= min_gap)]
+    if zone:
+        from shapely.geometry import Point, shape
+        z = shape(zone).buffer(0)
+        keep = [f for f in keep if z.contains(Point(f["geometry"]["coordinates"]))]
+        job["log"].append(f"zonă: {z.area / 1e4:.2f} ha")
     (d / "targets_in.geojson").write_text(json.dumps({"type": "FeatureCollection", "features": keep}))
     job["log"].append(f"{len(keep)} ținte ({mode}, gol ≥ {min_gap:g} m)")
     if not keep:
@@ -195,7 +201,7 @@ class Handler(SimpleHTTPRequestHandler):
                 job = {"id": uuid.uuid4().hex[:8], "state": "running", "log": [], "t0": time.time(), "mode": mode}
                 JOBS[job["id"]] = job
                 threading.Thread(target=run_route, args=(job, mode, float(q.get("min_gap", 3.0)),
-                                                          int(q.get("time", 20)), q.get("start")), daemon=True).start()
+                                                          int(q.get("time", 20)), q.get("start"), q.get("zone")), daemon=True).start()
                 return self.send_json({"job": job["id"]})
         except Exception as e:                    # noqa: BLE001 - report to the page, keep serving
             return self.send_json({"error": str(e)}, 400)

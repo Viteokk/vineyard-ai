@@ -128,6 +128,21 @@ to visit only, and a printable inspection report. A real registry extract (CSV) 
 Sources, legal basis and what is real vs demo: [`docs/COMPLIANCE.md`](docs/COMPLIANCE.md).
 `python -m pipeline.cadastre` · `python -m pipeline.compliance --visit-route [--registry-csv extras.csv]`
 
+### Zones, cadastral search, Moldova context
+- **Zonă** tab (`#zona`): one zone polygon from three inputs — draw (rectangle / polygon), select (blocks, tiles, the
+  cadastral parcel under a click; Shift+click adds), or a cadastral number. The same zone gives measurements (rows,
+  canopies, inter-rows, gaps, missing vines, waste), the blocks with their compliance status, the cadastral parcels,
+  GeoJSON / CSV export, a printable report and, in live mode, a route through the zone only. Shareable links:
+  `#zona=bloc:V63,V32`, `#zona=cad:80371140153`, `#zona=tile:r021_c012`, `#zona=poly:x,y;x,y;...`.
+- **Cadastral numbers**: search anywhere in Moldova (⌘K or the Conformitate tab) — the page queries the public ASP
+  cadastre on geodata.gov.md (WFS with CORS; MOLDREF99 → UTM 35N with proj4) and shows land use, area and the vines
+  detected on the parcel when it is inside the flight. No owner data is used.
+- **Moldova**: country outline (Natural Earth), 35 raions and the Sireți commune (ASP), study area highlighted
+  (`scripts/build_moldova.py`).
+- Production step not in this repo: the vineyard register (RVV, ONVV) and AIPA files have no public API; the real
+  integration is a data exchange through MConnect (the government interoperability platform). The CSV import in live
+  mode is the stand-in.
+
 ### Live mode on the laptop
 ```bash
 python -m pipeline.serve            # http://127.0.0.1:8000 — the same site plus the local API
