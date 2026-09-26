@@ -152,6 +152,10 @@ Measured fields per parcel come from the pipeline: rows clipped to the parcel ×
 (`measured_area_ha`, a few % below the block figure because rows are cut exactly at the parcel edge), rows, density
 nominal / effective (1.2 m vine spacing), gap share, missing vines, inter-row cover shares and `status_detected`
 (`no_vines`: measured < 10 % of the parcel; `abandoned`, heuristic: vegetation inter-rows > 80 % and gaps > 40 %).
+In the web map (Conformitate → Registru viticol, layer “Registru viticol DEMO”, ⌘K search `DEMO-0005`, link
+`#parcel=DEMO-0005`) a click opens the **parcel sheet**: declared vs measured side by side (differences above the
+tolerances in `criteria.json` highlighted), missing authorisation in red, event history, DEMO label always visible;
+**register extract** as CSV or GeoJSON for one parcel or all, with generation date, source and DEMO notice.
 Tests: `python -m unittest tests.test_register` (halves sum to the block within 1 %, every parcel has id / geometry /
 status, scenarios present, registry linked). Real integration (ONVV RVV, ASP cadastre, AIPA) would be a data exchange
 through MConnect; not implemented.

@@ -246,6 +246,13 @@ input[type=range]{accent-color:var(--accent);width:100%}
 .chip.lipsa{background:rgba(34,197,94,.16);color:#15803D}
 .zmodes{display:flex;gap:6px;flex-wrap:wrap}
 .pl{display:flex;flex-direction:column;gap:10px}
+.insp.wide{width:min(430px,calc(100vw - 32px))}
+@media (max-width:820px){.insp.wide{width:auto}}
+.rg-t{width:100%;border-collapse:collapse;font-size:12.5px;margin-top:4px;table-layout:fixed}.rg-t td,.rg-t th{overflow-wrap:anywhere}.rg-t th,.rg-t td{padding:5px 6px;border-top:1px solid var(--line);text-align:left;vertical-align:top}
+.rg-t thead th{border-top:0;color:var(--muted);font-weight:600;font-size:11px;text-transform:uppercase;letter-spacing:.04em}.rg-t tbody th{color:var(--muted);font-weight:500;width:34%}
+.rg-t tr.warn td{background:rgba(245,158,11,.12)}.rg-t tr.bad td{background:rgba(220,38,38,.12)}.rg-t tr.ok td:last-child{color:var(--accent-ink)}.rg-t small{color:var(--muted)}
+.rg-ev{display:flex;flex-direction:column;gap:3px;font-size:12.5px;margin-top:8px}.rg-ev div{display:flex;gap:10px}.rg-ev .mono{color:var(--muted)}
+.demo-chip{display:inline-block;background:#FDE68A;color:#78350F;font-weight:700;font-size:10px;letter-spacing:.06em;padding:1px 6px;border-radius:4px;margin-right:4px}
 .mm-li{display:flex;align-items:center;gap:6px;padding:0;cursor:default}.mm-go{flex:1;display:flex;align-items:center;gap:8px;min-height:40px;padding:0 6px;border:0;background:none;color:inherit;font:inherit;text-align:left;cursor:pointer;border-radius:8px;min-width:0}
 .mm-go:hover{background:var(--hover)}.mm-t{color:var(--muted);font-size:12px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:1;min-width:0}
 .pl h3{display:flex;align-items:center;gap:10px;margin:0;font-size:15px;font-weight:650}
@@ -611,7 +618,7 @@ function refreshAnnotations() {
   if (lay('ortho') && z >= HIRES_Z) { if (!map.hasLayer(hires)) hires.addTo(map); } else if (map.hasLayer(hires)) map.removeLayer(hires);
 }
 function PLAN_ANN() { return typeof PL !== 'undefined' && PL.ann; }
-const CALM = new Set(['canopy', 'rows', 'inter', 'grid', 'passage', 'targets', 'wcand', 'md', 'cad', 'cmp', 'bstat', 'mm', 'route_blue', 'route_red']);
+const CALM = new Set(['canopy', 'rows', 'inter', 'grid', 'passage', 'targets', 'wcand', 'md', 'cad', 'cmp', 'bstat', 'mm', 'reg', 'route_blue', 'route_red']);
 const lay = k => !!S.layers[k] && !(S.view === 'zona' && !PLAN_ANN() && CALM.has(k));   // Planifică: calm map unless asked
 function applyLayers() {
   lay('ortho') ? ortho.addTo(map) : map.removeLayer(ortho);
@@ -622,6 +629,7 @@ function applyLayers() {
   syncMd();
   if (cadLayer) { if (lay('cad')) cadLayer.addTo(map); else map.removeLayer(cadLayer); }
   if (cmpLayer) { if (lay('cmp')) { cmpLayer.addTo(map); cmpLayer.bringToBack(); } else map.removeLayer(cmpLayer); }
+  if (rgLayer) { if (lay('reg')) rgLayer.addTo(map); else map.removeLayer(rgLayer); }
   if (mmLayer) { if (lay('mm')) { mmLayer.addTo(map); mmLayer.bringToFront(); } else map.removeLayer(mmLayer); }
   if (bstatLayer) { if (lay('bstat')) { bstatLayer.addTo(map); bstatLayer.bringToBack(); } else map.removeLayer(bstatLayer); }
   ortho.eachLayer(l => l.setOpacity(S.op)); hires.eachLayer(l => l.setOpacity(S.op));
@@ -655,6 +663,7 @@ let hi = null;
 function select(sel) {
   if (hi) { map.removeLayer(hi); hi = null; }
   S.sel = sel; const box = $('#insp');
+  box.classList.toggle('wide', !!sel && sel.type === 'rp');
   if (!sel) { box.hidden = true; syncLists(); return; }
   $('#layers').hidden = true;
   const close = `<button class="icon-btn" type="button" data-act="unsel" aria-label="Închide">${IC.x}</button>`;
@@ -692,6 +701,13 @@ function select(sel) {
       ${p.flags.includes('landuse') ? `<p class="note" style="color:var(--warn)">Vie detectată pe un teren înregistrat „${p.landuse}”: de verificat modul de folosință.</p>` : ''}
       <div class="acts"><a class="btn" href="https://rvv.gov.md/publicpart/check.jsf" target="_blank" rel="noopener">Caută în RVV</a><button class="btn" type="button" data-act="copy-cod" data-id="${p.cod}">Copiază nr.</button><button class="btn" type="button" data-act="share" data-id="C${p.cod}">Copiază linkul</button><button class="btn" type="button" data-act="z-parcel" data-id="${p.cod}">Folosește ca zonă</button></div>
       <p class="note">${CAD?.source || ''}. Căutarea publică RVV acceptă numărul cadastral.</p>`;
+    if (sel.layer) hi = L.geoJSON(sel.layer.feature, {renderer: R, coordsToLatLng: toLL, style: {color: '#FFFFFF', weight: 3, fill: false}, interactive: false}).addTo(map);
+  } else if (sel.type === 'rp') {
+    const p = sel.f.properties;
+    html = `<div class="p-top"><div><div class="eyebrow"><span class="demo-chip">DEMO</span> Fișa parcelei · registru viticol</div><h2 style="font-size:19px">${p.cad_nr}</h2><div class="note">${p.grower_id} · ${p.vineyard_id ? 'bloc ' + p.vineyard_id : 'fără bloc detectat'}</div></div>${close}</div>
+      ${rgSheet(sel.f)}
+      <p class="note">Câmpurile declarate sunt sintetice (DEMO); cele măsurate vin din zborul UAV. Structură: Reg. (UE) 2018/273 art. 7.</p>
+      <div class="acts"><button class="btn" type="button" data-rgx="csv" data-id="${p.cad_nr}">Extras CSV</button><button class="btn" type="button" data-rgx="geojson" data-id="${p.cad_nr}">GeoJSON</button><button class="btn" type="button" data-act="share" data-id="parcel=${p.cad_nr}">Copiază linkul</button></div>`;
     if (sel.layer) hi = L.geoJSON(sel.layer.feature, {renderer: R, coordsToLatLng: toLL, style: {color: '#FFFFFF', weight: 3, fill: false}, interactive: false}).addTo(map);
   } else if (sel.type === 'mm') {
     const p = sel.f.properties, inV = MMV.has(p.id);
@@ -1274,6 +1290,52 @@ function viewCor() {
 
 /* ============ conformitate: registrul viticol (ONVV) + cereri AIPA vs dronă ============ */
 let CMP = null, cmpLayer = null, BFC = null, CAD = null, cadLayer = null;
+/* US-2: DEMO vineyard register (Reg. (EU) 2018/273 art. 7): parcel sheet, declared vs measured, register extract */
+let RG = null, rgLayer = null;
+fetch('data/register.geojson').then(r => r.ok ? r.json() : null).then(j => {
+  if (!j) return; RG = {...j, by: Object.fromEntries(j.features.map(f => [f.properties.cad_nr, f]))};
+  rgLayer = L.geoJSON(j, {renderer: R, coordsToLatLng: toLL, style: f => ({color: '#7C3AED', weight: 1.8, dashArray: '5 4', fillColor: '#7C3AED', fillOpacity: f.properties.measured.status_detected === 'planted' ? .06 : .18}),
+    onEachFeature: (f, l) => l.on('click', e => { L.DomEvent.stop(e); if (ZN.mode) return zoneClick(e.latlng, e.originalEvent); select({type: 'rp', f, layer: l}); })});
+  applyLayers(); renderLayers(); if (S.view === 'conformitate') renderPanel(); if (PENDING_P) openParcel(PENDING_P);
+}).catch(() => {});
+let PENDING_P = null;
+const RG_ST = {planted: 'plantată', grubbed_up: 'defrișată', abandoned: 'abandonată', no_vines: 'fără vie pe imagine'};
+function openParcel(cad) {
+  if (!RG) { PENDING_P = cad; return; } PENDING_P = null;
+  const f = RG.by[cad]; if (!f) return toast(`Parcela ${cad} nu e în registrul DEMO`);
+  if (!S.layers.reg) { S.layers.reg = true; store.set('layers3', S.layers); applyLayers(); renderLayers(); }
+  const l = rgLayer.getLayers().find(x => x.feature === f); if (l) fitBounds(l.getBounds().pad(0.8), 4);
+  select({type: 'rp', f, layer: l});
+}
+const RG_COLS = ['cad_nr', 'grower_id', 'rvv_code', 'vineyard_id', 'status', 'status_detected', 'declared_area_ha', 'measured_area_ha', 'area_diff_ha', 'area_diff_pct', 'parcel_area_ha', 'variety', 'planting_year', 'planting_scheme',
+  'row_spacing_m', 'rows', 'row_length_m', 'density_nominal', 'density_effective', 'gap_share', 'missing_vines', 'vegetation_share', 'authorisation_nr', 'pdo_pgi', 'events'];
+function rgExtract(fs, kind) {
+  const stamp = new Date().toISOString().slice(0, 10), src = `zbor UAV Sireț3 ${RG.flight_date}, vineyard-ai (câmpuri măsurate) + registru sintetic (câmpuri declarate)`;
+  if (kind === 'geojson') return JSON.stringify({type: 'FeatureCollection', crs: {type: 'name', properties: {name: 'urn:ogc:def:crs:EPSG::32635'}}, generated: stamp, source: src, notice: 'DATE DEMONSTRATIVE (DEMO) — nu sunt înregistrări reale ONVV / ASP', features: fs});
+  const q = v => /[",;\n]/.test(String(v ?? '')) ? `"${String(v).replace(/"/g, '""')}"` : (v ?? '');
+  return [`# Extras registru viticol DEMO · generat ${stamp} · sursa: ${src} · DATE DEMONSTRATIVE, nu înregistrări reale ONVV/ASP`, RG_COLS.join(','),
+    ...fs.map(f => { const p = f.properties, r = {...p, ...p.measured, events: p.events.map(e => `${e.date} ${e.type} ${e.result}`).join('; ')}; return RG_COLS.map(c => q(r[c])).join(','); })].join('\n') + '\n';
+}
+function rgDownload(fs, kind, name) { if (downloadText(`${name}.${kind === 'geojson' ? 'geojson' : 'csv'}`, rgExtract(fs, kind), kind === 'geojson' ? 'application/geo+json' : 'text/csv')) toast('Extras descărcat'); }
+function rgSheet(f) {
+  const p = f.properties, m = p.measured, tol = CMP?.criteria?.tolerances || {area_pass: .1, area_warn: .2};
+  const sch = /([\d,]+)\s*×\s*([\d,]+)/.exec(p.planting_scheme || ''), sp = sch ? parseFloat(sch[1].replace(',', '.')) : null, vs = sch ? parseFloat(sch[2].replace(',', '.')) : 1.2;
+  const dDecl = sp ? Math.round(10000 / (sp * vs)) : null;
+  const lvl = (a, b, t = tol) => a == null || b == null || !a ? '' : Math.abs(b - a) / a > t.area_warn ? 'bad' : Math.abs(b - a) / a > t.area_pass ? 'warn' : 'ok';
+  const row = (k, d, me, cls = '') => `<tr class="${cls}"><th>${k}</th><td>${d ?? '—'}</td><td>${me ?? '—'}</td></tr>`;
+  const stCls = p.status === (m.status_detected === 'no_vines' ? 'x' : m.status_detected) ? 'ok' : 'bad';
+  return `<table class="rg-t"><thead><tr><th></th><th>Declarat</th><th>Măsurat (dronă)</th></tr></thead><tbody>
+    ${row('Suprafață plantată', fmt(p.declared_area_ha, 3) + ' ha', fmt(m.measured_area_ha, 3) + ' ha' + (m.area_diff_pct != null ? ` <small>(${m.area_diff_pct > 0 ? '+' : ''}${fmt(m.area_diff_pct, 1)} %)</small>` : ''), lvl(p.declared_area_ha, m.measured_area_ha))}
+    ${row('Status', RG_ST[p.status], RG_ST[m.status_detected], stCls)}
+    ${row('Distanță între rânduri', sp ? fmt(sp, 2) + ' m' : '—', fmt(m.row_spacing_m, 2) + ' m', lvl(sp, m.row_spacing_m))}
+    ${row('Densitate (butuci/ha)', dDecl ? fmt(dDecl) : '—', `${fmt(m.density_effective)} <small>efectiv<br>${fmt(m.density_nominal)} nominal</small>`, lvl(dDecl, m.density_effective))}
+    ${row('Rânduri', '—', `${fmt(m.rows)} · ${fmt(m.row_length_m, 0)} m`)}
+    ${row('Goluri în rânduri', '—', `${fmt(m.gap_share * 100, 1)} % · ~${fmt(m.missing_vines)} butuci lipsă`, m.gap_share > (tol.gaps_warn ?? .25) ? 'bad' : m.gap_share > (tol.gaps_pass ?? .1) ? 'warn' : '')}
+    ${row('Soi · an plantare', `${p.variety} · ${p.planting_year}`, '—')}
+    ${row('Autorizație de plantare', p.authorisation_nr || '<b style="color:#DC2626">lipsă</b>', '—', p.authorisation_nr ? '' : 'bad')}
+    ${row('Cod RVV · IGP', `${p.rvv_code || '—'} · ${p.pdo_pgi}`, '—')}</tbody></table>
+    <div class="rg-ev"><b>Istoric</b>${p.events.map(e => `<div><span class="mono">${e.date}</span><span>${({planting: 'plantare', replanting: 'replantare', grubbing_up: 'defrișare', inspection: 'control'})[e.type] || e.type} · ${e.result}</span></div>`).join('')}</div>`;
+}
 /* US-3: possible unauthorised plantings / register to update (drone vs DEMO register) */
 let MMD = null, mmLayer = null;
 const MMC = {A: '#DC2626', B: '#F97316'};
@@ -1456,6 +1518,9 @@ function viewConf() {
       <div class="stat"><div class="v num">${lei(u.requested_lei)}</div><div class="l">cerut în ${fmt(u.requests)} cereri AIPA</div></div>
       <div class="stat"><div class="v num" style="color:${u.eligible_lei < u.requested_lei ? 'var(--warn)' : 'var(--accent)'}">${lei(u.eligible_lei)}</div><div class="l">eligibil după măsurătorile din dronă</div></div></div>
     ${CAD ? (() => { const fs = CAD.features.map(f => f.properties); return `<div class="stats"><div class="stat"><div class="v num">${fmt(fs.filter(p => p.vine_ha > 0).length)}</div><div class="l">parcele cadastrale cu vie (din ${fmt(fs.length)})</div></div><div class="stat"><div class="v num">${fmt(fs.filter(p => p.flags.includes('rvv')).length)}</div><div class="l">cu > 0,15 ha vie: RVV obligatoriu</div></div><div class="stat"><div class="v num" style="color:#A855F7">${fmt(fs.filter(p => p.flags.includes('landuse')).length)}</div><div class="l">vie pe teren pentru construcții</div></div><div class="stat"><div class="v num">${fmt(fs.reduce((a, p) => a + p.vine_ha, 0), 1)}<small>ha</small></div><div class="l">vie pe parcele cadastrale</div></div></div>`; })() : ''}
+    ${RG ? `<section><div class="sec-title"><h2>Registru viticol</h2><span class="badge" style="background:rgba(234,179,8,.16);color:#A16207">DEMO</span></div>
+      <p class="note">${fmt(RG.features.length)} parcele, structură Reg. (UE) 2018/273: declarat vs măsurat din dronă. Apasă o parcelă pe hartă sau caută <span class="mono">DEMO-0005</span> cu ⌘K.</p>
+      <div class="zmodes"><button class="btn sm" type="button" data-act="rg-on">${S.layers.reg ? 'Ascunde parcelele' : 'Arată parcelele'}</button><button class="btn sm" type="button" data-rgx="csv">Extras registru CSV</button><button class="btn sm" type="button" data-rgx="geojson">GeoJSON</button></div></section>` : ''}
     ${mmCard()}
     <div style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn primary" type="button" data-act="cmp-route">Traseu de verificare (${fmt(visit.length)} blocuri)</button><button class="btn" type="button" data-act="cmp-csv">Export CSV</button>${LIVE ? '<button class="btn" type="button" data-act="cmp-upload">Încarcă extras RVV / AIPA (CSV)</button>' : ''}${S.layers.cmp ? '' : '<button class="btn" type="button" data-act="cmp-on">Colorează pe hartă</button>'}${cadLayer && !S.layers.cad ? '<button class="btn" type="button" data-act="cad-on">Arată cadastrul</button>' : ''}</div>
     <section><div class="sec-title"><h2>De vizitat în teren</h2><span class="num">${fmt(visit.length)}</span></div>
@@ -1650,6 +1715,7 @@ function show(v) {
   if (v === 'administrator') v = 'fermier';
   if (ROLES[v]) return setRole(v);         // #inspector, #fermier (#administrator)
   if (VIEWS[v] && !allowedView(v)) v = ROLES[S.role].view;
+  if (/^parcel=/.test(v || '')) { if (S.view !== 'conformitate' && allowedView('conformitate')) show('conformitate'); return openParcel(decodeURIComponent(v.slice(7))); }
   if (/^zona=/.test(v || '')) { if (S.view !== 'zona') show('zona'); return openZoneHash(v); }
   if (/^C\d{4,}$/i.test(v || '')) { const q = v.slice(1); if (S.view !== 'conformitate') show('conformitate'); setTimeout(() => cadSearch(q), 600); return; }
   const idm = /^(V\d+)(-R\d+)?$/i.exec(v || '');   // shareable links: #V63 (block), #V02-R017 (row)
@@ -1721,6 +1787,7 @@ function renderLayers() {
   if (wcLayer) L1.push(['wcand', 'Candidați deșeuri (model AI + clasic, neconfirmați)', 'linear-gradient(90deg,#EAB308,#F97316)']);
   if (mdLayer) L1.push(['md', 'Moldova: contur, raioane, satul zonei', '#EF4444']);
   if (cadLayer) L1.push(['cad', 'Parcele cadastrale (ASP)', '#38BDF8']);
+  if (rgLayer) L1.push(['reg', 'Registru viticol DEMO (parcele)', '#7C3AED']);
   if (mmLayer) L1.push(['mm', 'Nepotriviri registru (DEMO): A roșu, B portocaliu', 'linear-gradient(90deg,#DC2626,#F97316)']);
   if (cmpLayer) L1.push(['cmp', 'Conformitate RVV / AIPA', 'linear-gradient(90deg,#EF4444,#F59E0B,#22C55E,#9CA3AF)']);
   if (bstatLayer) L1.push(['bstat', 'Starea blocurilor (roșu / galben / verde)', 'linear-gradient(90deg,#EF4444,#F59E0B,#22C55E)']);
@@ -1739,6 +1806,7 @@ function palSearch(q) {
   for (const [v, l, k] of [['harta', 'Hartă', '1'], ['traseu', 'Traseu', '2'], ['masuratori', 'Măsurători', '3'], ['pipeline', 'Pipeline', '4'], ['conformitate', 'Conformitate ONVV / AIPA', '5'], ['corectura', 'Corectură Marcaj', '6'], ['zona', 'Planifică: zonă, START, traseu', '7']]) if (!q || l.toLowerCase().includes(q)) it.push({g: 'Secțiuni', k, l, run: () => { location.hash = v; }});
   for (const [k, s] of Object.entries(SRC)) if (!q || s.name.toLowerCase().includes(q)) it.push({g: 'Sursă date', k: '◧', l: s.name, r: s.sub, run: () => setSrc(k)});
   if (WC.length && (!q || 'candidați deșeuri deseuri'.includes(q))) it.push({g: 'Locuri', k: 'D', l: 'Candidați deșeuri', r: `${WC.length} din checklist`, run: () => wcGo((WC.find(x => !WCV[x.rank]) || WC[0]).rank)});
+  if (RG && q.length >= 2) for (const f of RG.features) { const p = f.properties; if (p.cad_nr.toLowerCase().includes(q) || (p.vineyard_id || '').toLowerCase() === q) it.push({g: 'Registru DEMO', k: 'P', l: p.cad_nr, r: `${p.vineyard_id || 'fără bloc'} · ${fmt(p.declared_area_ha, 2)} ha declarat`, run: () => openParcel(p.cad_nr)}); }
   if (!q || 'start'.includes(q)) it.push({g: 'Locuri', k: 'S', l: 'START', r: 'punctul de plecare', run: () => startLL && map.flyTo(startLL, 3)});
   if (q) for (const t of TILES.filter(t => t.name && t.name.includes(q)).slice(0, 12)) { const g = cur().by[t.name]; it.push({g: 'Tile-uri', k: 'T', l: short(t.name), r: g ? `${g.can.length} coroane` : 'fără detecții', run: () => goTile(t.name)}); }
   if (/^\d{4,}$/.test(q)) {
@@ -1805,6 +1873,7 @@ document.addEventListener('click', e => {
   if (b.dataset.src) return setSrc(b.dataset.src);
   if (b.dataset.lang) { store.set('lang', b.dataset.lang); return renderLegend(); }
   if (b.dataset.mmv) return mmToggleVisit(b.dataset.mmv);
+  if (b.dataset.rgx) { if (!RG) return; const fs = b.dataset.id ? [RG.by[b.dataset.id]] : RG.features; return rgDownload(fs, b.dataset.rgx, b.dataset.id ? `extras_${b.dataset.id}` : 'extras_registru_demo'); }
   if (b.dataset.mm) { const f = MMD?.features.find(x => x.properties.id === b.dataset.mm); if (!f) return; if (!S.layers.mm) { S.layers.mm = true; store.set('layers3', S.layers); applyLayers(); renderLayers(); }
     const l = mmLayer.getLayers().find(x => x.feature === f); if (l) fitBounds(l.getBounds().pad(0.6), 4); return select({type: 'mm', f, layer: l}); }
   if (b.dataset.layersAll) { const ks = b.dataset.layersAll.split(','), on = !ks.every(k => S.layers[k]); for (const k of ks) S.layers[k] = on || k === 'ortho'; store.set('layers3', S.layers); renderLayers(); return applyLayers(); }
@@ -1871,6 +1940,7 @@ document.addEventListener('click', e => {
     case 'z-link': return copy(location.href.split('#')[0] + '#zona=' + ZN.key, null);
     case 'z-route': case 'pl-run': return planRoute();
     case 'pl-gps': return gpsStart();
+    case 'rg-on': { S.layers.reg = !S.layers.reg; store.set('layers3', S.layers); applyLayers(); renderLayers(); if (S.layers.reg && rgLayer) fitBounds(rgLayer.getBounds().pad(0.05), 3); return renderPanel(); }
     case 'mm-on': { S.layers.mm = !S.layers.mm; store.set('layers3', S.layers); applyLayers(); renderLayers(); if (S.layers.mm && mmLayer?.getLayers().length) fitBounds(mmLayer.getBounds().pad(0.1), 3); return renderPanel(); }
     case 'mm-route': return JOB ? null : mmRoute();
     case 'mm-gpx': { const g = mmGpx(); if (g && downloadText('vizita_nepotriviri.gpx', g, 'application/gpx+xml')) toast('vizita_nepotriviri.gpx descărcat'); return; }
