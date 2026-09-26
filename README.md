@@ -106,6 +106,8 @@ over non-vineyard land (measured: on 123 of 194 tiles the lines carried no more 
 - **second pass**: what the first vineyard leaves unexplained is searched for a second vineyard with another direction
   (block corners, neighbouring plots);
 - **model veto** (`scripts/model_veto.py`): tiles where the YOLO11 canopy model finds no vine at all stay empty.
+- **waste** (`scripts/add_waste.py`): YOLO11 waste detections with score ≥ 0.4, at most 2.5 m per side and outside the
+  organiser forbidden zones (sheet-metal roofs were the main false positive): 11 boxes, checked in Marcaj.
 
 On the two official reference tiles the local score (`pipeline.eval`) goes from 0.817 to 0.844 (axes F1 0.961 → 1.000,
 canopies 0.587 → 0.633); the per-line check `scripts/row_support.py` finds 0 tiles with lines off the vines (v1: 123).
@@ -115,7 +117,9 @@ the Corectură tab. v3 upload ZIPs: `out/upload_v3/` (only usable if the organis
 
 ```bash
 python -m pipeline.baseline --out out/baseline_all_v3.xml && python scripts/model_veto.py out/baseline_all_v3.xml out/baseline_all_v3v.xml
-python -m pipeline.blocks --inp out/baseline_all_v3v.xml --out out/pre_global_v3.xml --geojson out/blocks_v3.geojson
+python scripts/add_waste.py out/baseline_all_v3v.xml out/baseline_all_v3w.xml
+python -m pipeline.blocks --inp out/baseline_all_v3w.xml --out out/pre_global_v3.xml --geojson out/blocks_v3.geojson
+python -m pipeline.export_cvat --inp out/pre_global_v3.xml --out out/upload_v3      # the 9 ZIPs uploaded to Marcaj (project v2)
 python scripts/row_support.py --inp out/pre_global_v3.xml && python scripts/marcaj_plan_v3.py
 ```
 
