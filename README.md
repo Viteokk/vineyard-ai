@@ -113,7 +113,7 @@ is delivered anyway: `train/make_dataset.py` (pseudo-labels + official example, 
 
 ## Web interface
 
-Pages: `web/index.html` (landing, interactive map of Moldova) → `web/login.html` (choose a role) → `web/app.html`, the map.
+Pages: `web/index.html` (landing: interactive map of Moldova, current figures and the challenge requirements, read from `web/data`) → `web/login.html` (role + demo account `inspector@fieldplanner.demo` / `administrator@fieldplanner.demo`, password `demo2026`, checked in the browser only; or MPass) → `web/app.html`, the map. The role is fixed by the account; logging out is the way to switch.
 
 `web/app.html` — Leaflet on the real orthophoto in UTM (CRS.Simple, no reprojection): layers (canopies, rows with
 `row_id`, inter-rows with cover, passages, forbidden, blocks), both routes with length, walking time and targets

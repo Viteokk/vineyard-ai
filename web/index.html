@@ -6,7 +6,7 @@
 <title>Field Planner Sireț3</title>
 <meta name="description" content="Podgoriile Moldovei văzute rând cu rând: coroane, rânduri, goluri, cadastru și trasee de inspecție din zborul de la Sireți.">
 <script>/* old app links (#V63, #zona=..., #harta) now live in app.html */
-(function () { var h = location.hash.slice(1); if (h && !/^(top|roluri|cum|date)$/.test(h)) location.replace('app.html#' + h); })();</script>
+(function () { var h = location.hash.slice(1); if (h && !/^(top|acum|standard|roluri|cum|date)$/.test(h)) location.replace('app.html#' + h); })();</script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,700;12..96,800&family=Geist:wght@400;500;600;700&family=Geist+Mono:wght@400;500&display=swap">
 <style>
@@ -85,6 +85,52 @@ section{padding-block:80px}
 .trust p{color:var(--muted);font-size:14px}
 .badge{align-self:flex-start;font:600 11px/1 'Geist',sans-serif;letter-spacing:.08em;text-transform:uppercase;padding:5px 8px;border-radius:6px}
 .badge.real{background:rgba(74,222,128,.14);color:var(--leaf)}.badge.demo{background:rgba(255,210,0,.14);color:var(--yellow)}
+#acum{padding-block:72px 40px}
+.status{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));border:1px solid var(--line);border-radius:16px;margin-bottom:20px}
+.status > div{padding:16px 18px;display:flex;flex-direction:column;gap:6px;border-left:1px solid var(--line)}
+.status > div:first-child{border-left:0}
+.status b{font:600 15px/1.3 'Geist',sans-serif}
+.status span.s{font-size:13px;color:var(--muted)}
+.now{display:grid;grid-template-columns:1fr 1fr;gap:20px}
+.nowcard{background:var(--surface);border:1px solid var(--line);border-top:4px solid var(--c);border-radius:20px;padding:24px 26px;display:flex;flex-direction:column;gap:4px}
+.nowcard.insp{--c:var(--blue)}.nowcard.admin{--c:var(--red)}
+.nowcard header{display:flex;justify-content:space-between;align-items:baseline;gap:12px;margin-bottom:10px}
+.nowcard h3{font-size:22px;font-weight:800}
+.nowcard header a{font-size:14px;color:var(--soft);white-space:nowrap}
+.kv{display:grid;grid-template-columns:140px 1fr;gap:16px;align-items:baseline;padding-block:12px;border-top:1px solid var(--line)}
+.kv .v{font:500 clamp(22px,2.4vw,28px)/1 var(--mono);letter-spacing:-.02em;font-variant-numeric:tabular-nums;white-space:nowrap}
+.kv .l{color:var(--soft);font-size:15px;line-height:1.45}
+.kv .l small{display:block;color:var(--muted);font-size:13px}
+.rules-h{font:700 17px/1.3 'Geist',sans-serif;margin:40px 0 14px}
+.rules{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:14px}
+.rule{border:1px solid var(--line);border-radius:16px;padding:18px;display:flex;flex-direction:column;gap:8px}
+.rule .big{font:500 24px/1 var(--mono);color:var(--yellow)}
+.rule p{color:var(--soft);font-size:14px;flex:1}
+.rule a{font-size:13px;color:var(--muted)}
+.rule a:hover{color:#fff}
+@media (max-width:960px){.now{grid-template-columns:1fr}.status,.rules{grid-template-columns:1fr 1fr}.status > div:nth-child(3){border-left:0}.status > div:nth-child(n+3){border-top:1px solid var(--line)}}
+@media (max-width:560px){.status,.rules{grid-template-columns:1fr}.status > div{border-left:0}.status > div + div{border-top:1px solid var(--line)}.nowcard{padding:20px}.kv{grid-template-columns:1fr;gap:6px}}
+.mvp{background:#060908;border-bottom:1px solid var(--line);font-size:13px;color:var(--muted)}
+.mvp .wrap{display:flex;justify-content:space-between;gap:16px;padding-block:8px;flex-wrap:wrap}
+.mvp b{color:var(--soft);font-weight:600}
+#standard{padding-block:40px 72px}
+.std{border:1px solid var(--line);border-radius:18px;overflow:hidden}
+.std-row{display:grid;grid-template-columns:minmax(0,1.1fr) minmax(0,1.4fr) minmax(0,1fr);gap:24px;padding:20px 24px;border-top:1px solid var(--line);align-items:start}
+.std-row:first-child{border-top:0}
+.std-row.head{background:var(--surface);padding-block:12px;font:600 12px/1 'Geist',sans-serif;letter-spacing:.1em;text-transform:uppercase;color:var(--muted)}
+.std h3{font:700 17px/1.3 'Geist',sans-serif}
+.std .req{color:var(--soft);font-size:15px}
+.std .req code,.std .val code{font:500 13px var(--mono);background:rgba(255,255,255,.07);padding:1px 6px;border-radius:5px;color:#fff}
+.std .val{display:flex;flex-direction:column;gap:6px;font-size:14px;color:var(--soft)}
+.std .val .n{font:500 20px/1.2 var(--mono);color:#fff;font-variant-numeric:tabular-nums}
+.ok{align-self:flex-start;display:inline-flex;align-items:center;gap:6px;font:600 11px/1 'Geist',sans-serif;letter-spacing:.08em;text-transform:uppercase;padding:5px 8px;border-radius:6px;background:rgba(74,222,128,.14);color:var(--leaf)}
+.ok.wip{background:rgba(255,210,0,.14);color:var(--yellow)}
+.labels{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}
+.labels span{font:500 12px var(--mono);border:1px solid var(--line);border-radius:6px;padding:3px 7px;color:var(--soft)}
+.deliv{display:flex;flex-wrap:wrap;gap:8px;margin-top:18px}
+.deliv a{display:inline-flex;align-items:center;gap:8px;border:1px solid var(--line);border-radius:10px;padding:8px 12px;font:500 13px var(--mono);text-decoration:none;color:var(--soft)}
+.deliv a:hover{color:#fff;border-color:rgba(255,255,255,.3)}
+@media (max-width:860px){.std-row{grid-template-columns:1fr;gap:10px}.std-row.head{display:none}}
 footer{border-top:1px solid var(--line);padding-block:28px 40px;color:var(--muted);font-size:14px;display:flex;gap:16px;flex-wrap:wrap;justify-content:space-between}
 @media (max-width:960px){.hero-grid,.roles{grid-template-columns:1fr}.steps{grid-template-columns:1fr 1fr}.trust{grid-template-columns:1fr}.stats{grid-template-columns:1fr 1fr}.mapcard{max-width:460px}}
 @media (max-width:960px){.hero{min-height:0}.hero-grid{padding-block:24px 28px;gap:28px}.mapcard{max-width:none}.mapcard svg{max-height:380px}}
@@ -93,11 +139,14 @@ footer{border-top:1px solid var(--line);padding-block:28px 40px;color:var(--mute
 </style>
 </head>
 <body>
+<div class="mvp"><div class="wrap"><span><b>MVP demonstrativ</b> · Marcaj Vineyard AI Field Challenge · DeepTech GigaHack 2026, Chișinău</span><span class="mvp-r">Date: Sireț3, OpenAerialMap, CC BY 4.0</span></div></div>
 <header class="hero" id="top">
   <div class="wrap" style="width:100%">
     <nav aria-label="Principal">
       <a class="logo" href="#top">Field Planner</a>
       <span class="sp"></span>
+      <a class="link" href="#acum">Acum</a>
+      <a class="link" href="#standard">Standarde</a>
       <a class="link" href="#roluri">Roluri</a>
       <a class="link" href="#cum">Cum funcționează</a>
       <a class="link" href="#date">Date</a>
@@ -132,6 +181,91 @@ footer{border-top:1px solid var(--line);padding-block:28px 40px;color:var(--mute
 </header>
 
 <main class="wrap">
+<section id="acum" aria-labelledby="acum-h">
+  <div class="sec-head">
+    <span class="eyebrow">Acum pe platformă</span>
+    <h2 id="acum-h">Ce e de făcut în Sireț3</h2>
+    <p id="now-meta">Zbor din 20 mai 2025, 145 ha la 2,5 cm/px.</p>
+  </div>
+  <div class="status" aria-label="Starea datelor">
+    <div><span class="badge real">real</span><b>Ortofoto</b><span class="s">20 mai 2025 · 2,5 cm/px</span></div>
+    <div><span class="badge demo">în validare</span><b>Adnotări</b><span class="s">Verificare umană în Marcaj; cifrele se actualizează după export</span></div>
+    <div><span class="badge real">real</span><b>Cadastru ASP</b><span class="s">Parcele la 01.01.2026, geodata.gov.md</span></div>
+    <div><span class="badge demo">demo</span><b>Registru RVV, cereri AIPA</b><span class="s">Înregistrări sintetice, marcate ca atare</span></div>
+  </div>
+  <div class="now">
+    <article class="nowcard insp">
+      <header><h3>Pentru inspector</h3><a href="login.html">Deschide →</a></header>
+      <div class="kv"><span class="v" data-k="visit">…</span><span class="l">blocuri de vizitat<small data-k="visit_s">&nbsp;</small></span></div>
+      <div class="kv"><span class="v" data-k="croute">…</span><span class="l">traseu de control prin ele<small data-k="croute_s">&nbsp;</small></span></div>
+      <div class="kv"><span class="v" data-k="rvv">…</span><span class="l">parcele cu peste 0,15 ha de vie<small>înregistrarea în RVV e obligatorie</small></span></div>
+      <div class="kv"><span class="v" data-k="landuse">…</span><span class="l">parcele pentru construcții cu vie detectată<small>de verificat pe teren</small></span></div>
+    </article>
+    <article class="nowcard admin">
+      <header><h3>Pentru administrator</h3><a href="login.html">Deschide →</a></header>
+      <div class="kv"><span class="v" data-k="red">…</span><span class="l">blocuri în stare critică<small data-k="red_s">&nbsp;</small></span></div>
+      <div class="kv"><span class="v" data-k="missing">…</span><span class="l">butuci lipsă (estimare)<small data-k="missing_s">&nbsp;</small></span></div>
+      <div class="kv"><span class="v" data-k="cost">…</span><span class="l">lei pentru butași de replantare<small data-k="cost_s">&nbsp;</small></span></div>
+      <div class="kv"><span class="v" data-k="waste">…</span><span class="l">posibile deșeuri găsite de AI<small>de confirmat înainte de colectare</small></span></div>
+    </article>
+  </div>
+  <h3 class="rules-h">Reguli de reținut</h3>
+  <div class="rules">
+    <div class="rule"><span class="big">0,15 ha</span><p>Peste acest prag, parcela cu vie se înregistrează în Registrul vitivinicol (Legea 57/2006, art. 21).</p><a href="https://rvv.gov.md/publicpart/check.jsf" target="_blank" rel="noopener">Verifică o parcelă în RVV ↗</a></div>
+    <div class="rule"><span class="big">≥ 90 %</span><p>Prinderea cerută la recepția plantației în primul an, pentru sprijinul AIPA pe viță (măsura SP_2.5).</p><a href="https://aipa.gov.md/masura-sp-2-5-investitii-in-exploatatii-din-sectorul-viticol/" target="_blank" rel="noopener">Condițiile AIPA ↗</a></div>
+    <div class="rule"><span class="big">+20 000</span><p>Lei pe hectar în plus la AIPA pentru membrii IGP. Sireți, r. Strășeni, e în aria IGP Codru.</p><a href="https://wineofmoldova.com/ro/regiuni-vitivinicole/" target="_blank" rel="noopener">Regiunile vitivinicole ↗</a></div>
+    <div class="rule"><span class="big">5 %</span><p>În UE, cel puțin atâția viticultori au control pe teren în fiecare an; vița fără dosar se verifică sistematic.</p><a href="https://github.com/Viteokk/vineyard-ai/blob/main/docs/EU.md" target="_blank" rel="noopener">Ce cere UE ↗</a></div>
+  </div>
+</section>
+
+<section id="standard" aria-labelledby="std-h">
+  <div class="sec-head">
+    <span class="eyebrow">Standarde respectate</span>
+    <h2 id="std-h">Aceleași reguli ca în caietul de sarcini</h2>
+    <p>Cerințele Marcaj Vineyard AI Field Challenge și ce livrează platforma pentru fiecare. Valorile se citesc din datele publicate.</p>
+  </div>
+  <div class="std" role="table" aria-label="Cerințe și rezultate">
+    <div class="std-row head" role="row"><span role="columnheader">Cerință</span><span role="columnheader">Regula</span><span role="columnheader">Pe Sireț3</span></div>
+    <div class="std-row" role="row">
+      <h3 role="cell">Georeferențiere</h3>
+      <p class="req" role="cell">Toate geometriile, traseul și tabelele în <code>EPSG:32635</code> (WGS 84 / UTM 35N, metri). Măsurători orizontale, fără corecție de teren.</p>
+      <div class="val" role="cell"><span class="ok">respectat</span><span>311 tile-uri GeoTIFF, 2048 px la 2,5 cm/px</span></div>
+    </div>
+    <div class="std-row" role="row">
+      <h3 role="cell">Obiecte adnotate</h3>
+      <div class="req" role="cell">Coroane separate pe butuc, deșeuri vizibile, axa fiecărui rând, suprafețele dintre rânduri; fiecare obiect legat de blocul lui.
+        <div class="labels"><span>vineyard · poligon</span><span>waste · cutie</span><span>row · row_id, row_structure</span><span>interrow_area · interrow_cover</span><span>vineyard_id pe toate</span></div></div>
+      <div class="val" role="cell"><span class="ok">respectat</span><span><span class="n" data-k="s_blocks">…</span> blocuri, <span data-k="s_rows">…</span> rânduri</span><span>ID-uri păstrate peste marginile tile-urilor</span></div>
+    </div>
+    <div class="std-row" role="row">
+      <h3 role="cell">Măsurători</h3>
+      <p class="req" role="cell">Număr de blocuri și rânduri, lungimea fiecărui rând și totală (m), suprafața coroanelor din uniunea poligoanelor și suprafața dintre rânduri (m² și ha).</p>
+      <div class="val" role="cell"><span class="ok">respectat</span><span><span class="n" data-k="s_len">…</span> lungime totală a rândurilor</span><span><span data-k="s_canopy">…</span> coroane · <span data-k="s_inter">…</span> între rânduri</span></div>
+    </div>
+    <div class="std-row" role="row">
+      <h3 role="cell">Traseu pe jos</h3>
+      <p class="req" role="cell">Pornește din punctul oficial și revine în el (toleranță 5 m); merge doar pe inter-rânduri și pasaje autorizate, cel mult 2 % în afara lor; o țintă e vizitată la cel mult 2 m.</p>
+      <div class="val" role="cell"><span class="ok" data-k="s_valid">…</span><span><span class="n" data-k="s_route">…</span> traseu de inspecție</span><span><span data-k="s_out">…</span> în afara zonei trecabile · revine la <span data-k="s_end">…</span> de start</span></div>
+    </div>
+    <div class="std-row" role="row">
+      <h3 role="cell">Validare umană</h3>
+      <p class="req" role="cell">Pre-adnotările AI se importă în Marcaj; geometria și atributele se corectează manual doar acolo, apoi se trimit.</p>
+      <div class="val" role="cell"><span class="ok wip">în validare</span><span>Proiect Marcaj publicat, 311 fișiere</span></div>
+    </div>
+    <div class="std-row" role="row">
+      <h3 role="cell">Model AI</h3>
+      <p class="req" role="cell">Rețea neuronală antrenată sau adaptată pe date deschise cu licență verificată; greutățile disponibile printr-un link.</p>
+      <div class="val" role="cell"><span class="ok">respectat</span><span>YOLO11n-seg, 2 clase (vineyard, waste)</span><span>DroneWaste, UAVVaste: CC BY 4.0</span></div>
+    </div>
+  </div>
+  <div class="deliv" aria-label="Livrabile">
+    <a href="https://github.com/Viteokk/vineyard-ai/blob/main/route.geojson" target="_blank" rel="noopener">route.geojson ↗</a>
+    <a href="https://github.com/Viteokk/vineyard-ai/blob/main/measurements.csv" target="_blank" rel="noopener">measurements.csv ↗</a>
+    <a href="https://github.com/Viteokk/vineyard-ai#readme" target="_blank" rel="noopener">README: instalare și rulare ↗</a>
+    <a href="https://github.com/Viteokk/vineyard-ai/releases/tag/v0.2-weights" target="_blank" rel="noopener">greutăți model ↗</a>
+  </div>
+</section>
+
 <section id="roluri">
   <div class="sec-head">
     <span class="eyebrow">Două roluri</span>
@@ -217,6 +351,42 @@ footer{border-top:1px solid var(--line);padding-block:28px 40px;color:var(--mute
     if (el.classList.contains('study')) location.href = 'login.html';
   });
   box.addEventListener('keydown', e => { if (e.key === 'Enter' && e.target.closest('.raion.study')) location.href = 'login.html'; });
+})();
+</script>
+<script>
+/* "Acum pe platformă": current figures read from the published data, nothing hardcoded */
+(async function () {
+  const nf = (n, d = 0) => Number(n).toLocaleString('ro-RO', {minimumFractionDigits: d, maximumFractionDigits: d});
+  const get = async u => { const r = await fetch(u); if (!r.ok) throw new Error(u); return {j: await r.json(), lm: r.headers.get('last-modified')}; };
+  const set = (k, v) => document.querySelectorAll(`[data-k="${k}"]`).forEach(el => { el.textContent = v; });
+  const [cmp, blk, rte, cad, wc] = await Promise.allSettled(['data/compliance.json', 'data/blocks_report.json', 'data/variants/route_compliance.geojson', 'data/cadastre.geojson', 'data/waste_candidates.geojson'].map(get));
+  const ok = x => x.status === 'fulfilled' ? x.value : null;
+  const c = ok(cmp), b = ok(blk), r = ok(rte), k = ok(cad), w = ok(wc);
+  if (c) { const st = c.j.summary.status; set('visit', nf(c.j.summary.visit.length)); set('visit_s', `${nf(st.neconform)} neconforme, ${nf(st.verificare)} de verificat${c.j.summary.demo_registry ? ' (registru demo)' : ''}`); }
+  if (r) { const f = r.j.features.find(x => x.geometry.type !== 'Point'); if (f) { const m = Math.round(f.properties.minutes_at_4kmh); set('croute', nf(f.properties.length_m / 1000, 1) + ' km'); set('croute_s', `≈ ${Math.floor(m / 60)} h ${m % 60} min pe jos, cu GPX`); } }
+  if (k) { const n = fl => k.j.features.filter(x => (x.properties.flags || []).includes(fl)).length; set('rvv', nf(n('rvv'))); set('landuse', nf(n('landuse'))); }
+  if (b) { const s = b.j.summary; set('red', `${nf(s.status.red)}`); set('red_s', `din ${nf(s.blocks)}: peste 30 % din rânduri au goluri`);
+    set('missing', nf(Math.round(s.missing_vines / 100) * 100)); set('missing_s', `${nf(s.gap_length_m / 1000, 1)} km de goluri ÷ ${nf(s.vine_spacing_m, 1)} m între butuci`);
+    set('cost', nf(Math.round(s.missing_vines * s.cutting_price_mdl / 1000)) + ' mii'); set('cost_s', `la ${nf(s.cutting_price_mdl)} lei butașul, fără manoperă`); }
+  if (w) set('waste', nf(w.j.features.length));
+  const lm = [c, b].map(x => x && x.lm && new Date(x.lm)).filter(d => d && !isNaN(d)).sort((a, z) => z - a)[0];
+  if (lm) document.getElementById('now-meta').textContent += ` Date procesate: ${lm.toLocaleDateString('ro-RO', {day: 'numeric', month: 'long', year: 'numeric'})}.`;
+  document.querySelectorAll('.nowcard .v').forEach(el => { if (el.textContent === '…') el.textContent = '—'; });
+})();
+</script>
+<script>
+/* "Standarde respectate": values from the published outputs */
+(async function () {
+  const nf = (n, d = 0) => Number(n).toLocaleString('ro-RO', {minimumFractionDigits: d, maximumFractionDigits: d});
+  const set = (k, v) => document.querySelectorAll(`[data-k="${k}"]`).forEach(el => { el.textContent = v; });
+  const get = u => fetch(u).then(r => { if (!r.ok) throw new Error(u); return r.json(); });
+  const [b, rc] = await Promise.allSettled([get('data/blocks_report.json'), get('data/route_check_inspector.json')]).then(a => a.map(x => x.status === 'fulfilled' ? x.value : null));
+  if (b) { const s = b.summary; set('s_blocks', nf(s.blocks)); set('s_rows', nf(s.rows)); set('s_len', nf(s.row_length_m / 1000, 1) + ' km');
+    set('s_canopy', nf(s.canopy_m2 / 1e4, 2) + ' ha'); set('s_inter', nf(s.interrow_m2 / 1e4, 2) + ' ha'); }
+  if (rc) { set('s_valid', rc.valid ? 'respectat' : 'de verificat'); set('s_route', nf(rc.length_m / 1000, 1) + ' km'); set('s_out', nf(rc.outside_share * 100, 2) + ' %');
+    set('s_end', nf(Math.max(rc.start_m, rc.end_m), 1) + ' m');
+    if (!rc.valid) document.querySelector('[data-k="s_valid"]').classList.add('wip'); }
+  document.querySelectorAll('#standard [data-k]').forEach(el => { if (el.textContent === '…') el.textContent = '—'; });
 })();
 </script>
 </body>
