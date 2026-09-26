@@ -92,6 +92,7 @@ def main() -> None:
             sh([PY, "-m", "pipeline.compliance", "--visit-route"])   # RVV / AIPA checks per block (demo registry)
             sh([PY, "-m", "pipeline.register"])              # DEMO vineyard register: parcels, declared vs measured (US-2)
             sh([PY, "-m", "pipeline.register_mismatch"])     # possible unauthorised plantings / register to update (US-3)
+            sh([PY, "-m", "pipeline.env_indicators"])        # environmental indicators per block, ISO 14001 activity data (US-1)
         elif stage == "export":
             sh([PY, "-m", "pipeline.export_cvat", "--inp", str(global_xml), "--tiles", a.tiles])
         elif stage == "web":

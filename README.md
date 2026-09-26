@@ -140,6 +140,27 @@ visited, measurements per block / row, pipeline status. Data contract: `web/data
   (precomputed routes for ≥ 5 / 8 / 10 m on the static site, `scripts/build_route_variants.py`).
 - **Field use:** GPX export of each route, GPS navigation on the phone with a chosen start and checked targets.
 
+### Environmental indicators (ISO 14001 activity data)
+`python -m pipeline.env_indicators` → `web/data/env_indicators.json`, `out/env_indicators.csv` (one row per block +
+TOTAL; < 1 s on the MacBook Pro M4 Pro, in `out/timing.json`). For ISO 14001 clause 9.1 (monitoring and
+measurement); **activity data only, no GHG / CO2 calculation (ISO 14064-1 out of scope)**. Per `vineyard_id`:
+
+| Indicator | Definition | Unit |
+|---|---|---|
+| `block_area_ha` | block polygon area | ha |
+| `waste_count`, `waste_per_ha` | annotated waste in the block, per hectare | pieces, pieces/ha |
+| `waste_candidates_ai` | AI waste candidates (not confirmed) in the block | pieces |
+| `bare_soil_share`, `vegetation_share`, `mixed_share`, `unassessable_share` | inter-row cover, area-weighted over the block's `interrow_area` polygons | 0–1 |
+| `missing_vines`, `missing_vines_share` | ≈ gap length / 1.2 m; gap length / row length | vines, 0–1 |
+| `inspection_km_block`, `inspection_km_saved` | km to inspect only this block; full inspection tour − that | km |
+
+`inspection_km_block` is an approximation (a separate optimal route per block takes ~1 min each): 1.3 × (straight-line
+distance between consecutive targets of the block in the official route's order + 2 × straight-line distance from
+START); for V42 it gives 3.0 km vs 3.1–3.3 km from the real routers. Totals are checked against `blocks_report.json`
+(area, missing vines, inter-row area, row length; the module fails if any differs by more than 1 %). Web map:
+Măsurători → **Mediu · ISO 14001**: sortable table, map coloured by the chosen indicator, indicators in each block
+card, **Export CSV (ISO 14001)** with source (flight 20 May 2025), method, units and scope in the header.
+
 ### Vineyard register (DEMO, EU-compatible)
 `python -m pipeline.register [--make-demo]` → `web/data/register.geojson`, `out/register.csv` (≈ 2 s).
 Model in [`registry/schema.json`](registry/schema.json), aligned with Reg. (EU) 2018/273 art. 7 and annexes III–IV:
