@@ -1,0 +1,27 @@
+<!doctype html>
+<html lang="ro">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Intrare Field Planner</title>
+<style>body{margin:0;min-height:100vh;display:grid;place-items:center;background:#0B0F0D;color:#D5DCD7;font:16px system-ui,sans-serif}</style>
+</head>
+<body>
+<p id="msg">Se deschide sesiunea…</p>
+<script>
+/* callback of the simulated MPass flow: in production the server receives the signed SAML response here */
+(function () {
+  const q = new URLSearchParams(location.search);
+  let who = null;
+  try { who = JSON.parse(new TextDecoder().decode(Uint8Array.from(atob(q.get('code') || ''), c => c.charCodeAt(0)))); } catch (e) {}
+  if (!who || !['inspector', 'fermier'].includes(who.role)) { document.getElementById('msg').textContent = 'Răspuns de autorizare invalid.'; setTimeout(() => location.replace('login.html'), 1500); return; }
+  try {
+    localStorage.setItem('fpm.session', JSON.stringify({role: who.role, name: who.name, org: who.org, via: 'mpass-demo', at: new Date().toISOString()}));
+    localStorage.setItem('fpm.role', JSON.stringify(who.role));
+  } catch (e) {}
+  const ret = q.get('return') || 'app.html';
+  location.replace((/^[a-z0-9_.-]+\.html$/i.test(ret) ? ret : 'app.html') + '#' + who.role);
+})();
+</script>
+</body>
+</html>

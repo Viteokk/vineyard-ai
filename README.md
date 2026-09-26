@@ -113,14 +113,21 @@ is delivered anyway: `train/make_dataset.py` (pseudo-labels + official example, 
 
 ## Web interface
 
-`web/index.html` — Leaflet on the real orthophoto in UTM (CRS.Simple, no reprojection): layers (canopies, rows with
+Pages: `web/index.html` (landing, interactive map of Moldova) → `web/login.html` (choose a role) → `web/app.html`, the map.
+
+`web/app.html` — Leaflet on the real orthophoto in UTM (CRS.Simple, no reprojection): layers (canopies, rows with
 `row_id`, inter-rows with cover, passages, forbidden, blocks), both routes with length, walking time and targets
 visited, measurements per block / row, pipeline status. Data contract: `web/data/*.geojson`, `web/data/pred/*`,
 `web/data/route*.geojson`, `web/data/route_check_*.json`, `web/data/variants/`.
 
-- **Roles** (first screen, or `#inspector` / `#fermier` / `#agronom` in the link): state inspector (blue route,
-  gaps, blocks, areas), farmer (red route, waste, missing vines ≈ gap length / 1.2 m, replanting cost, yearly
-  maintenance at MDL 52 000–80 000 / ha from the brief), agronomist (all layers).
+- **Roles** (login page, or `#inspector` / `#fermier` in the link): state inspector (compliance, blue route, gaps,
+  blocks, areas) and vineyard administrator (red route, waste, missing vines ≈ gap length / 1.2 m, replanting cost,
+  yearly maintenance at MDL 52 000–80 000 / ha from the brief, Marcaj corrections). Each role sees only its tabs.
+- **MPass (simulated):** „Intră cu MPass” on the login page runs the shape of the real flow: `mpass.html`, an authorization
+  page clearly labelled as a demo, with test identities and no credential fields, then `auth.html`, the callback that opens the
+  session with the role. A real integration needs Field Planner registered as a SAML 2.0 service provider with the
+  Agenția de Guvernare Electronică and a server-side assertion consumer endpoint that checks the signature and maps
+  the IDNP to a role; a static site cannot do this.
 - **Parameters:** walking speed and hours per day (times and field days update at once), minimum gap to inspect
   (precomputed routes for ≥ 5 / 8 / 10 m on the static site, `scripts/build_route_variants.py`).
 - **Field use:** GPX export of each route, GPS navigation on the phone with a chosen start and checked targets.
