@@ -2,29 +2,19 @@
  "speed_kmh": 4.0,
  "hours": 6.0,
  "budget_m": 24000.0,
- "days": 2,
- "targets_full_tour": 2421,
- "targets_visited": 2133,
+ "days": 1,
+ "targets_full_tour": 573,
+ "targets_visited": 573,
  "tours": [
   {
    "day": 1,
    "route": "data/tours/tour_1.geojson",
    "targets": "data/tours/targets_1.geojson",
-   "length_m": 14682.2,
-   "minutes": 220,
-   "targets_total": 1214,
-   "targets_visited": 926,
-   "outside_share": 0.0165
-  },
-  {
-   "day": 2,
-   "route": "data/tours/tour_2.geojson",
-   "targets": "data/tours/targets_2.geojson",
-   "length_m": 16416.7,
-   "minutes": 246,
-   "targets_total": 1207,
-   "targets_visited": 1207,
-   "outside_share": 0.0153
+   "length_m": 22441.6,
+   "minutes": 337,
+   "targets_total": 573,
+   "targets_visited": 573,
+   "outside_share": 0.014
   }
  ]
 }
