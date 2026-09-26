@@ -448,9 +448,9 @@ if (TG.length) {
 
 /* waste checklist candidates: automatic, NOT annotated waste; a human confirms each one before drawing it in Marcaj */
 const WC = (EXTRA.wcand?.features || []).map(f => ({...f.properties, x: f.geometry.coordinates[0], y: f.geometry.coordinates[1]})).sort((a, b) => a.rank - b.rank);
-const WCV = store.get('wc', {});               // rank -> 'y' (waste) | 'n' (not waste); this browser only
-const WCC = {y: '#9333EA', n: '#8A958F', u: '#F97316'};
-const wcStyle = c => { const v = WCV[c.rank] || 'u'; return {radius: v === 'n' ? 4 : 6, color: '#1A1A1A', weight: 1.5, fillColor: WCC[v], fillOpacity: v === 'n' ? .7 : 1}; };
+const WCV = store.get('wc2', {});               // rank -> 'y' (waste) | 'n' (not waste); this browser only
+const WCC = {y: '#9333EA', n: '#8A958F', u: '#F97316', m: '#EAB308'};
+const wcStyle = c => { const v = WCV[c.rank] || (c.source === 'model' ? 'm' : 'u'); return {radius: v === 'n' ? 4 : 6, color: '#1A1A1A', weight: 1.5, fillColor: WCC[v], fillOpacity: v === 'n' ? .7 : 1}; };
 const wcMk = {};
 const wcLayer = WC.length ? L.layerGroup(WC.map(c => {
   const m = L.circleMarker(ll(c.x, c.y), {renderer: R, ...wcStyle(c)});
@@ -459,7 +459,7 @@ const wcLayer = WC.length ? L.layerGroup(WC.map(c => {
 })) : null;
 function wcMark(c, v) {
   if (WCV[c.rank] === v) delete WCV[c.rank]; else WCV[c.rank] = v;
-  store.set('wc', WCV); wcMk[c.rank]?.setStyle(wcStyle(c)); if (S.view === 'harta') renderPanel();
+  store.set('wc2', WCV); wcMk[c.rank]?.setStyle(wcStyle(c)); if (S.view === 'harta') renderPanel();
   return WCV[c.rank] === v;
 }
 function wcGo(rank) {
@@ -592,9 +592,9 @@ function select(sel) {
     if (sel.layer) hi = L.geoJSON(sel.layer.feature, {renderer: R, coordsToLatLng: toLL, style: {color: '#FFFFFF', weight: 3, fill: false}, interactive: false}).addTo(map);
   } else if (sel.type === 'wcand') {
     const c = sel.c, v = WCV[c.rank], n = WC.length, done = Object.keys(WCV).length, yes = Object.values(WCV).filter(x => x === 'y').length;
-    html = `<div class="p-top"><div><div class="eyebrow">Candidat deșeu #${c.rank} din ${n} · automat, neconfirmat</div><h2 style="font-size:19px">${short(c.tile)} · px ${Math.round((c.px[0] + c.px[2]) / 2)}, ${Math.round((c.px[1] + c.px[3]) / 2)}</h2></div>${close}</div>
+    html = `<div class="p-top"><div><div class="eyebrow">Candidat deșeu #${c.rank} din ${n} · ${c.source === 'model' ? 'model AI' : 'detector clasic'}, neconfirmat</div><h2 style="font-size:19px">${short(c.tile)} · px ${Math.round((c.px[0] + c.px[2]) / 2)}, ${Math.round((c.px[1] + c.px[3]) / 2)}</h2></div>${close}</div>
       ${c.thumb ? `<img class="wc-img" src="${c.thumb}" alt="Decupaj 2,5 cm/px în jurul candidatului #${c.rank}">` : ''}
-      <dl><dt>Box pe tile (px)</dt><dd class="mono">${c.px.join(', ')}</dd><dt>vineyard_id</dt><dd>${c.vineyard_id || '— (peste 10 m de un bloc)'}</dd><dt>Arie pată</dt><dd class="num">${fmt(c.area_m2, 2)} m²</dd><dt>Tip · scor</dt><dd>${c.kind} · ${c.score}${c.on_passage ? ' · pe drum' : ''}</dd><dt>X, Y</dt><dd class="mono">${c.x.toFixed(2)}, ${c.y.toFixed(2)}</dd></dl>
+      <dl><dt>Box pe tile (px)</dt><dd class="mono">${c.px.join(', ')}</dd><dt>vineyard_id</dt><dd>${c.vineyard_id || '— (peste 10 m de un bloc)'}</dd><dt>Arie pată</dt><dd class="num">${fmt(c.area_m2, 2)} m²</dd><dt>Sursă · scor</dt><dd>${c.source === 'model' ? 'model AI' : 'clasic, ' + c.kind} · ${c.score}${c.on_passage ? ' · pe drum' : ''}</dd><dt>X, Y</dt><dd class="mono">${c.x.toFixed(2)}, ${c.y.toFixed(2)}</dd></dl>
       <div class="acts"><button class="btn ${v === 'y' ? 'primary' : ''}" type="button" data-act="wc-y" aria-pressed="${v === 'y'}">E deșeu</button><button class="btn ${v === 'n' ? 'primary' : ''}" type="button" data-act="wc-n" aria-pressed="${v === 'n'}">Nu e</button></div>
       <div class="acts"><button class="btn" type="button" data-act="wc-prev" ${c.rank > 1 ? '' : 'disabled'}>‹ Anterior</button><button class="btn" type="button" data-act="wc-next" ${c.rank < n ? '' : 'disabled'}>Următor ›</button></div>
       <p class="note">${done} din ${n} verificați · ${yes} deșeu (salvat doar în acest browser). Cutia se desenează în Marcaj pe ${short(c.tile)}, la pixelii de mai sus. În dubiu, nu adnota.</p>`;
@@ -631,7 +631,7 @@ function viewHarta() {
   $('#p-body').innerHTML = `${roleCard()}${statsBlock(s)}${S.role === 'agronom' || !S.role ? blocksCard() : ''}
     <p class="note">${S.src === 'pred' ? 'Detecții automate pe toate cele 311 tile-uri, înainte de corectura umană din Marcaj. Unele tile-uri fără vie (livezi, sat) au detecții false: folosește lista de mai jos ca să le verifici.' : 'Adnotările oficiale ale organizatorilor pentru cele 2 tile-uri exemplu. Mărește pe ele: imaginea trece automat la rezoluția completă de 2,5 cm/px.'}</p>
     ${WC.length ? `<section><div class="sec-title"><h2 style="display:flex;align-items:center;gap:8px"><span style="width:10px;height:10px;border-radius:50%;background:#F97316;border:1.5px solid #1A1A1A"></span>Candidați deșeuri</h2><span class="num">${Object.keys(WCV).length} / ${WC.length} verificați · ${Object.values(WCV).filter(x => x === 'y').length} deșeu</span></div>
-      <p class="note">Pete găsite automat (checklist pentru Marcaj). Nu sunt adnotări și nu intră în trasee: fiecare se verifică pe imagine (E deșeu / Nu e), apoi se desenează de mână în Marcaj.</p>
+      <p class="note">${WC.filter(c => c.source === 'model').length} găsite de modelul AI lângă vie (galben, primele în listă) + ${WC.filter(c => c.source !== 'model').length} de detectorul clasic (portocaliu). Nu sunt adnotări și nu intră în trasee: fiecare se verifică pe imagine (E deșeu / Nu e), apoi se desenează de mână în Marcaj.</p>
       <div style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn primary" type="button" data-act="wc-start">${Object.keys(WCV).length ? 'Continuă verificarea' : 'Începe verificarea'}</button></div></section>` : ''}
     <section><div class="sec-title"><h2>Tile-uri cu detecții</h2><span class="num">${list.length} din ${s.tiles.length}</span></div>
       <input class="search" id="tile-q" type="search" placeholder="Filtrează, ex. r021 sau c012" value="${S.q.replace(/"/g, '')}" aria-label="Filtrează tile-uri">
@@ -1026,7 +1026,7 @@ function renderLayers() {
     ['passage', 'Passage (drumuri)', '#FFFFFF'], ['forbidden', 'Forbidden', '#FF4D4D'], ['study', 'Zona de studiu', '#FFFFFF'], ['grid', 'Grilă tile-uri', '#9AA59F']];
   for (const [k, r] of Object.entries(ROUTES)) L1.push(['route_' + k, `Traseu ${r.name.toLowerCase()} (${r.sub})`, r.color]);
   if (targetsLayer) L1.push(['targets', 'Ținte (goluri, deșeuri)', '#2563EB']);
-  if (wcLayer) L1.push(['wcand', 'Candidați deșeuri (checklist, neconfirmați)', '#F97316']);
+  if (wcLayer) L1.push(['wcand', 'Candidați deșeuri (model AI + clasic, neconfirmați)', 'linear-gradient(90deg,#EAB308,#F97316)']);
   if (bstatLayer) L1.push(['bstat', 'Starea blocurilor (roșu / galben / verde)', 'linear-gradient(90deg,#EF4444,#F59E0B,#22C55E)']);
   $('#layers').innerHTML = `<div class="sec-title" style="padding:2px 4px 4px"><h2>Straturi</h2><span><kbd>L</kbd></span></div>` +
     L1.map(([k, l, c]) => `<button type="button" class="sw" role="switch" aria-checked="${!!S.layers[k]}" data-layer="${k}"><span class="sw-i" style="background:${c};border:1px solid var(--line)"></span>${l}<span class="tg"></span></button>`).join('') +
