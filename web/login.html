@@ -7,76 +7,76 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,800&family=Geist:wght@400;500;600;700&display=swap">
 <style>
-:root{color-scheme:dark;--bg:#0C120F;--surface:#131B16;--surface2:#18221C;--line:rgba(233,239,233,.10);--ink:#E9EFE9;--muted:#9AA79F;--leaf:#4ADE80;--insp:#60A5FA;--admin:#F87171;--amber:#F5B942}
+:root{color-scheme:dark;--bg:#0B0F0D;--glass:rgba(11,15,13,.82);--card:rgba(255,255,255,.04);--line:rgba(255,255,255,.14);--ink:#FFFFFF;--soft:#D5DCD7;--muted:#9FAAA3;--blue:#0046AE;--yellow:#FFD200;--red:#CC092F}
 *{box-sizing:border-box}
-body{margin:0;min-height:100vh;background:var(--bg) linear-gradient(rgba(12,18,15,.86),rgba(12,18,15,.95)),url('data/hires/siret3_r006_c004.webp') center/cover fixed;color:var(--ink);font:16px/1.55 'Geist',system-ui,sans-serif;display:grid;place-items:center;padding-inline:16px;padding-block:32px}
-.card{width:min(460px,100%);background:var(--surface);border:1px solid var(--line);border-radius:22px;padding:28px;display:flex;flex-direction:column;gap:18px;box-shadow:0 30px 80px rgba(0,0,0,.45)}
+body{margin:0;min-height:100vh;background:#1B221E url('data/hires/siret3_r021_c012.webp') center/cover fixed;color:var(--ink);font:16px/1.55 'Geist',system-ui,sans-serif;display:grid;place-items:center;padding-inline:16px;padding-block:32px}
+body::before{content:'';position:fixed;inset:0;background:rgba(10,14,12,.8)}
+main{position:relative;width:min(640px,100%);background:var(--glass);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);border:1px solid var(--line);border-radius:24px;padding:30px;display:flex;flex-direction:column;gap:20px;box-shadow:0 30px 80px rgba(0,0,0,.45)}
 a{color:inherit}
 .top{display:flex;align-items:center;justify-content:space-between}
-.logo{display:flex;align-items:center;gap:10px;font-weight:700;text-decoration:none}
-.logo i{width:28px;height:28px;border-radius:8px;background:var(--leaf);display:grid;place-items:center;color:#062312}
-h1{font:800 30px/1.1 'Bricolage Grotesque','Geist',sans-serif;margin:0;letter-spacing:-.02em}
+.logo{font-weight:700;font-size:18px;text-decoration:none}
+.ribbon{display:flex;width:120px;height:6px}.ribbon i{flex:1}.ribbon i:nth-child(1){background:var(--blue)}.ribbon i:nth-child(2){background:var(--yellow)}.ribbon i:nth-child(3){background:var(--red)}
+h1{font:800 34px/1.1 'Bricolage Grotesque','Geist',sans-serif;margin:10px 0 0;letter-spacing:-.02em}
 .muted{color:var(--muted);font-size:14px;margin:0}
-.tabs{display:grid;grid-template-columns:1fr 1fr;gap:6px;background:var(--surface2);border:1px solid var(--line);border-radius:14px;padding:5px}
-.tabs button{font:600 15px 'Geist',sans-serif;color:var(--muted);background:none;border:0;border-radius:10px;min-height:44px;cursor:pointer}
-.tabs button[aria-selected="true"]{background:var(--c);color:#0B0F0D}
-.tabs button[data-role="inspector"]{--c:var(--insp)}.tabs button[data-role="administrator"]{--c:var(--admin)}
-form{display:flex;flex-direction:column;gap:14px}
-label{display:flex;flex-direction:column;gap:6px;font-size:14px;color:var(--muted)}
-input{font:16px 'Geist',sans-serif;color:var(--ink);background:var(--bg);border:1px solid var(--line);border-radius:12px;min-height:46px;padding:0 14px}
-input:focus-visible,button:focus-visible,a:focus-visible{outline:2px solid var(--leaf);outline-offset:2px}
-.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:48px;border-radius:12px;font:600 15px 'Geist',sans-serif;border:1px solid var(--line);background:var(--surface2);color:var(--ink);cursor:pointer;text-decoration:none;width:100%}
-.btn.go{background:var(--c);color:#0B0F0D;border-color:transparent}
-.btn[disabled]{opacity:.55;cursor:not-allowed}
-.gets{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:6px;font-size:14px}
-.gets li::before{content:'';display:inline-block;width:6px;height:6px;border-radius:50%;background:var(--c);margin-right:9px;vertical-align:middle}
-.note{border-left:3px solid var(--amber);background:rgba(245,185,66,.08);padding:10px 12px;border-radius:0 10px 10px 0;font-size:13px;color:var(--muted)}
-.or{display:flex;align-items:center;gap:10px;color:var(--muted);font-size:13px}.or::before,.or::after{content:'';flex:1;height:1px;background:var(--line)}
+.roles{display:grid;grid-template-columns:1fr 1fr;gap:12px;border:0;margin:0;padding:0}
+.roles legend{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}
+.role{position:relative;display:flex;flex-direction:column;gap:8px;padding:18px;border-radius:16px;border:1.5px solid var(--line);background:var(--card);cursor:pointer;transition:border-color .15s,background .15s}
+.role:hover{border-color:rgba(255,255,255,.3)}
+.role input{position:absolute;opacity:0;pointer-events:none}
+.role .bar{height:4px;width:40px;border-radius:2px;background:var(--c)}
+.role b{font:800 20px/1.2 'Bricolage Grotesque','Geist',sans-serif}
+.role small{color:var(--muted);font-size:13px}
+.role ul{margin:4px 0 0;padding-left:18px;font-size:13px;color:var(--soft);display:flex;flex-direction:column;gap:3px}
+.role.insp{--c:#3B82F6}.role.admin{--c:#EF4444}
+.role:has(input:checked){border-color:var(--c);background:color-mix(in srgb,var(--c) 14%,transparent)}
+.role:has(input:focus-visible){outline:2px solid var(--yellow);outline-offset:2px}
+.role .check{position:absolute;top:14px;right:14px;width:20px;height:20px;border-radius:50%;border:1.5px solid var(--line)}
+.role:has(input:checked) .check{background:var(--c);border-color:var(--c);box-shadow:inset 0 0 0 4px #0B0F0D}
+.fields{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+label.f{display:flex;flex-direction:column;gap:6px;font-size:14px;color:var(--muted)}
+input[type=text]{font:16px 'Geist',sans-serif;color:var(--ink);background:rgba(0,0,0,.35);border:1px solid var(--line);border-radius:12px;min-height:48px;padding:0 14px}
+input[type=text]:focus-visible,button:focus-visible,a:focus-visible{outline:2px solid var(--yellow);outline-offset:2px}
+.go{min-height:52px;border-radius:12px;border:0;background:#fff;color:#0B0F0D;font:700 16px 'Geist',sans-serif;cursor:pointer}
+.go:hover{background:#E9EFE9}
+.note{border-left:3px solid var(--yellow);background:rgba(255,210,0,.07);padding:10px 12px;border-radius:0 10px 10px 0;font-size:13px;color:var(--muted);margin:0}
+@media (max-width:560px){.roles,.fields{grid-template-columns:1fr}main{padding:22px}}
 </style>
 </head>
 <body>
-<main class="card" id="card" style="--c:var(--insp)">
-  <div class="top"><a class="logo" href="index.html"><i><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" aria-hidden="true"><path d="M5 20V9M10 20V4M15 20V9M20 20V4"/></svg></i>Field Planner</a><a class="muted" href="index.html">Înapoi</a></div>
-  <div><h1 id="title">Intrare inspector</h1><p class="muted" id="sub">AIPA, ONVV, MAIA</p></div>
-  <div class="tabs" role="tablist" aria-label="Rol">
-    <button type="button" role="tab" data-role="inspector" aria-selected="true">Inspector</button>
-    <button type="button" role="tab" data-role="administrator" aria-selected="false">Administrator</button>
-  </div>
-  <ul class="gets" id="gets"></ul>
+<main>
+  <div class="top"><a class="logo" href="index.html">Field Planner</a><a class="muted" href="index.html">Înapoi</a></div>
+  <div><div class="ribbon" aria-hidden="true"><i></i><i></i><i></i></div><h1>Intră în Field Planner</h1><p class="muted">Alege cum intri. Fiecare rol vede doar funcțiile lui.</p></div>
   <form id="f" autocomplete="on">
-    <label for="name">Numele afișat în aplicație<input id="name" name="name" type="text" placeholder="ex. Ion Popescu" maxlength="60"></label>
-    <label for="org" id="org-l">Subdiviziune<input id="org" name="org" type="text" placeholder="ex. AIPA, subdiviziunea Strășeni" maxlength="80"></label>
-    <button class="btn go" type="submit" id="go">Intră în demo</button>
+    <fieldset class="roles">
+      <legend>Rol</legend>
+      <label class="role insp"><input type="radio" name="role" value="inspector" checked><span class="check" aria-hidden="true"></span><span class="bar"></span><b>Inspector de stat</b><small>AIPA · ONVV · MAIA</small>
+        <ul><li>Conformitate: registru și cerere AIPA vs dronă</li><li>Căutare după număr cadastral</li><li>Traseu de control, proces-verbal</li></ul></label>
+      <label class="role admin"><input type="radio" name="role" value="administrator"><span class="check" aria-hidden="true"></span><span class="bar"></span><b>Administrator</b><small>Fermier · exploatația viticolă</small>
+        <ul><li>Starea blocurilor, butuci lipsă, costuri</li><li>Deșeuri, traseu de colectare, ture</li><li>Zone, analiză de tile nou</li></ul></label>
+    </fieldset>
+    <div class="fields" style="margin-top:16px">
+      <label class="f" for="name">Numele afișat<input id="name" name="name" type="text" placeholder="ex. Ion Popescu" maxlength="60"></label>
+      <label class="f" for="org"><span id="org-l">Subdiviziune</span><input id="org" name="org" type="text" placeholder="ex. AIPA Strășeni" maxlength="80"></label>
+    </div>
+    <button class="go" type="submit" id="go" style="width:100%;margin-top:16px">Intră</button>
   </form>
-  <div class="or">în producție</div>
-  <button class="btn" type="button" id="mpass" disabled>Autentificare MPass</button>
-  <p class="note">Demo fără parolă: numele se păstrează doar în acest browser și nu pleacă nicăieri. În producție, inspectorii intră prin MPass, iar administratorii cu contul exploatației; drepturile se verifică pe server.</p>
+  <p class="note">Demo fără parolă: numele rămâne doar în acest browser. În producție, inspectorii intră prin MPass (autentificarea guvernamentală), iar administratorii cu contul exploatației; drepturile se verifică pe server.</p>
 </main>
 <script>
-const ROLE = {
-  inspector: {title: 'Intrare inspector', sub: 'AIPA, ONVV, MAIA', c: 'var(--insp)', org: 'Subdiviziune', ph: 'ex. AIPA, subdiviziunea Strășeni', mpass: 'Autentificare MPass',
-    gets: ['Conformitate pe bloc: registru și cerere AIPA vs dronă', 'Căutare după număr cadastral, în toată Moldova', 'Traseu de control și proces-verbal']},
-  administrator: {title: 'Intrare administrator', sub: 'Proprietarul sau agronomul exploatației', c: 'var(--admin)', org: 'Exploatația', ph: 'ex. Vie Sireți SRL', mpass: 'Cont exploatație',
-    gets: ['Starea blocurilor, butuci lipsă, costuri', 'Deșeuri și traseul de colectare, ture pe zile', 'Zone, măsurători, analiză de tile nou']}};
-let role = /administrator|fermier/.test(location.hash) ? 'administrator' : 'inspector';
 const $ = s => document.querySelector(s);
-function render() {
-  const r = ROLE[role];
-  $('#card').style.setProperty('--c', r.c); $('#title').textContent = r.title; $('#sub').textContent = r.sub;
-  $('#org-l').firstChild.textContent = r.org; $('#org').placeholder = r.ph; $('#mpass').textContent = r.mpass;
-  $('#gets').innerHTML = r.gets.map(g => `<li>${g}</li>`).join('');
-  document.querySelectorAll('.tabs button').forEach(b => b.setAttribute('aria-selected', b.dataset.role === role));
-}
-document.querySelectorAll('.tabs button').forEach(b => b.addEventListener('click', () => { role = b.dataset.role; try { history.replaceState(null, '', '#' + role); } catch (e) {} render(); }));
+const ORG = {inspector: ['Subdiviziune', 'ex. AIPA Strășeni'], administrator: ['Exploatația', 'ex. Vie Sireți SRL']};
+const sync = () => { const r = document.querySelector('input[name=role]:checked').value; $('#org-l').textContent = ORG[r][0]; $('#org').placeholder = ORG[r][1]; };
+if (/administrator|fermier/.test(location.hash)) document.querySelector('input[value=administrator]').checked = true;
+document.querySelectorAll('input[name=role]').forEach(i => i.addEventListener('change', sync));
 $('#f').addEventListener('submit', e => {
   e.preventDefault();
-  const appRole = role === 'administrator' ? 'fermier' : 'inspector';
+  const role = document.querySelector('input[name=role]:checked').value, appRole = role === 'administrator' ? 'fermier' : 'inspector';
   const session = {role: appRole, name: $('#name').value.trim(), org: $('#org').value.trim(), at: new Date().toISOString()};
   try { localStorage.setItem('fpm.session', JSON.stringify(session)); localStorage.setItem('fpm.role', JSON.stringify(appRole)); } catch (err) {}
   location.href = 'app.html#' + appRole;
 });
 try { const s = JSON.parse(localStorage.getItem('fpm.session') || 'null'); if (s?.name) $('#name').value = s.name; if (s?.org) $('#org').value = s.org; } catch (e) {}
-render();
+sync();
 </script>
 </body>
 </html>
