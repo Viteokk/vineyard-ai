@@ -5,7 +5,7 @@
   POST /api/analyze       body = one GeoTIFF (header X-Filename; ?canopy=classical|model)
                           -> classical detector + the AI model on that tile -> GeoJSON layers in the tile's CRS,
                              a preview image with its bounds, counts / lengths / areas and the processing time
-  POST /api/route         {"mode": "inspector"|"farmer", "min_gap": 3.0, "time": 20}
+  POST /api/route         {"mode": "inspector"|"farmer", "min_gap": 3.0, "time": 20, "start": [x, y] (optional)}
                           -> {"job": id}: pipeline.route on the targets that pass the filters (cached distances)
   GET  /api/job/<id>      {"state": "running"|"done"|"error", "log": [...], "route": ..., "targets": ..., "seconds"}
   POST /api/compliance    body = registry extract as CSV (registry/rvv_template.csv columns)
@@ -107,7 +107,7 @@ def analyze(data: bytes, name: str, canopy: str) -> dict:
             "seconds": {"classical": round(t_classic, 1), "model": round(t_model, 1), "total": round(time.time() - t0, 1)}}
 
 
-def run_route(job: dict, mode: str, min_gap: float, tlimit: int) -> None:
+def run_route(job: dict, mode: str, min_gap: float, tlimit: int, start=None) -> None:
     d = LIVE / job["id"]
     d.mkdir(parents=True, exist_ok=True)
     feats = json.loads((C.OUT / "targets.geojson").read_text())["features"]
@@ -120,6 +120,9 @@ def run_route(job: dict, mode: str, min_gap: float, tlimit: int) -> None:
         return
     cmd = [sys.executable, "-m", "pipeline.route", "--mode", mode, "--targets", str(d / "targets_in.geojson"),
            "--out", str(d / "route.geojson"), "--targets-out", str(d / "targets.geojson"), "--time", str(tlimit)]
+    if start:
+        cmd += ["--start", f"{float(start[0]):.2f},{float(start[1]):.2f}"]
+        job["log"].append(f"START ales: {float(start[0]):.1f}, {float(start[1]):.1f}")
     p = subprocess.Popen(cmd, cwd=C.ROOT, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True)
     for line in p.stdout:
         job["log"].append(line.rstrip())
@@ -192,7 +195,7 @@ class Handler(SimpleHTTPRequestHandler):
                 job = {"id": uuid.uuid4().hex[:8], "state": "running", "log": [], "t0": time.time(), "mode": mode}
                 JOBS[job["id"]] = job
                 threading.Thread(target=run_route, args=(job, mode, float(q.get("min_gap", 3.0)),
-                                                          int(q.get("time", 20))), daemon=True).start()
+                                                          int(q.get("time", 20)), q.get("start")), daemon=True).start()
                 return self.send_json({"job": job["id"]})
         except Exception as e:                    # noqa: BLE001 - report to the page, keep serving
             return self.send_json({"error": str(e)}, 400)

@@ -53,6 +53,7 @@ kbd{font-family:var(--mono);font-size:11px;padding:1px 6px;border-radius:6px;bor
 .start-ic{display:flex;align-items:center;gap:6px;white-space:nowrap}
 .start-ic i{width:18px;height:18px;border-radius:50%;background:#101713;box-shadow:0 0 0 4px #fff;flex-shrink:0}
 .start-ic span{font:700 11px/1 'Geist',sans-serif;letter-spacing:.06em;color:#fff;background:#101713;padding:4px 7px;border-radius:6px}
+.start-ic.custom i{background:#10B981}.start-ic.custom span{background:#047857}
 
 /* chrome */
 .rail{position:fixed;left:16px;top:16px;bottom:16px;width:60px;border-radius:20px;display:flex;flex-direction:column;align-items:center;gap:6px;padding:10px 0;z-index:1000}
@@ -571,7 +572,7 @@ function scale() {
 map.on('moveend zoomend', () => { refreshAnnotations(); syncTargets(); scale(); });
 const tileAt = (x, y) => TILES.find(t => t.name && x >= t.bounds[0] && x < t.bounds[2] && y >= t.bounds[1] && y < t.bounds[3]);
 map.on('mousemove', e => { const x = e.latlng.lng, y = e.latlng.lat, t = tileAt(x, y); $('#xy').textContent = `X ${x.toFixed(1)}  Y ${y.toFixed(1)}${t ? '  ·  ' + short(t.name) : ''}`; });
-map.on('click', e => { if (RULER.on) { RULER.pts.push([e.latlng.lng, e.latlng.lat]); return rulerRender(); } const t = tileAt(e.latlng.lng, e.latlng.lat); t ? select({type: 'tile', name: t.name}) : select(null); });
+map.on('click', e => { if (CST.picking) return setCustomStart([e.latlng.lng, e.latlng.lat]); if (RULER.on) { RULER.pts.push([e.latlng.lng, e.latlng.lat]); return rulerRender(); } const t = tileAt(e.latlng.lng, e.latlng.lat); t ? select({type: 'tile', name: t.name}) : select(null); });
 
 function leftPad() { return phone() ? 0 : 88 + (S.collapsed ? 0 : ($('#panel').classList.contains('wide') ? Math.min(760, innerWidth - 120) : 392)) + 16; }
 function fitBounds(b, maxZoom = 5) {
@@ -825,6 +826,42 @@ function paramsCard() {
       : `<p class="note">Timpii și zilele se recalculează imediat.${VARS && !farmer ? ` Pragul de gol schimbă traseul: variantele ≥ ${Object.keys(VARS).join(', ')} m sunt calculate dinainte.` : ''} Orice alt calcul (alt prag, alt start, un tile nou) rulează de pe laptop: <span class="mono">python -m pipeline.serve</span>, apoi <span class="mono">http://127.0.0.1:8000</span>.</p>`}</section>`;
 }
 let LIVE = null, JOB = null, VARS = null, BR = null, bstatLayer = null, TOURS = null, PENDING = null;
+/* ============ custom START (chosen on the map) ============ */
+const CST = {xy: store.get('cstart', null), picking: false, layer: null};
+function nearestOnRoute(xy) {                 // closest point of the shown route to xy (static mode: no path finding)
+  const r = ROUTES.live || ROUTES[S.role === 'fermier' ? 'red' : 'blue'] || ROUTES.blue || ROUTES.red; if (!r) return null;
+  let best = null;
+  for (const f of r.fc.features) { const c = f.geometry.coordinates;
+    for (let i = 1; i < c.length; i++) { const [ax, ay] = c[i - 1], [bx, by] = c[i], dx = bx - ax, dy = by - ay, L2 = dx * dx + dy * dy;
+      const t = L2 ? Math.max(0, Math.min(1, ((xy[0] - ax) * dx + (xy[1] - ay) * dy) / L2)) : 0, px = ax + t * dx, py = ay + t * dy, d = Math.hypot(xy[0] - px, xy[1] - py);
+      if (!best || d < best.d) best = {d, xy: [px, py], route: r.name}; } }
+  return best;
+}
+function drawCustomStart() {
+  if (CST.layer) { map.removeLayer(CST.layer); CST.layer = null; }
+  if (!CST.xy) return;
+  const parts = [L.marker(ll(CST.xy[0], CST.xy[1]), {icon: L.divIcon({className: '', html: '<div class="start-ic custom"><i></i><span>START ALES</span></div>', iconSize: [110, 22], iconAnchor: [9, 11]}), keyboard: false, interactive: false, zIndexOffset: 1100})];
+  const n = !LIVE && nearestOnRoute(CST.xy);
+  if (n && n.d > 1) parts.push(L.polyline([ll(CST.xy[0], CST.xy[1]), ll(n.xy[0], n.xy[1])], {renderer: R, color: '#047857', weight: 3, dashArray: '4 6', interactive: false}));
+  CST.layer = L.layerGroup(parts).addTo(map);
+}
+function setCustomStart(xy) {
+  CST.xy = xy; CST.picking = false; store.set('cstart', xy); map.getContainer().style.cursor = '';
+  drawCustomStart();
+  if (xy && !LIVE && typeof ORDERED !== 'undefined' && ORDERED.length) {   // navigation starts from the target closest to it
+    const t = ORDERED.reduce((a, x) => Math.hypot(x.x - xy[0], x.y - xy[1]) < Math.hypot(a.x - xy[0], a.y - xy[1]) ? x : a);
+    NAV.startIdx = ORDERED.indexOf(t);
+  }
+  renderPanel();
+  if (xy) toast(LIVE ? 'START ales. Apasă „Recalculează traseul” ca să pornească de aici.' : 'START ales. Traseul se intră din cel mai apropiat punct.');
+}
+function startCard() {
+  const off = EXTRA.start?.features?.[0]?.geometry.coordinates, n = CST.xy && !LIVE ? nearestOnRoute(CST.xy) : null;
+  return `<section><div class="sec-title"><h2>Punct de start</h2>${CST.xy ? '<span class="badge" style="background:rgba(16,185,129,.15);color:#047857">ales pe hartă</span>' : '<span class="badge" style="background:var(--hover);color:var(--muted)">START oficial</span>'}</div>
+    <p class="note">${CST.xy ? `Ales: <span class="mono">${CST.xy[0].toFixed(1)}, ${CST.xy[1].toFixed(1)}</span>${n ? ` · intrarea în traseul ${n.route.toLowerCase()} la <b>${fmt(n.d, 0)} m</b> (linia punctată verde; drumul de acces nu e calculat pe site-ul publicat)` : ''}` : `START-ul organizatorilor: <span class="mono">${off ? off[0].toFixed(1) + ', ' + off[1].toFixed(1) : '—'}</span>. Poți alege alt punct: unde parchezi, intrarea în parcelă etc.`}</p>
+    <div style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn ${CST.picking ? 'primary' : ''}" type="button" data-act="cst-pick">${CST.picking ? 'Apasă pe hartă…' : 'Alege START pe hartă'}</button>${CST.xy ? '<button class="btn" type="button" data-act="cst-clear">Revino la START oficial</button><button class="btn" type="button" data-act="cst-go">Arată pe hartă</button>' : ''}</div>
+    ${LIVE ? `<p class="note">Pe laptop, „Recalculează traseul” pornește ${CST.xy ? 'din punctul ales (se lipește de cel mai apropiat drum sau inter-rând, max. 80 m)' : 'din START-ul oficial'}.</p>` : ''}</section>`;
+}
 function openPending() {
   if (!PENDING) return;
   if (PENDING.includes('-R')) { const id = PENDING; PENDING = null; return setTimeout(() => goRow(id), 400); }
@@ -1016,11 +1053,11 @@ async function loadVariant(g) {                // static site: precomputed route
   } catch (e) { return false; }
 }
 const AN = [];
-fetch('api/status', {cache: 'no-store'}).then(r => r.ok ? r.json() : null).then(j => { if (j?.live) { LIVE = j; renderPanel(); } }).catch(() => {});
+fetch('api/status', {cache: 'no-store'}).then(r => r.ok ? r.json() : null).then(j => { if (j?.live) { LIVE = j; renderPanel(); drawCustomStart(); } }).catch(() => {});
 async function liveRoute() {
   const mode = S.role === 'fermier' ? 'farmer' : 'inspector', gap = S.minGap;
   try {
-    const r = await fetch('api/route', {method: 'POST', body: JSON.stringify({mode, min_gap: gap, time: 20})}).then(r => r.json());
+    const r = await fetch('api/route', {method: 'POST', body: JSON.stringify({mode, min_gap: gap, time: 20, ...(CST.xy ? {start: CST.xy} : {})})}).then(r => r.json());
     if (!r.job) throw new Error(r.error || 'fără răspuns');
     JOB = {id: r.job, last: ''}; renderPanel();
     const poll = async () => {
@@ -1037,7 +1074,7 @@ async function liveRoute() {
 function addLiveRoute(fc, tg, mode, gap, name = 'Personalizat', sub = null) {
   if (ROUTES.live) map.removeLayer(ROUTES.live.layer);
   const p = fc.features[0].properties, line = geo(fc, {color: '#10B981', weight: 3.5});
-  ROUTES.live = {fc, tg, ck: null, key: 'live', p, len: p.length_m || 0, name, sub: sub || `${mode === 'farmer' ? 'fermier' : 'inspector'}, gol ≥ ${gap} m`,
+  ROUTES.live = {fc, tg, ck: null, key: 'live', p, len: p.length_m || 0, name, sub: sub || `${mode === 'farmer' ? 'fermier' : 'inspector'}, gol ≥ ${gap} m${p.custom_start ? ', START ales' : ''}`,
     color: '#10B981', file: 'route_live.geojson', layer: L.layerGroup([geo(fc, {color: '#FFFFFF', weight: 7, opacity: .9}), line])};
   S.layers.route_live = true; applyLayers(); renderLayers(); renderPanel();
   map.fitBounds(line.getBounds(), {padding: [40, 40]});
@@ -1079,7 +1116,7 @@ function viewTraseu() {
   const sc = EXTRA.start?.features?.[0]?.geometry.coordinates;
   $('#p-head').innerHTML = head('Două trasee · START → ținte → START', 'Inspector (albastru) și fermier (roșu)');
   const order = S.role === 'fermier' ? ['red', 'blue'] : ['blue', 'red'];
-  $('#p-body').innerHTML = `${roleCard()}${paramsCard()}${ROUTES.live ? routeCard(ROUTES.live) : ''}${toursCard()}${S.role === 'fermier' || S.role === 'inspector' ? blocksCard() : ''}
+  $('#p-body').innerHTML = `${roleCard()}${paramsCard()}${startCard()}${ROUTES.live ? routeCard(ROUTES.live) : ''}${toursCard()}${S.role === 'fermier' || S.role === 'inspector' ? blocksCard() : ''}
     ${order.map(k => ROUTES[k] ? routeCard(ROUTES[k]) : missingCard(EXTRA.routes[k])).join('')}
     ${UTM && TG.some(t => t.order) ? `<section><div class="sec-title"><h2>Navigare pe teren</h2><span class="num">${fmt(Object.keys(NAV.done).length)} verificate</span></div>
       <div style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn primary" type="button" data-act="nav-start">${NAV.watch ? 'Navigarea rulează' : 'Pornește navigarea'}</button><button class="btn" type="button" data-act="nav-reset">Resetează bifele</button></div>
@@ -1322,6 +1359,9 @@ document.addEventListener('click', e => {
     case 'role': return openRole();
     case 'legend': { const p = $('#legend'); if (p.hidden) renderLegend(); p.hidden = !p.hidden; b.setAttribute('aria-expanded', !p.hidden); if (!p.hidden) { $('#layers').hidden = true; $('#insp').hidden = true; } return; }
     case 'ruler': return rulerToggle();
+    case 'cst-pick': { CST.picking = !CST.picking; map.getContainer().style.cursor = CST.picking ? 'crosshair' : ''; if (CST.picking) { if (phone()) collapsePanel(true); toast('Apasă pe hartă punctul de start'); } return renderPanel(); }
+    case 'cst-clear': return setCustomStart(null);
+    case 'cst-go': return CST.xy && map.flyTo(ll(CST.xy[0], CST.xy[1]), Math.max(map.getZoom(), 3), {duration: .5});
     case 'share': return shareLink(b.dataset.id);
     case 'pv': return S.sel?.b && printPV(S.sel.b);
     case 'cad-on': { S.layers.cad = true; store.set('layers', S.layers); applyLayers(); renderLayers(); return renderPanel(); }
@@ -1362,7 +1402,7 @@ document.addEventListener('change', e => {
 document.addEventListener('keydown', e => {
   const typing = e.target.matches('input,textarea');
   if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'k') { e.preventDefault(); return $('#pal-veil').hidden ? openPal() : closePal(); }
-  if (e.key === 'Escape') { if (RULER.on) return rulerToggle(); if (!$('#legend').hidden) return ($('#legend').hidden = true); if (!$('#role-veil').hidden) return ($('#role-veil').hidden = true); if (!$('#pal-veil').hidden) return closePal(); if (!$('#ex-veil').hidden) return ($('#ex-veil').hidden = true); if (!$('#layers').hidden) return ($('#layers').hidden = true); if (S.sel) return select(null); }
+  if (e.key === 'Escape') { if (CST.picking) { CST.picking = false; map.getContainer().style.cursor = ''; return renderPanel(); } if (RULER.on) return rulerToggle(); if (!$('#legend').hidden) return ($('#legend').hidden = true); if (!$('#role-veil').hidden) return ($('#role-veil').hidden = true); if (!$('#pal-veil').hidden) return closePal(); if (!$('#ex-veil').hidden) return ($('#ex-veil').hidden = true); if (!$('#layers').hidden) return ($('#layers').hidden = true); if (S.sel) return select(null); }
   if (typing) return;
   if (e.key === '/') { e.preventDefault(); return openPal(); }
   if ('123456'.includes(e.key) && e.key.length === 1) location.hash = ['harta', 'traseu', 'masuratori', 'pipeline', 'conformitate', 'corectura'][+e.key - 1];
@@ -1378,7 +1418,7 @@ roleBtn();
 show(location.hash.slice(1) || (S.role ? ROLES[S.role].view : 'harta'));
 if (!S.role && !ROLES[location.hash.slice(1)] && !/^#V\d+/i.test(location.hash)) openRole();   // shared links open straight on the object
 map.fitBounds(bnds(EXT), phone() ? {paddingTopLeft: [16, 70], paddingBottomRight: [16, innerHeight * .44 + 100]} : {paddingTopLeft: [leftPad() + 16, 76], paddingBottomRight: [76, 76]});
-renderLayers(); applyLayers(); scale();
+renderLayers(); applyLayers(); scale(); drawCustomStart();
 $('#loader').remove();
 })();
 </script>

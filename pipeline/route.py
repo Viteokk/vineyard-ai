@@ -253,6 +253,9 @@ def main() -> None:
                     help="never step over a vine row, not even through a planting gap: move between inter-rows only "
                          "via headlands and passages (out-and-back walking)")
     ap.add_argument("--workers", type=int, default=max(1, (os.cpu_count() or 2) - 1), help="parallel Dijkstra workers")
+    ap.add_argument("--start", default="", help="custom start 'x,y' (EPSG:32635) instead of data/route/start.geojson; "
+                                                 "snapped to the nearest walkable cell within --start-radius")
+    ap.add_argument("--start-radius", type=float, default=0.0, help="snap radius for --start (m); default 5 m official, 80 m custom")
     ap.add_argument("--reach", type=float, default=REACH_M, help="Dijkstra search limit per stop (m); farther pairs are"
                                                                   " never consecutive in a good tour")
     a = ap.parse_args()
@@ -268,7 +271,9 @@ def main() -> None:
     forbidden = load(C.ROUTE_IN / "forbidden.geojson")
     study = load(C.ROUTE_IN / "study_area.geojson")
     blocks = load(C.OUT / "blocks.geojson") if (C.OUT / "blocks.geojson").exists() else inter.buffer(3)
-    start = json.loads((C.ROUTE_IN / "start.geojson").read_text())["features"][0]["geometry"]["coordinates"]
+    custom = bool(a.start)
+    start = ([float(v) for v in a.start.split(",")] if custom
+             else json.loads((C.ROUTE_IN / "start.geojson").read_text())["features"][0]["geometry"]["coordinates"])
     grid = Grid(study.union(passages).bounds)
     row_lines = [shape(f["geometry"]) for f in layers.get("rows", [])] if a.no_row_crossing else None
     cost = build_cost(grid, inter, passages, canopies, forbidden, study, blocks, row_lines)
@@ -279,7 +284,12 @@ def main() -> None:
 
     feats = [f for f in json.loads(Path(a.targets).read_text())["features"]
              if f["properties"]["type"] in types.split(",") and f["properties"].get("reachable", True)]
-    s_node = anchor(grid, cost, idx, start, radius=5.0)
+    s_node = anchor(grid, cost, idx, start, radius=a.start_radius or (80.0 if custom else 5.0))
+    if s_node is None:
+        sys.exit(f"START {start[0]:.1f}, {start[1]:.1f} is not within reach of an inter-row or passage")
+    if custom:                                   # begin on the walkable cell itself, never across a canopy
+        start = [float(v) for v in grid.to_xy(rc[[s_node], 0], rc[[s_node], 1])[0]]
+        print(f"custom START snapped to {start[0]:.1f}, {start[1]:.1f}")
     anchors, members, unreachable = [], [], []
     for f in feats:
         nd = anchor(grid, cost, idx, f["geometry"]["coordinates"])
@@ -316,13 +326,25 @@ def main() -> None:
     if cache.exists() and not a.recompute:
         z = np.load(cache, allow_pickle=False)
         pos = {int(n): i for i, n in enumerate(z["nodes"])}
-        if str(z["key"]) == key and all(n in pos for n in nodes):       # any subset of the cached stops
+        missing = [i for i, n in enumerate(nodes) if n not in pos]
+        if str(z["key"]) == key and not missing:                       # any subset of the cached stops
             sel = [pos[n] for n in nodes]
             D = z["D"][np.ix_(sel, sel)]
             print("distance matrix from cache")
+        elif str(z["key"]) == key and len(missing) <= 20:              # e.g. a custom START: a few new rows only
+            D = np.full((len(nodes), len(nodes)), np.inf)
+            have = [i for i, n in enumerate(nodes) if n in pos]
+            sel = [pos[nodes[i]] for i in have]
+            D[np.ix_(have, have)] = z["D"][np.ix_(sel, sel)]
+            for i in missing:
+                row = dijkstra(g, directed=True, indices=nodes[i], limit=np.inf if i == 0 else a.reach * COST_CORE)[nodes]
+                D[i] = row
+                D[:, i] = row                                          # the grid graph is symmetric
+            print(f"distance matrix from cache + {len(missing)} new row(s)")
     if D is None:
         D = distance_matrix(g, nodes, a.workers, t0, a.reach)
-        np.savez_compressed(cache, D=D, nodes=np.array(nodes), key=np.array(key))
+        if not custom:                                                 # keep the cache on the official START
+            np.savez_compressed(cache, D=D, nodes=np.array(nodes), key=np.array(key))
     reach = np.isfinite(D[0]) & np.isfinite(D[:, 0])
     if not reach.all():
         print(f"  {int((~reach).sum())} stops not connected to START -> skipped")
@@ -376,7 +398,7 @@ def main() -> None:
     visited = [f for f in feats if line.distance(Point(f["geometry"]["coordinates"])) <= VISIT]
     fc = {"type": "FeatureCollection", "crs": CRS, "features": [{
         "type": "Feature",
-        "properties": {"length_m": length, "mode": a.mode, "target_types": types, "targets_total": len(feats),
+        "properties": {"length_m": length, "mode": a.mode, "start": [round(start[0], 2), round(start[1], 2)], "custom_start": custom, "target_types": types, "targets_total": len(feats),
                        "targets_visited": len(visited), "outside_share": round(share, 4),
                        "minutes_at_4kmh": round(length / 4000 * 60, 1)},
         "geometry": {"type": "LineString", "coordinates": [[round(x, 2), round(y, 2)] for x, y in line.coords]}}]}
