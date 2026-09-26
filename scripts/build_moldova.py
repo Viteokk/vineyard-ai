@@ -2,7 +2,8 @@
 
   country  Natural Earth 1:10m outline (world-atlas@2.0.2 countries-10m.json, public domain), whole territory
   raion    districts from the national cadastre (geodata.gov.md WFS cadastru_data:UAT2, ASP), simplified 150 m;
-           the service covers the right bank only
+           the service covers the right bank only, so the left bank (UTA din stânga Nistrului, with Bender) is
+           derived as country minus raions, keeping only the large pieces (> 500 km²)
   commune  the commune of the study area (cadastru_data:UAT1, name 'Sireți'), simplified 10 m
 Downloads with curl (system certificates) into data/moldova/ once; --refresh to download again.
 
@@ -85,6 +86,15 @@ def main() -> None:
         g = transform(md2utm, shape(f["geometry"])).simplify(150)
         feats.append({"type": "Feature", "properties": {"kind": "raion", "name": f["properties"]["name"]},
                       "geometry": mapping(g)})
+
+    right = unary_union([shape(f["geometry"]).buffer(0) for f in feats if f["properties"]["kind"] == "raion"])
+    rest = country.buffer(0).difference(right)
+    rest = rest.buffer(-400).buffer(400).intersection(country)           # drop the thin slivers along the borders
+    left = unary_union([p for p in getattr(rest, "geoms", [rest]) if p.area > 500e6])
+    if not left.is_empty:
+        feats.append({"type": "Feature", "properties": {"kind": "raion", "name": "UTA din stânga Nistrului",
+                                                        "left_bank": True, "note": "fără date cadastrale ASP"},
+                      "geometry": mapping(left.simplify(150))})
 
     q = urllib.parse.quote(f"name LIKE '%{a.commune}%'")
     com = get(WFS + "&typeNames=cadastru_data%3AUAT1&CQL_FILTER=" + q, RAW / "commune.json", a.refresh)
