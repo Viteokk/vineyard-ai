@@ -146,6 +146,7 @@ tbody tr:hover td{background:var(--hover)}
 .tr{position:fixed;right:16px;top:16px;display:flex;gap:8px;z-index:1000}
 .tr .icon-btn{width:44px;height:44px;border-radius:14px}
 .tr .btn{min-height:44px;border-radius:14px}
+.tr .logout-btn:hover{color:var(--red,#CC092F)}
 .pop{position:fixed;right:16px;top:70px;width:290px;border-radius:18px;padding:14px;z-index:1001;display:flex;flex-direction:column;gap:2px;max-height:calc(100vh - 100px);overflow:auto}
 .sw{display:flex;align-items:center;gap:10px;min-height:38px;font-size:13px;padding:0 4px;border-radius:10px;width:100%;text-align:left}
 .sw:hover{background:var(--hover)}
@@ -291,6 +292,7 @@ input[type=range]{accent-color:var(--accent);width:100%}
 
 <div class="tr">
   <button class="btn glass role-btn" type="button" data-act="role" id="role-btn" aria-label="Schimbă rolul"></button>
+  <button class="icon-btn glass logout-btn" type="button" data-act="logout" id="logout-btn" aria-label="Ieșire din cont" title="Ieșire" hidden><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 4h3a2 2 0 012 2v12a2 2 0 01-2 2h-3"/><path d="M10 17l-5-5 5-5M5 12h11"/></svg></button>
   <button class="icon-btn glass" type="button" data-act="layers" aria-label="Straturi" aria-expanded="false"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l9 5-9 5-9-5 9-5z"/><path d="M3 13l9 5 9-5"/></svg></button>
   <button class="icon-btn glass" type="button" data-act="legend" aria-label="Legendă" aria-expanded="false"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M9.5 9.5a2.5 2.5 0 114 2c-.9.6-1.5 1.1-1.5 2.5M12 17h.01"/></svg></button>
   <button class="icon-btn glass" type="button" data-act="theme" id="theme-btn" aria-label="Schimbă tema"></button>
@@ -805,7 +807,7 @@ const ROLE_VIEWS = {inspector: ['conformitate', 'harta', 'traseu', 'zona', 'masu
 const allowedView = v => !S.role || !ROLE_VIEWS[S.role] || ROLE_VIEWS[S.role].includes(v);
 function applyRoleNav() { $$('.rail a[data-view]').forEach(a => { a.hidden = !allowedView(a.dataset.view); }); }
 const USER_IC = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0116 0"/></svg>';
-function roleBtn() { $('#role-btn').innerHTML = `${USER_IC}<span>${SESSION?.name ? SESSION.name + ' · ' : ''}${S.role ? ROLES[S.role].short : 'Alege rolul'}</span>`; applyRoleNav(); }
+function roleBtn() { $('#role-btn').innerHTML = `${USER_IC}<span>${SESSION?.name ? SESSION.name + ' · ' : ''}${S.role ? ROLES[S.role].short : 'Alege rolul'}</span>`; $('#logout-btn').hidden = !SESSION; applyRoleNav(); }
 function openRole() {
   $('#role-title').textContent = SESSION ? `Conectat: ${SESSION.name || 'utilizator demo'}` : 'Cine folosește harta?';
   $('#role-sess').innerHTML = SESSION ? `<div class="callout"><b>${SESSION.name ? SESSION.name + ' · ' : ''}${ROLES[S.role]?.name || ''}${SESSION.org ? ' · ' + SESSION.org : ''}</b><p class="note">${SESSION.via === 'mpass-demo' ? 'Intrat prin MPass (simulat). ' : ''}Sesiune demo în acest browser. Tab-urile afișate sunt cele ale rolului.</p><div><button class="btn primary" type="button" data-act="logout">Ieșire</button></div></div>` : `<div class="callout"><p class="note">Ai și o <a href="login.html">pagină de intrare</a> pe roluri.</p></div>`;
