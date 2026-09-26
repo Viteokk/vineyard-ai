@@ -58,8 +58,7 @@ h1{font:800 clamp(38px,6vw,56px)/1.05 'Bricolage Grotesque','Geist',sans-serif;m
 document.querySelectorAll('.tile').forEach(b => b.addEventListener('click', () => {
   const role = b.dataset.role;
   try {
-    const prev = JSON.parse(localStorage.getItem('fpm.session') || 'null') || {};
-    localStorage.setItem('fpm.session', JSON.stringify({...prev, role, at: new Date().toISOString()}));
+    localStorage.setItem('fpm.session', JSON.stringify({role, via: 'demo', at: new Date().toISOString()}));
     localStorage.setItem('fpm.role', JSON.stringify(role));
   } catch (e) {}
   location.href = 'app.html#' + role;
