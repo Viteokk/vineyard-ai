@@ -5,6 +5,24 @@ Challenge ales: **Marcaj — Vineyard AI Field Challenge** (premiu 30.000 MDL, u
 Obiectiv: punctaj MAXIM, strict după regulile oficiale (`../03_docs/*.pdf` au prioritate).
 Limba de comunicare cu echipa: română; cod/comentarii în engleză.
 
+## Stare sâmbătă 07:55 (planul complet: `PLAN_final.md`; modelul explicat: `docs/MODEL.md`)
+- **Model unic, 2 clase (vineyard + waste)** în antrenare pe MPS: `train/make_multi_dataset.py` (Sireț3 3 037 crop-uri +
+  DroneWaste 893 + 600 fundal + UAVVaste 3 494 crop-uri, CC BY 4.0) → `train/train_yolo.py --name multi` (15 epoci,
+  start din greutățile canopy). Urmărire: `python train/watch.py --name multi`. Gata ~09:00.
+  După: `pipeline/infer_multi.py` pe exemple → `pipeline.eval` vs 0,817; pe 311 tile-uri → `out/waste_model.json` →
+  `scripts/waste_sheet.py` (planșă) → prag `--conf-waste` → blocks → targets → route → ZIP-uri.
+- **Regulă:** bifele „E deșeu / Nu e” de pe hartă NU intră în ZIP-uri și nu se antrenează pe ele (adnotarea manuală a
+  Sireț3 doar în Marcaj). În pre-adnotări intră doar ieșirea modelului.
+- **Site (GitHub Pages, publicat):** roluri (inspector / fermier / agronom, `#inspector`…), parametri (viteză, ore/zi,
+  prag gol cu variante precalculate 5/8/10 m în `web/data/variants/`), starea blocurilor (`pipeline/block_report.py` →
+  `web/data/blocks_report.json` + `blocks_status.geojson`, totaluri = measurements.csv), ture pe zile
+  (`pipeline/tours.py` → `web/data/tours/`, 2 × ≤ 6 h), candidați deșeuri (200) cu verificare, legendă RO/EN, riglă,
+  linkuri `#V63` / `#V02-R017`.
+- **Mod live pe laptop:** `python -m pipeline.serve` (port 8000): `/api/analyze` (GeoTIFF încărcat → detector + model,
+  ~4 s/tile), `/api/route` (traseu recalculat cu alt prag, 1–3 min, cache). Site-ul detectează API-ul singur.
+- **Marcaj (Victor):** dry run cu `out/upload_test/test_r021_c012_r006_c004.zip` → Remove all; ZIP-urile finale după
+  model (~10:30); PUBLISH ≤ 13:30.
+
 ## Echipă (actualizat sâmbătă 00:30): Vikea face TOT (Dev 1 + Dev 2), cu Claude Code. Dev 2 nu e inclus momentan.
 Sarcinile „Dev 2” de mai jos (targets, route ×2, validate, measurements, web) le face tot Vikea, în paralel cu antrenarea YOLO
 (care rulează în fundal pe GPU/MPS — nu porni o a doua antrenare/inferență grea pe GPU în același timp).
