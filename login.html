@@ -5,65 +5,125 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <title>Intrare Field Planner</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,800&family=Geist:wght@400;500;600;700&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,800&family=Geist:wght@400;500;600;700&family=Geist+Mono:wght@500&display=swap">
 <style>
-:root{color-scheme:dark;--ink:#FFFFFF;--muted:#9FAAA3;--blue:#0046AE;--yellow:#FFD200;--red:#CC092F}
+:root{color-scheme:light;--ink:#15201A;--muted:#5C6A62;--line:#DCE2DE;--field:#F6F8F7;--blue:#0046AE;--yellow:#FFD200;--red:#CC092F;--c:var(--blue)}
 *{box-sizing:border-box}
 html,body{height:100%}
-body{margin:0;min-height:100%;background:#1B221E url('data/hires/siret3_r021_c012.webp') center/cover fixed;color:var(--ink);font:16px/1.5 'Geist',system-ui,sans-serif;display:flex;flex-direction:column;padding-inline:20px}
+body{margin:0;min-height:100%;background:#1B221E url('data/hires/siret3_r021_c012.webp') center/cover fixed;color:#fff;font:16px/1.5 'Geist',system-ui,sans-serif;display:flex;flex-direction:column;padding-inline:16px}
 body::before{content:'';position:fixed;inset:0;background:rgba(10,14,12,.82);z-index:0}
 body > *{position:relative;z-index:1}
 header{padding-block:22px;display:flex;justify-content:space-between;align-items:center;max-width:1100px;width:100%;margin:0 auto}
 a{color:inherit}
 .logo{font-weight:700;font-size:18px;text-decoration:none}
-header a.back{color:var(--muted);font-size:14px}
-main{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:28px;padding-block:24px 56px}
+header a.back{color:#9FAAA3;font-size:14px}
+main{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:20px;padding-block:8px 48px}
 .ribbon{display:flex;width:120px;height:6px}.ribbon i{flex:1}.ribbon i:nth-child(1){background:var(--blue)}.ribbon i:nth-child(2){background:var(--yellow)}.ribbon i:nth-child(3){background:var(--red)}
-h1{font:800 clamp(38px,6vw,56px)/1.05 'Bricolage Grotesque','Geist',sans-serif;margin:0;letter-spacing:-.02em;text-align:center}
-.tiles{display:grid;grid-template-columns:repeat(2,minmax(0,300px));gap:20px}
-.tile{display:flex;flex-direction:column;justify-content:space-between;gap:18px;min-height:260px;padding:30px 28px 28px;border-radius:22px;background:var(--c);color:#fff;text-decoration:none;border:0;cursor:pointer;text-align:left;font:inherit;transition:transform .15s,box-shadow .15s}
-.tile:hover{transform:translateY(-3px);box-shadow:0 18px 40px rgba(0,0,0,.4)}
-.tile:focus-visible{outline:3px solid var(--yellow);outline-offset:4px}
-.tile.insp{--c:var(--blue)}.tile.admin{--c:var(--red)}
-.tile b{display:block;font:800 30px/1.1 'Bricolage Grotesque','Geist',sans-serif}
-.tile span.sub{display:block;margin-top:6px;font-weight:500}
-.note{color:var(--muted);font-size:14px;margin:0;text-align:center;max-width:520px;text-wrap:balance}.note a{color:var(--ink)}
-.or{display:flex;align-items:center;gap:12px;color:var(--muted);font-size:13px;width:min(620px,100%)}.or::before,.or::after{content:'';flex:1;height:1px;background:rgba(255,255,255,.16)}
-.mpass{display:inline-flex;align-items:center;gap:10px;min-height:52px;padding:0 24px;border-radius:14px;background:#fff;color:#0B0F0D;font:700 16px 'Geist',sans-serif;text-decoration:none}
-.mpass:hover{background:#E9EFE9}.mpass:focus-visible{outline:3px solid var(--yellow);outline-offset:3px}
-@media (max-width:640px){.tiles{grid-template-columns:1fr;width:100%;max-width:340px}.tile{min-height:0;flex-direction:row;align-items:center;justify-content:flex-start;gap:20px;padding:22px}.tile svg{flex-shrink:0}.tile b{font-size:26px}}
-@media (prefers-reduced-motion:reduce){.tile{transition:none}}
+.card{width:min(440px,100%);background:#fff;color:var(--ink);border-radius:20px;padding:28px;display:flex;flex-direction:column;gap:18px;box-shadow:0 24px 60px rgba(0,0,0,.45)}
+h1{font:800 26px/1.1 'Bricolage Grotesque','Geist',sans-serif;margin:0;letter-spacing:-.01em}
+fieldset{border:0;margin:0;padding:0;min-width:0}
+legend{font-size:14px;font-weight:600;margin-bottom:8px;padding:0}
+.roles{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.role{position:relative;display:flex;align-items:center;gap:10px;padding:12px;border:1.5px solid var(--line);border-radius:14px;cursor:pointer;color:var(--muted);transition:border-color .15s,background .15s}
+.role input{position:absolute;opacity:0;pointer-events:none}
+.role svg{flex-shrink:0}
+.role b{display:block;color:var(--ink);font-size:15px}
+.role small{font-size:12px;line-height:1.3;display:block}
+.role.insp{--rc:var(--blue)}.role.admin{--rc:var(--red)}
+.role:has(input:checked){border-color:var(--rc);background:color-mix(in srgb,var(--rc) 7%,#fff);color:var(--rc)}
+.role:has(input:focus-visible){outline:3px solid var(--yellow);outline-offset:2px}
+.f{display:flex;flex-direction:column;gap:6px;font-size:14px;font-weight:600}
+.f input{width:100%;min-height:48px;border:1px solid var(--line);border-radius:12px;background:var(--field);padding:0 14px;font:500 16px 'Geist',sans-serif;color:var(--ink)}
+.f input:focus{outline:none;border-color:var(--c);box-shadow:0 0 0 3px color-mix(in srgb,var(--c) 18%,transparent);background:#fff}
+.pw{position:relative;display:block}
+.pw input{padding-right:52px}
+.pw button{position:absolute;right:4px;top:4px;width:40px;height:40px;border:0;border-radius:10px;background:none;color:var(--muted);cursor:pointer;display:grid;place-items:center}
+.pw button:hover{background:var(--field);color:var(--ink)}
+.err{margin:0;color:var(--red);font-size:14px;font-weight:500}
+.err.info{color:var(--muted)}
+.go{min-height:50px;border:0;border-radius:12px;background:var(--c);color:#fff;font:600 16px 'Geist',sans-serif;cursor:pointer;transition:background .15s}
+.go:hover{filter:brightness(1.08)}
+.go:focus-visible,.mpass:focus-visible,.linkbtn:focus-visible,.demo button:focus-visible{outline:3px solid var(--yellow);outline-offset:2px}
+.linkbtn{align-self:center;border:0;background:none;color:var(--c);font:600 14px 'Geist',sans-serif;cursor:pointer;padding:4px}
+.demo{background:var(--field);border-radius:12px;padding:12px 14px;font-size:13px;color:var(--muted);display:flex;flex-wrap:wrap;gap:4px 8px;align-items:center}
+.demo code{font:500 13px 'Geist Mono',ui-monospace,monospace;color:var(--ink);overflow-wrap:anywhere}
+.demo button{margin-left:auto;border:1px solid var(--line);background:#fff;border-radius:8px;padding:5px 10px;font:600 13px 'Geist',sans-serif;color:var(--ink);cursor:pointer}
+.or{display:flex;align-items:center;gap:12px;color:var(--muted);font-size:13px}.or::before,.or::after{content:'';flex:1;height:1px;background:var(--line)}
+.mpass{display:flex;align-items:center;justify-content:center;gap:10px;min-height:50px;border:1px solid var(--line);border-radius:12px;background:#fff;color:var(--ink);font:600 16px 'Geist',sans-serif;text-decoration:none}
+.mpass:hover{background:var(--field)}
+.sim{align-self:center;font-size:13px;color:var(--muted)}
+.note{color:#9FAAA3;font-size:13px;margin:0;text-align:center;max-width:440px;text-wrap:balance}
+@media (max-width:420px){.card{padding:22px 18px}.role{padding:10px;gap:8px}.role svg{width:22px;height:22px}}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
 </style>
 </head>
 <body>
 <header><a class="logo" href="index.html">Field Planner</a><a class="back" href="index.html">Înapoi</a></header>
 <main>
   <div class="ribbon" aria-hidden="true"><i></i><i></i><i></i></div>
-  <h1>Cine intră?</h1>
-  <div class="tiles">
-    <button class="tile insp" type="button" data-role="inspector">
-      <svg width="44" height="44" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l8 3v6c0 4.5-3.4 8.3-8 9-4.6-.7-8-4.5-8-9V6l8-3z"/><path d="M8.5 12l2.5 2.5 4.5-5"/></svg>
-      <span><b>Inspector</b><span class="sub">Control și conformitate →</span></span>
-    </button>
-    <button class="tile admin" type="button" data-role="fermier">
-      <svg width="44" height="44" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="9" cy="10" r="2.4"/><circle cx="15" cy="10" r="2.4"/><circle cx="12" cy="14.5" r="2.4"/><circle cx="9" cy="18.5" r="2.2"/><circle cx="15" cy="18.5" r="2.2"/><path d="M12 7.5V4M12 4c2-1.5 4-1 5 0"/></svg>
-      <span><b>Administrator</b><span class="sub">Vie, costuri, trasee →</span></span>
-    </button>
-  </div>
-  <div class="or">sau</div>
-  <a class="mpass" href="https://mpass.gov.md/login/saml" rel="noopener"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="10" width="16" height="11" rx="2"/><path d="M8 10V7a4 4 0 018 0v3"/></svg>Intră cu MPass</a>
-  <p class="note">MPass te duce pe mpass.gov.md. Întoarcerea în Field Planner după autentificare cere înregistrarea platformei la AGE.<br>Pentru demo: plăcile de mai sus sau <a href="mpass.html?return=app.html">simularea MPass</a>.</p>
+  <form class="card" id="f" novalidate>
+    <h1>Intră în cont</h1>
+    <fieldset>
+      <legend>Intru în calitate de</legend>
+      <div class="roles">
+        <label class="role insp"><input type="radio" name="role" value="inspector" checked>
+          <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l8 3v6c0 4.5-3.4 8.3-8 9-4.6-.7-8-4.5-8-9V6l8-3z"/><path d="M8.5 12l2.5 2.5 4.5-5"/></svg>
+          <span><b>Inspector</b><small>AIPA · ONVV</small></span></label>
+        <label class="role admin"><input type="radio" name="role" value="fermier">
+          <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="9" cy="10" r="2.4"/><circle cx="15" cy="10" r="2.4"/><circle cx="12" cy="14.5" r="2.4"/><circle cx="9" cy="18.5" r="2.2"/><circle cx="15" cy="18.5" r="2.2"/><path d="M12 7.5V4M12 4c2-1.5 4-1 5 0"/></svg>
+          <span><b>Administrator</b><small>Exploatația viticolă</small></span></label>
+      </div>
+    </fieldset>
+    <label class="f">Poșta electronică<input type="email" id="email" name="email" autocomplete="username" placeholder="nume@exemplu.md" required></label>
+    <label class="f">Parolă<span class="pw"><input type="password" id="pw" name="password" autocomplete="current-password" placeholder="Parolă" required><button type="button" id="eye" aria-label="Arată parola" aria-pressed="false"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/></svg></button></span></label>
+    <p class="err" id="err" role="alert" hidden></p>
+    <button class="go" type="submit" id="go">Intră ca Inspector</button>
+    <button class="linkbtn" type="button" id="forgot">Ai uitat parola?</button>
+    <div class="demo"><span>Cont demo:</span><code id="demo-email"></code><span>parola</span><code id="demo-pw"></code><button type="button" id="fill">Completează</button></div>
+    <div class="or">sau</div>
+    <a class="mpass" href="https://mpass.gov.md/login/saml" rel="noopener"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="10" width="16" height="11" rx="2"/><path d="M8 10V7a4 4 0 018 0v3"/></svg>Intră cu MPass</a>
+    <a class="sim" href="mpass.html?return=app.html">Simulare MPass pentru demo</a>
+  </form>
+  <p class="note">MVP demonstrativ: se intră doar cu conturile demo; parola nu pleacă din browser și nu se salvează. Revenirea din MPass cere înregistrarea platformei la Agenția de Guvernare Electronică.</p>
 </main>
 <script>
-document.querySelectorAll('.tile').forEach(b => b.addEventListener('click', () => {
-  const role = b.dataset.role;
+/* demo accounts only: checked in the browser, nothing is sent, the password is never stored */
+const ACCOUNTS = {
+  inspector: {email: 'inspector@fieldplanner.demo', name: 'Inspector demo', org: 'AIPA Strășeni', label: 'Inspector'},
+  fermier: {email: 'administrator@fieldplanner.demo', name: 'Administrator demo', org: 'Vie Sireți SRL', label: 'Administrator'}};
+const DEMO_PW = 'demo2026';
+const $ = s => document.querySelector(s), f = $('#f'), err = $('#err');
+const role = () => f.role.value;
+const COLORS = {inspector: 'var(--blue)', fermier: 'var(--red)'};
+const say = (m, info) => { err.textContent = m; err.classList.toggle('info', !!info); err.hidden = false; };
+function syncRole() {
+  const a = ACCOUNTS[role()];
+  document.documentElement.style.setProperty('--c', COLORS[role()]);
+  $('#go').textContent = 'Intră ca ' + a.label;
+  $('#demo-email').textContent = a.email; $('#demo-pw').textContent = DEMO_PW;
+  err.hidden = true;
+}
+f.addEventListener('change', e => { if (e.target.name === 'role') syncRole(); });
+$('#fill').addEventListener('click', () => { f.email.value = ACCOUNTS[role()].email; f.password.value = DEMO_PW; err.hidden = true; $('#go').focus(); });
+$('#eye').addEventListener('click', e => { const b = e.currentTarget, on = b.getAttribute('aria-pressed') !== 'true'; b.setAttribute('aria-pressed', on); b.setAttribute('aria-label', on ? 'Ascunde parola' : 'Arată parola'); f.password.type = on ? 'text' : 'password'; });
+$('#forgot').addEventListener('click', () => say('În demo nu există resetare: datele contului demo sunt mai jos.', true));
+f.addEventListener('submit', e => {
+  e.preventDefault();
+  const email = f.email.value.trim().toLowerCase(), pw = f.password.value;
+  if (!email || !pw) return say('Completează poșta electronică și parola.');
+  const owner = Object.keys(ACCOUNTS).find(k => ACCOUNTS[k].email === email);
+  if (!owner || pw !== DEMO_PW) { f.password.value = ''; return say('Poșta sau parola nu se potrivesc cu un cont demo.'); }
+  if (owner !== role()) return say(`Acest cont nu are rolul ${ACCOUNTS[role()].label}. Alege „${ACCOUNTS[owner].label}” sus.`);
+  const a = ACCOUNTS[owner];
+  f.password.value = '';
   try {
-    localStorage.setItem('fpm.session', JSON.stringify({role, via: 'demo', at: new Date().toISOString()}));
-    localStorage.setItem('fpm.role', JSON.stringify(role));
-  } catch (e) {}
-  location.href = 'app.html#' + role;
-}));
-if (/administrator|fermier/.test(location.hash)) document.querySelector('.tile.admin').focus();
+    localStorage.setItem('fpm.session', JSON.stringify({role: owner, name: a.name, org: a.org, email: a.email, via: 'parola-demo', at: new Date().toISOString()}));
+    localStorage.setItem('fpm.role', JSON.stringify(owner));
+  } catch (x) {}
+  location.href = 'app.html#' + owner;
+});
+if (/administrator|fermier/.test(location.hash)) f.role.value = 'fermier';
+syncRole();
 </script>
 </body>
 </html>

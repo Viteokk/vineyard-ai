@@ -843,13 +843,14 @@ function roleBtn() {
 }
 function renderAcct() {
   const r = ROLES[S.role], sn = SESSION || {};
-  const via = sn.via === 'mpass-demo' ? 'MPass (simulat)' : SESSION ? 'Intrare demo, fără parolă' : 'Neconectat';
+  const via = sn.via === 'mpass-demo' ? 'MPass (simulat)' : sn.via === 'parola-demo' ? 'Cont demo, cu parolă' : SESSION ? 'Intrare demo' : 'Neconectat';
   const since = sn.at ? new Date(sn.at).toLocaleString('ro-RO', {day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit'}) : '';
   $('#acct').innerHTML = `<div class="acct-h"><span class="av" style="--rc:${acctColor()}">${acctIni()}</span><div><b>${escH(sn.name || (r ? r.name : 'Vizitator'))}</b><span class="note">${r ? escH(r.short) : 'Niciun rol ales'}${sn.org ? ' · ' + escH(sn.org) : ''}</span></div></div>
   <dl class="meta"><dt>Autentificare</dt><dd>${via}</dd>${since ? `<dt>De la</dt><dd>${since}</dd>` : ''}<dt>Acces</dt><dd>${r ? r.sees : 'Toate tab-urile'}</dd></dl>
-  <div class="acts"><button class="btn" type="button" data-act="role">Schimbă rolul</button>${SESSION ? '<button class="btn out" type="button" data-act="logout">Ieșire din cont</button>' : '<a class="btn primary" href="login.html">Intră în cont</a>'}</div>`;
+  <div class="acts">${SESSION ? '<button class="btn out" type="button" data-act="logout">Ieșire din cont</button><p class="note" style="margin:0;text-align:center">Pentru alt rol: ieși și intră cu alt cont.</p>' : '<a class="btn primary" href="login.html">Intră în cont</a><button class="btn" type="button" data-act="role">Alege rolul fără cont</button>'}</div>`;
 }
 function openRole() {
+  if (SESSION?.role && ROLES[SESSION.role]) return;   // signed in: the role comes from the account
   $('#role-title').textContent = SESSION ? `Conectat: ${SESSION.name || 'utilizator demo'}` : 'Cine folosește harta?';
   $('#role-sess').innerHTML = SESSION ? `<div class="callout"><b>${SESSION.name ? SESSION.name + ' · ' : ''}${ROLES[S.role]?.name || ''}${SESSION.org ? ' · ' + SESSION.org : ''}</b><p class="note">${SESSION.via === 'mpass-demo' ? 'Intrat prin MPass (simulat). ' : ''}Sesiune demo în acest browser. Tab-urile afișate sunt cele ale rolului.</p><div><button class="btn primary" type="button" data-act="logout">Ieșire</button></div></div>` : `<div class="callout"><p class="note">Ai și o <a href="login.html">pagină de intrare</a> pe roluri.</p></div>`;
   $('#role-list').innerHTML = Object.entries(ROLES).map(([k, r]) => `<button type="button" class="role-card" data-role="${k}" aria-pressed="${S.role === k}"><span class="ic" style="background:${r.color}"></span><b>${r.name}</b><span class="note">${r.sub}</span><span class="sees">${r.sees}</span></button>`).join('');
@@ -857,6 +858,7 @@ function openRole() {
 }
 function setRole(k) {
   const r = ROLES[k]; if (!r) return;
+  if (SESSION?.role && ROLES[SESSION.role] && k !== SESSION.role) { $('#role-veil').hidden = true; return show(ROLES[SESSION.role].view); }   // the account fixes the role: log out to switch
   S.role = k; store.set('role', k);
   if (SESSION) { SESSION.role = k; store.set('session', SESSION); }
   Object.assign(S.layers, r.layers); store.set('layers3', S.layers); applyLayers(); renderLayers();
