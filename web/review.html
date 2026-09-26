@@ -1,0 +1,161 @@
+<!doctype html>
+<html lang="ro">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="robots" content="noindex">
+<title>Verificare pre-adnotări v2</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&family=Geist+Mono:wght@500&display=swap">
+<style>
+:root{color-scheme:dark;--bg:#0B0F0D;--surface:#131A16;--line:rgba(255,255,255,.12);--ink:#fff;--soft:#D5DCD7;--muted:#9FAAA3;--leaf:#4ADE80;--yellow:#FFD200;--red:#F05252;--blue:#60A5FA;--mono:'Geist Mono',ui-monospace,Menlo,monospace}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.5 'Geist',system-ui,sans-serif;padding-inline:16px}
+a{color:inherit}
+.wrap{max-width:1240px;margin:0 auto;padding-block:28px 60px;display:flex;flex-direction:column;gap:22px}
+h1{font-size:clamp(24px,3vw,32px);margin:0;letter-spacing:-.01em;text-wrap:balance}
+.lead{color:var(--soft);max-width:75ch;margin:0}
+.cmp{border:1px solid var(--line);border-radius:14px;overflow-x:auto}
+table{border-collapse:collapse;width:100%;min-width:560px;font-variant-numeric:tabular-nums}
+th,td{padding:10px 14px;text-align:right;border-top:1px solid var(--line)}
+th:first-child,td:first-child{text-align:left}
+thead th{border-top:0;font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);font-weight:600;background:var(--surface)}
+td{font-family:var(--mono);font-size:14px}td:first-child{font-family:inherit}
+.delta{color:var(--muted)}
+.bar{position:sticky;top:0;z-index:5;background:rgba(11,15,13,.94);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);border-bottom:1px solid var(--line);margin-inline:-16px;padding:12px 16px;display:flex;flex-wrap:wrap;gap:10px;align-items:center}
+.chips{display:flex;flex-wrap:wrap;gap:6px}
+.chip{border:1px solid var(--line);background:none;color:var(--soft);border-radius:999px;padding:6px 12px;font:600 13px 'Geist',sans-serif;cursor:pointer;min-height:36px}
+.chip[aria-pressed="true"]{background:#fff;color:#0B0F0D;border-color:#fff}
+.sp{flex:1}
+.tally{font:500 13px var(--mono);color:var(--soft)}
+.btn{border:0;border-radius:10px;padding:0 14px;min-height:36px;font:600 13px 'Geist',sans-serif;cursor:pointer;background:var(--leaf);color:#052312}
+.btn.ghost{background:none;border:1px solid var(--line);color:var(--soft)}
+label.ov{display:flex;gap:6px;align-items:center;font-size:13px;color:var(--soft);cursor:pointer}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:16px}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:14px;overflow:hidden;display:flex;flex-direction:column}
+.card.k-manual{border-color:rgba(74,222,128,.55)}.card.k-verifica{border-color:rgba(255,210,0,.55)}
+.img{position:relative;aspect-ratio:1;max-width:100%;cursor:zoom-in;background:#000}
+.img img,.img svg{position:absolute;inset:0;width:100%;height:100%;display:block}
+.body{padding:12px 14px 14px;display:flex;flex-direction:column;gap:8px;flex:1}
+.top{display:flex;justify-content:space-between;gap:8px;align-items:baseline}
+.top b{font:500 14px var(--mono)}
+.meta{font-size:12px;color:var(--muted);font-family:var(--mono)}
+.note{font-size:13px;color:var(--soft);margin:0;flex:1}
+.tag{font:600 11px 'Geist',sans-serif;letter-spacing:.06em;text-transform:uppercase;padding:3px 7px;border-radius:6px;white-space:nowrap}
+.tag.goleste{background:rgba(255,255,255,.08);color:var(--soft)}.tag.verifica{background:rgba(255,210,0,.14);color:var(--yellow)}.tag.manual{background:rgba(74,222,128,.14);color:var(--leaf)}
+.seg{display:grid;grid-template-columns:1fr 1fr;border:1px solid var(--line);border-radius:10px;overflow:hidden}
+.seg button{border:0;background:none;color:var(--soft);min-height:38px;font:600 13px 'Geist',sans-serif;cursor:pointer}
+.seg button+button{border-left:1px solid var(--line)}
+.seg button[aria-pressed="true"].e{background:rgba(240,82,82,.18);color:#FCA5A5}
+.seg button[aria-pressed="true"].k{background:rgba(74,222,128,.18);color:var(--leaf)}
+button:focus-visible,.img:focus-visible{outline:2px solid var(--yellow);outline-offset:2px}
+.lb{position:fixed;inset:0;z-index:20;background:rgba(0,0,0,.88);display:grid;place-items:center;padding:16px}
+.lb[hidden]{display:none}
+.lb .box{position:relative;width:min(92vh,100%);aspect-ratio:1;max-width:100%}
+.lb img,.lb svg{position:absolute;inset:0;width:100%;height:100%}
+.lb .cap{position:absolute;left:0;right:0;bottom:-34px;text-align:center;font:500 13px var(--mono);color:var(--soft)}
+.out{display:flex;flex-direction:column;gap:8px}
+.out textarea{width:100%;min-height:90px;background:var(--surface);color:var(--soft);border:1px solid var(--line);border-radius:10px;padding:10px;font:500 12px var(--mono)}
+.legend{display:flex;flex-wrap:wrap;gap:14px;font-size:13px;color:var(--muted)}
+.legend i{display:inline-block;width:12px;height:12px;border-radius:3px;margin-right:6px;vertical-align:-1px}
+@media (max-width:560px){.bar{gap:8px}.sp{display:none}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header style="display:flex;flex-direction:column;gap:10px">
+    <a href="index.html" style="color:var(--muted);font-size:13px">Field Planner</a>
+    <h1>Pre-adnotări v2: sunt mai bune decât v1?</h1>
+    <p class="lead" id="about"></p>
+  </header>
+  <div class="cmp"><table><thead><tr><th>Ce punctează juriul</th><th>v1 (în Marcaj)</th><th>v2</th><th>Diferență</th></tr></thead><tbody id="cmp"></tbody></table></div>
+  <p class="lead">Dacă tile-urile golite chiar nu au vie, v1 numără cu aproape 50 % prea mult, iar juriul acceptă doar 15 % eroare la numărători și suprafețe și 10 % la lungime. În plus, fiecare coroană desenată pe un tile fără vie e penalizată. Riscul lui v2: dacă pe un tile golit există vie, se pierde. De aceea: am verificat de aproape cele 7 tile-uri cu urme de rânduri. Pe niciunul grila v1 nu urmărește rândurile reale, deci „Păstrează v1” nu ajută; pe 2 tile-uri (<b style="color:var(--leaf)">Golește + manual</b>) e vie tânără de desenat de mână.</p>
+  <div class="legend"><span><i style="background:rgba(74,222,128,.7)"></i>coroane v1</span><span><i style="background:#FFD200"></i>axe de rând v1</span><span><i style="background:rgba(96,165,250,.45)"></i>inter-rând v1</span></div>
+  <div class="bar">
+    <div class="chips" id="chips" role="group" aria-label="Filtru"></div>
+    <label class="ov"><input type="checkbox" id="ov" checked> Arată adnotările v1</label>
+    <span class="sp"></span>
+    <span class="tally" id="tally"></span>
+  </div>
+  <div class="grid" id="grid"></div>
+  <section class="out">
+    <b>Decizia ta</b>
+    <p class="lead" style="font-size:14px">Tile-urile marcate „Păstrează v1” rămân cu adnotările din v1; toate celelalte se golesc. Copiază lista și trimite-mi-o, iar eu fac ZIP-urile finale.</p>
+    <textarea id="dec" readonly aria-label="Decizii"></textarea>
+    <div><button class="btn" type="button" id="copy">Copiază lista</button> <button class="btn ghost" type="button" id="reset">Revino la propunerea mea</button></div>
+  </section>
+</div>
+<div class="lb" id="lb" hidden></div>
+<script>
+const $ = s => document.querySelector(s);
+const KEY = 'fpm.review_v2';
+let DATA, F = 'toate', DEC = {};
+try { DEC = JSON.parse(localStorage.getItem(KEY) || '{}'); } catch (e) {}
+const save = () => { try { localStorage.setItem(KEY, JSON.stringify(DEC)); } catch (e) {} };
+const keep = r => DEC[r.tile] === 'k';
+const nf = (n, d = 0) => Number(n).toLocaleString('ro-RO', {minimumFractionDigits: d, maximumFractionDigits: d});
+const TAG = {goleste: 'Golește', verifica: 'Neclar', manual: 'Golește + manual'};
+
+function overlay(r, sz) {
+  const k = sz / 512, P = p => p.map(([x, y]) => `${(x * k).toFixed(1)},${(y * k).toFixed(1)}`).join(' ');
+  const s = r.shapes.map(o => o.l === 'row' ? `<polyline points="${P(o.p)}" fill="none" stroke="#FFD200" stroke-width="${1.2 * k}"/>`
+    : o.l === 'interrow_area' ? `<polygon points="${P(o.p)}" fill="rgba(96,165,250,.22)" stroke="rgba(96,165,250,.6)" stroke-width="${.6 * k}"/>`
+    : o.l === 'vineyard' ? `<polygon points="${P(o.p)}" fill="rgba(74,222,128,.45)" stroke="#4ADE80" stroke-width="${.5 * k}"/>` : '').join('');
+  return `<svg viewBox="0 0 ${sz} ${sz}" aria-hidden="true" class="ovl">${s}</svg>`;
+}
+function card(r, i) {
+  const c = r.counts, k = keep(r);
+  return `<article class="card k-${r.verdict}" data-i="${i}">
+    <div class="img" tabindex="0" role="button" aria-label="Mărește ${r.tile}"><img loading="lazy" src="data/tiles/${r.tile.replace('.tif', '.jpg')}" alt="">${overlay(r, 512)}</div>
+    <div class="body">
+      <div class="top"><b>${r.tile.slice(7, 16)}</b><span class="tag ${r.verdict}">${TAG[r.verdict]}</span></div>
+      <div class="meta">${nf(c.vineyard || 0)} coroane · ${nf(c.row || 0)} rânduri · ${r.ids.join(', ') || '—'}</div>
+      <p class="note">${r.note}</p>
+      <div class="seg" role="group" aria-label="Decizie pentru ${r.tile}"><button type="button" class="e" data-d="e" aria-pressed="${!k}">Golește (v2)</button><button type="button" class="k" data-d="k" aria-pressed="${k}">Păstrează v1</button></div>
+    </div></article>`;
+}
+function render() {
+  const list = DATA.tiles.map((r, i) => [r, i]).filter(([r]) => F === 'toate' || (F === 'decis' ? keep(r) : r.verdict === F));
+  $('#grid').innerHTML = list.map(([r, i]) => card(r, i)).join('') || '<p class="lead">Nimic în filtrul ăsta.</p>';
+  applyOv(); tally();
+}
+function tally() {
+  const kept = DATA.tiles.filter(keep);
+  $('#tally').textContent = `${kept.length} păstrate · ${DATA.tiles.length - kept.length} golite`;
+  $('#dec').value = JSON.stringify({keep_v1: kept.map(r => r.tile), empty: DATA.tiles.filter(r => !keep(r)).map(r => r.tile)});
+}
+function applyOv() { document.querySelectorAll('.ovl').forEach(s => { s.style.display = $('#ov').checked ? '' : 'none'; }); }
+function chips() {
+  const n = v => DATA.tiles.filter(r => r.verdict === v).length;
+  const C = [['toate', `Toate ${DATA.tiles.length}`], ['manual', `Vie de adăugat manual ${n('manual')}`], ['verifica', `Neclare ${n('verifica')}`], ['goleste', `Fără vie ${n('goleste')}`], ['decis', 'Păstrate de tine']];
+  $('#chips').innerHTML = C.map(([k, t]) => `<button type="button" class="chip" data-f="${k}" aria-pressed="${F === k}">${t}</button>`).join('');
+}
+function openLb(r) {
+  const src = r.hi || 'data/tiles/' + r.tile.replace('.tif', '.jpg');
+  $('#lb').innerHTML = `<div class="box"><img src="${src}" alt="${r.tile}">${overlay(r, 512)}<div class="cap">${r.tile} · click oriunde ca să închizi</div></div>`;
+  $('#lb').hidden = false; applyOv();
+}
+document.addEventListener('click', e => {
+  const ch = e.target.closest('.chip'); if (ch) { F = ch.dataset.f; chips(); render(); return; }
+  const sb = e.target.closest('.seg button'); if (sb) { const r = DATA.tiles[+sb.closest('.card').dataset.i]; DEC[r.tile] = sb.dataset.d; save(); const card = sb.closest('.card'); card.querySelectorAll('.seg button').forEach(b => b.setAttribute('aria-pressed', b === sb)); tally(); return; }
+  const im = e.target.closest('.img'); if (im) return openLb(DATA.tiles[+im.closest('.card').dataset.i]);
+  if (e.target.closest('#lb')) $('#lb').hidden = true;
+});
+document.addEventListener('keydown', e => { if (e.key === 'Escape') $('#lb').hidden = true; if (e.key === 'Enter' && e.target.classList.contains('img')) e.target.click(); });
+$('#ov').addEventListener('change', applyOv);
+$('#copy').addEventListener('click', async () => { const t = $('#dec'); try { await navigator.clipboard.writeText(t.value); $('#copy').textContent = 'Copiat'; } catch (x) { t.select(); } setTimeout(() => { $('#copy').textContent = 'Copiază lista'; }, 1500); });
+$('#reset').addEventListener('click', () => { DEC = {}; save(); render(); });
+(async () => {
+  DATA = await fetch('data/review_v2.json?v=1').then(r => r.json());
+  $('#about').textContent = DATA.about;
+  const [a, b] = await fetch('data/review_stats.json?v=1').then(r => r.json()).then(s => [s.v1, s.v2]).catch(() => [null, null]);
+  if (a) {
+    const R = [['Blocuri (vineyard_id distincte)', 'blocks', 0, ''], ['Rânduri (row_id distincte)', 'rows', 0, ''], ['Lungime totală a rândurilor', 'row_len_km', 1, ' km'], ['Suprafața coroanelor', 'canopy_ha', 2, ' ha'], ['Suprafața dintre rânduri', 'interrow_ha', 2, ' ha']];
+    $('#cmp').innerHTML = R.map(([t, k, d, u]) => `<tr><td>${t}</td><td>${nf(a[k], d)}${u}</td><td>${nf(b[k], d)}${u}</td><td class="delta">${nf((b[k] - a[k]) / a[k] * 100, 0)} %</td></tr>`).join('')
+      + `<tr><td>Obiecte scoase (pe cele 72 de tile-uri)</td><td colspan="3" class="delta">${nf(DATA.removed.vineyard)} coroane · ${nf(DATA.removed.row)} rânduri · ${nf(DATA.removed.interrow_area)} inter-rânduri</td></tr>`;
+  }
+  chips(); render();
+})();
+</script>
+</body>
+</html>
