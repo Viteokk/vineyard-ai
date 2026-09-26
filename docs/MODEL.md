@@ -24,8 +24,8 @@ GeoTIFF 2048×2048 px, 2,5 cm/px, EPSG:32635
 ```
 
 ## Modelul
-- **Arhitectură:** YOLOv8n-seg (Ultralytics), 3,4 M parametri: detecție + segmentare de instanțe într-o singură
-  trecere. „n” = varianta cea mai mică: rulează pe laptop, fără GPU dedicat.
+- **Arhitectură:** YOLO11n-seg (Ultralytics 8.4), ~2,9 M parametri: detecție + segmentare de instanțe într-o singură
+  trecere. (Prima versiune a fost YOLOv8n-seg; YOLO11 a ieșit mai bun: deșeuri mAP50 0,731 vs 0,654, coroane 0,717 vs 0,713.) „n” = varianta cea mai mică: rulează pe laptop, fără GPU dedicat.
 - **Clase:** `0 vineyard` (coroana unui butuc, poligon) și `1 waste` (deșeu; din mască se ia cutia).
 - **Intrare:** crop-uri de 640×640 px din tile-urile de 2048 px, la rezoluția nativă (o coroană ≈ 30 px,
   o sticlă ≈ 10–15 px), suprapunere de 128 px. Pe tile: 16 crop-uri; obiectele duble de la suprapuneri se elimină.

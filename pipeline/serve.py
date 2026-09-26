@@ -13,7 +13,7 @@
                           -> pipeline.compliance on it -> the new compliance.json (written to out/live/, the
                              published web/data/compliance.json with the demo registry is left as it is)
 
-Usage:  python -m pipeline.serve [--port 8000] [--weights runs/vineyard/multi/weights/best.pt] [--device cpu]
+Usage:  python -m pipeline.serve [--port 8000] [--weights runs/vineyard/multi11/weights/best.pt] [--device cpu]
 Binds to 127.0.0.1 only. Nothing here changes route.geojson / measurements.csv: live results go to out/live/.
 """
 from __future__ import annotations
@@ -211,7 +211,7 @@ class Handler(SimpleHTTPRequestHandler):
 def main() -> None:
     ap = argparse.ArgumentParser()
     ap.add_argument("--port", type=int, default=8000)
-    ap.add_argument("--weights", default=str(C.ROOT / "runs/vineyard/multi/weights/best.pt"))
+    ap.add_argument("--weights", default=str(C.ROOT / "runs/vineyard/multi11/weights/best.pt"))
     ap.add_argument("--device", default="cpu", help="cpu | mps (use cpu while a training run holds the GPU)")
     a = ap.parse_args()
     STATE["weights"] = a.weights if Path(a.weights).exists() else None

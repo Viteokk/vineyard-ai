@@ -6,7 +6,7 @@ Per tile: 640 px crops (stride 512), masks -> polygons in tile pixels, duplicate
   waste     boxes with score >= --conf-waste, 0.1-10 m per side; vineyard_id is set later by pipeline.blocks
 Rows, inter-rows and attributes always come from the classical detector.
 
-Usage:  python -m pipeline.infer_multi --weights runs/vineyard/multi/weights/best.pt \\
+Usage:  python -m pipeline.infer_multi --weights runs/vineyard/multi11/weights/best.pt \\
             --base out/baseline_all.xml --out out/multi_all.xml [--canopy classical|model] [--conf-waste 0.5]
         python -m pipeline.infer_multi ... --tiles data/examples/images --base out/baseline.xml --out out/multi.xml
         python -m pipeline.eval --pred out/multi.xml
@@ -182,7 +182,7 @@ def tile_objects(model, img, base_objs: list[dict], canopy: str, conf: float, co
 
 def main() -> None:
     ap = argparse.ArgumentParser()
-    ap.add_argument("--weights", default=str(C.ROOT / "runs/vineyard/multi/weights/best.pt"))
+    ap.add_argument("--weights", default=str(C.ROOT / "runs/vineyard/multi11/weights/best.pt"))
     ap.add_argument("--base", default=str(C.OUT / "baseline_all.xml"), help="classical xml (rows / inter-rows / canopies)")
     ap.add_argument("--tiles", default=str(C.TILES))
     ap.add_argument("--out", default=str(C.OUT / "multi_all.xml"))

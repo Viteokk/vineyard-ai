@@ -10,7 +10,7 @@ global block / row IDs → measurements → two walking routes → interactive w
 | Walking route, farmer (waste only) | [`route_waste.geojson`](route_waste.geojson) |
 | Measurements by `vineyard_id` / `row_id` | [`measurements.csv`](measurements.csv) |
 | Web interface | **https://viteokk.github.io/vineyard-ai/** (GitHub Pages from `web/`, branch `gh-pages`) · local: `python -m http.server -d web 8000` |
-| Model weights | [yolov8n-seg-vineyard-canopy.pt (GitHub release v0.1-weights)](https://github.com/Viteokk/vineyard-ai/releases/tag/v0.1-weights) |
+| Model weights | [yolo11n-seg-vineyard-waste.pt (release v0.2-weights)](https://github.com/Viteokk/vineyard-ai/releases/tag/v0.2-weights) · earlier canopy-only [v0.1-weights](https://github.com/Viteokk/vineyard-ai/releases/tag/v0.1-weights) |
 | Pre-annotations uploaded to Marcaj | `out/upload/*.zip` (CVAT for images 1.1, built by `pipeline/export_cvat.py`) |
 
 ## Architecture
@@ -97,9 +97,14 @@ Full per-stage timings of the last run: `out/timing.json`.
 ## Model
 
 How the whole solution works, the training data and the open questions: [`docs/MODEL.md`](docs/MODEL.md).
-One YOLOv8n-seg with two classes (`vineyard`, `waste`): `train/make_multi_dataset.py` (Sireț3 crops with the official
-reference + pseudo-labels, DroneWaste v1.0 and UAVVaste, both CC BY 4.0, non-waste categories dropped) →
-`train/train_yolo.py --name multi` → `pipeline/infer_multi.py` (waste boxes + optional model canopies on classical rows).
+One **YOLO11n-seg** with two classes (`vineyard`, `waste`) —
+[weights: GitHub release v0.2-weights](https://github.com/Viteokk/vineyard-ai/releases/tag/v0.2-weights):
+`train/make_multi_dataset.py` (Sireț3 crops with the official reference + pseudo-labels, DroneWaste v1.0 and UAVVaste,
+both CC BY 4.0, non-waste categories dropped) → `train/train_yolo.py --model yolo11n-seg.pt --name multi11` (15 epochs,
+2 h 51 min on the M4 Pro GPU) → `pipeline/infer_multi.py`. Held-out validation: mask mAP50 vineyard 0.717, box mAP50
+waste 0.731 (YOLOv8n-seg: 0.713 / 0.654). On the held-out example tile the classical canopies still score higher
+(0.683 vs 0.529 model-only), so the submitted canopies are classical; the model supplies waste candidates and the
+live "analyse a tile" mode.
 
 Submitted detections come from the classical pipeline (it scored higher than the fine-tuned YOLO on the example
 tiles: canopy 0.587 vs 0.562, because its outlines match the loosely traced reference better). The neural model
