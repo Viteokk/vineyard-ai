@@ -213,6 +213,16 @@ input[type=range]{accent-color:var(--accent);width:100%}
 .leg{display:grid;grid-template-columns:28px 1fr;gap:8px 10px;align-items:start;font-size:13px}
 .leg i{display:block;width:26px;height:12px;border-radius:3px;margin-top:3px}
 .leg small{display:block;color:var(--muted);font-size:12px;line-height:1.35}
+.cor-task{border:1px solid var(--line);border-radius:12px;padding:10px 12px;display:flex;flex-direction:column;gap:6px;background:var(--solid)}
+.cor-task.done{opacity:.55}
+.cor-head{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.cor-head b{font-size:15px}
+.cor-fr{display:flex;align-items:center;gap:8px;flex-wrap:wrap;font-size:13px;text-align:left;padding:4px 6px;border-radius:8px}
+.cor-fr:hover{background:var(--hover)}
+.chip{display:inline-block;font-size:11px;font-weight:600;padding:1px 8px;border-radius:999px;white-space:nowrap}
+.chip.gol{background:rgba(239,68,68,.15);color:#DC2626}.chip.gol_check{background:rgba(245,158,11,.18);color:#B45309}
+.chip.partial{background:rgba(59,130,246,.15);color:#2563EB}.chip.deseu,.chip.deseu_top{background:rgba(147,51,234,.15);color:#9333EA}
+.chip.lipsa{background:rgba(34,197,94,.16);color:#15803D}
 .demo-band{border:1px dashed var(--warn);background:var(--warn-soft);color:var(--ink);border-radius:12px;padding:8px 12px;font-size:12px}
 .cmp-tbl{width:100%;border-collapse:collapse;font-size:13px}
 .cmp-tbl th,.cmp-tbl td{text-align:left;padding:5px 6px;border-bottom:1px solid var(--line);vertical-align:top}
@@ -258,6 +268,7 @@ input[type=range]{accent-color:var(--accent);width:100%}
   <a href="#traseu" data-view="traseu"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="6" cy="19" r="2"/><circle cx="18" cy="5" r="2"/><path d="M8 19h6a4 4 0 000-8h-4a4 4 0 010-8h6"/></svg><span class="tip">Traseu <kbd>2</kbd></span><span class="sr">Traseu</span></a>
   <a href="#masuratori" data-view="masuratori"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 20V10M10 20V4M16 20v-7M21 20H3"/></svg><span class="tip">Măsurători <kbd>3</kbd></span><span class="sr">Măsurători</span></a>
   <a href="#pipeline" data-view="pipeline"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="6" height="6" rx="1.5"/><rect x="15" y="14" width="6" height="6" rx="1.5"/><path d="M9 7h4a2 2 0 012 2v5"/></svg><span class="tip">Pipeline <kbd>4</kbd></span><span class="sr">Pipeline</span></a>
+  <a href="#corectura" data-view="corectura"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 11l3 3 8-8"/><path d="M20 12v6a2 2 0 01-2 2H6a2 2 0 01-2-2V6a2 2 0 012-2h9"/></svg><span class="tip">Corectură Marcaj <kbd>6</kbd></span><span class="sr">Corectură Marcaj</span></a>
   <a href="#conformitate" data-view="conformitate"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l8 3v6c0 4.5-3.4 8.3-8 9-4.6-.7-8-4.5-8-9V6l8-3z"/><path d="M8.5 12l2.5 2.5 4.5-5"/></svg><span class="tip">Conformitate <kbd>5</kbd></span><span class="sr">Conformitate</span></a>
   <div class="sp"></div>
   <button type="button" data-act="palette" class="only-phone" aria-label="Caută tile, rând, bloc"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg></button>
@@ -850,6 +861,30 @@ Promise.all([fetch('data/blocks_report.json').then(r => r.ok ? r.json() : null),
 }).catch(() => {});
 const blockHa = b => (b.canopy_m2 + b.interrow_m2) / 1e4;
 
+/* ============ corectură Marcaj: plan pe task-uri ============ */
+let COR = null;
+const CORD = store.get('cor', {});
+const CORA = {gol: 'golește tot', gol_check: 'verifică, apoi golește', partial: 'șterge zonele fără vie', deseu: 'posibil deșeu', deseu_top: 'deșeu probabil', lipsa: 'vie ratată: desenează rândurile'};
+fetch('data/marcaj_tasks.json').then(r => r.ok ? r.json() : null).then(j => { COR = j; if (S.view === 'corectura') renderPanel(); }).catch(() => {});
+function viewCor() {
+  $('#p-head').innerHTML = head(`Corectură Marcaj · proiectul ${COR?.project ?? ''}`, '63 de task-uri');
+  if (!COR) { $('#p-body').innerHTML = '<p class="note">Se încarcă planul…</p>'; return; }
+  const work = COR.tasks.filter(t => t.frames.length), clean = COR.tasks.filter(t => !t.frames.length);
+  const done = COR.tasks.filter(t => CORD[t.task]).length;
+  const count = k => work.reduce((a, t) => a + t.frames.filter(f => f.actions.includes(k)).length, 0);
+  $('#p-body').innerHTML = `<div class="stats"><div class="stat"><div class="v num">${fmt(done)} / 63</div><div class="l">task-uri trimise (Submit), bifate aici</div></div>
+      <div class="stat"><div class="v num" style="color:#DC2626">${fmt(count('gol') + count('gol_check'))}</div><div class="l">tile-uri fără vie de golit</div></div>
+      <div class="stat"><div class="v num" style="color:#2563EB">${fmt(count('partial'))}</div><div class="l">tile-uri cu zone de șters</div></div>
+      <div class="stat"><div class="v num" style="color:#15803D">${fmt(count('lipsa'))}</div><div class="l">tile-uri cu vie ratată</div></div></div>
+    <p class="note">Pe fiecare task din Marcaj: faci ce scrie la fiecare frame, te uiți rapid la restul, apoi <b>Save + Submit</b> și bifezi aici. Click pe un frame = harta sare la tile și arată ce a desenat AI-ul. Bifele rămân doar în acest browser. <a href="https://marcaj.com/projects/38" target="_blank" rel="noopener">Deschide proiectul în Marcaj</a></p>
+    <div style="display:flex;flex-direction:column;gap:8px">${work.map(t => `<div class="cor-task ${CORD[t.task] ? 'done' : ''}">
+      <div class="cor-head"><b>Task #${t.task}</b><span class="note">${t.frames.length} frame${t.frames.length > 1 ? '-uri' : ''} de lucru</span><span style="flex:1"></span><button class="btn sm" type="button" data-cor-done="${t.task}" aria-pressed="${!!CORD[t.task]}">${CORD[t.task] ? '✓ Trimis' : 'Marchează trimis'}</button></div>
+      ${t.frames.map(f => `<button type="button" class="cor-fr" data-cor-tile="${f.tile}"><b class="num">${f.frame ? 'frame ' + f.frame : 'frame ?'}</b><span class="mono">${short(f.tile)}</span>${f.actions.map(a => `<span class="chip ${a}">${CORA[a]}</span>`).join('')}<span class="note">${f.objects ? fmt(f.objects) + ' obiecte AI' : 'gol acum'}${f.vineyard_id ? ' · vineyard_id ' + f.vineyard_id : ''}</span></button>`).join('')}</div>`).join('')}</div>
+    <section><div class="sec-title"><h2>Fără probleme găsite</h2><span class="num">${fmt(clean.length)}</span></div>
+      <div style="display:flex;gap:6px;flex-wrap:wrap">${clean.map(t => `<button class="btn sm" type="button" data-cor-done="${t.task}" aria-pressed="${!!CORD[t.task]}">${CORD[t.task] ? '✓ ' : ''}#${t.task}</button>`).join('')}</div>
+      <p class="note">Doar privire rapidă și Submit.</p></section>`;
+}
+
 /* ============ conformitate: registrul viticol (ONVV) + cereri AIPA vs dronă ============ */
 let CMP = null, cmpLayer = null, BFC = null, CAD = null, cadLayer = null;
 const CADC = f => f.properties.flags.includes('landuse') ? '#A855F7' : f.properties.flags.includes('rvv') ? '#38BDF8' : '#E5E7EB';
@@ -1101,7 +1136,7 @@ python -m pipeline.to_geojson --cvat data/examples/annotations.xml
 <span class="c"># pornește site-ul</span>
 python -m http.server -d web 8000</div></section>`;
 }
-const VIEWS = {harta: viewHarta, traseu: viewTraseu, masuratori: viewMas, pipeline: viewPipe, conformitate: viewConf};
+const VIEWS = {harta: viewHarta, traseu: viewTraseu, masuratori: viewMas, pipeline: viewPipe, conformitate: viewConf, corectura: viewCor};
 function renderPanel() { VIEWS[S.view](); }
 function show(v) {
   if (v === 'administrator') v = 'fermier';
@@ -1185,7 +1220,7 @@ function renderLayers() {
 let palItems = [], palIdx = 0;
 function palSearch(q) {
   q = q.trim().toLowerCase(); const it = [];
-  for (const [v, l, k] of [['harta', 'Hartă', '1'], ['traseu', 'Traseu', '2'], ['masuratori', 'Măsurători', '3'], ['pipeline', 'Pipeline', '4'], ['conformitate', 'Conformitate ONVV / AIPA', '5']]) if (!q || l.toLowerCase().includes(q)) it.push({g: 'Secțiuni', k, l, run: () => { location.hash = v; }});
+  for (const [v, l, k] of [['harta', 'Hartă', '1'], ['traseu', 'Traseu', '2'], ['masuratori', 'Măsurători', '3'], ['pipeline', 'Pipeline', '4'], ['conformitate', 'Conformitate ONVV / AIPA', '5'], ['corectura', 'Corectură Marcaj', '6']]) if (!q || l.toLowerCase().includes(q)) it.push({g: 'Secțiuni', k, l, run: () => { location.hash = v; }});
   for (const [k, s] of Object.entries(SRC)) if (!q || s.name.toLowerCase().includes(q)) it.push({g: 'Sursă date', k: '◧', l: s.name, r: s.sub, run: () => setSrc(k)});
   if (WC.length && (!q || 'candidați deșeuri deseuri'.includes(q))) it.push({g: 'Locuri', k: 'D', l: 'Candidați deșeuri', r: `${WC.length} din checklist`, run: () => wcGo((WC.find(x => !WCV[x.rank]) || WC[0]).rank)});
   if (!q || 'start'.includes(q)) it.push({g: 'Locuri', k: 'S', l: 'START', r: 'punctul de plecare', run: () => startLL && map.flyTo(startLL, 3)});
@@ -1256,6 +1291,8 @@ document.addEventListener('click', e => {
   if (b.dataset.role) return setRole(b.dataset.role);
   if (b.dataset.block) return goBlock(b.dataset.block);
   if (b.dataset.cmp) return goCmp(b.dataset.cmp);
+  if (b.dataset.corTile) { if (S.src !== 'pred') setSrc('pred'); return goTile(b.dataset.corTile); }
+  if (b.dataset.corDone) { const k = b.dataset.corDone; if (CORD[k]) delete CORD[k]; else CORD[k] = true; store.set('cor', CORD); return renderPanel(); }
   if (b.dataset.tour) return showTour(+b.dataset.tour);
   switch (b.dataset.act) {
     case 'panel': return collapsePanel(!S.collapsed);
@@ -1328,7 +1365,7 @@ document.addEventListener('keydown', e => {
   if (e.key === 'Escape') { if (RULER.on) return rulerToggle(); if (!$('#legend').hidden) return ($('#legend').hidden = true); if (!$('#role-veil').hidden) return ($('#role-veil').hidden = true); if (!$('#pal-veil').hidden) return closePal(); if (!$('#ex-veil').hidden) return ($('#ex-veil').hidden = true); if (!$('#layers').hidden) return ($('#layers').hidden = true); if (S.sel) return select(null); }
   if (typing) return;
   if (e.key === '/') { e.preventDefault(); return openPal(); }
-  if ('12345'.includes(e.key) && e.key.length === 1) location.hash = ['harta', 'traseu', 'masuratori', 'pipeline', 'conformitate'][+e.key - 1];
+  if ('123456'.includes(e.key) && e.key.length === 1) location.hash = ['harta', 'traseu', 'masuratori', 'pipeline', 'conformitate', 'corectura'][+e.key - 1];
   if (e.key.toLowerCase() === 'l') $('.tr [data-act="layers"]').click();
   if (e.key === '0') fitAll();
 });
