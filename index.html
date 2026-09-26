@@ -557,7 +557,8 @@ function select(sel) {
   if (sel.type === 'row') {
     const p = sel.p;
     html = `<div class="p-top"><div><div class="eyebrow">Rând · ${S.src === 'pred' ? 'pre-adnotare' : 'referință'}</div><h2 style="font-size:19px">${p.row_id}</h2></div>${close}</div>
-      <dl><dt>Lungime</dt><dd class="num">${fmt(p.length_m, 1)} m</dd><dt>row_structure</dt><dd><span class="badge ${p.row_structure === 'disrupted' ? 'dis' : ''}">${p.row_structure}</span></dd><dt>vineyard_id</dt><dd>${p.vineyard_id}</dd><dt>Tile</dt><dd>${short(p.tile)}</dd></dl>`;
+      <dl><dt>Lungime</dt><dd class="num">${fmt(p.length_m, 1)} m</dd><dt>row_structure</dt><dd><span class="badge ${p.row_structure === 'disrupted' ? 'dis' : ''}">${p.row_structure}</span></dd><dt>vineyard_id</dt><dd>${p.vineyard_id}</dd><dt>Tile</dt><dd>${short(p.tile)}</dd></dl>
+      <div class="acts"><button class="btn" type="button" data-act="share" data-id="${p.row_id}">Copiază linkul</button></div>`;
     hi = L.polyline(sel.layer.getLatLngs(), {renderer: R, color: '#FFFFFF', weight: 7, opacity: .9}).addTo(map); sel.layer.bringToFront();
   } else if (sel.type === 'inter') {
     const p = sel.p;
@@ -587,7 +588,7 @@ function select(sel) {
         ${b.waste ? `<div class="li" style="cursor:default"><span class="dot" style="background:#9333EA"></span>Strânge ${fmt(b.waste)} deșeuri<span class="r">traseul roșu</span></div>` : ''}
         ${rows.length ? `<div class="li" style="cursor:default;flex-wrap:wrap;gap:4px"><span class="dot" style="background:#FFD43B"></span>Verifică rândurile:${rows.slice(0, 12).map(r => ` <button type="button" class="btn sm" data-rowid="${r}">${r.split('-').pop()}</button>`).join('')}${rows.length > 12 ? ` <span class="note">+${rows.length - 12}</span>` : ''}</div>` : ''}
       </div>
-      ${b.bbox ? `<div class="acts"><button class="btn" type="button" data-act="zoom-block">Mărește pe bloc</button></div>` : ''}`;
+      <div class="acts">${b.bbox ? `<button class="btn" type="button" data-act="zoom-block">Mărește pe bloc</button>` : ''}<button class="btn" type="button" data-act="share" data-id="${b.vineyard_id}">Copiază linkul</button></div>`;
     if (sel.layer) hi = L.geoJSON(sel.layer.feature, {renderer: R, coordsToLatLng: toLL, style: {color: '#FFFFFF', weight: 3, fill: false}, interactive: false}).addTo(map);
   } else if (sel.type === 'wcand') {
     const c = sel.c, v = WCV[c.rank], n = WC.length, done = Object.keys(WCV).length, yes = Object.values(WCV).filter(x => x === 'y').length;
@@ -769,7 +770,17 @@ function paramsCard() {
       <p class="note">${JOB ? `<span class="mono">${JOB.last || 'pornesc'}</span>` : `pipeline/route.py rulează pe laptop pe ${farmer ? 'deșeuri' : `țintele cu gol ≥ ${S.minGap} m`}; distanțele sunt în cache, durează 1–3 minute.`}</p>`
       : `<p class="note">Timpii și zilele se recalculează imediat.${VARS && !farmer ? ` Pragul de gol schimbă traseul: variantele ≥ ${Object.keys(VARS).join(', ')} m sunt calculate dinainte.` : ''} Orice alt calcul (alt prag, alt start, un tile nou) rulează de pe laptop: <span class="mono">python -m pipeline.serve</span>, apoi <span class="mono">http://127.0.0.1:8000</span>.</p>`}</section>`;
 }
-let LIVE = null, JOB = null, VARS = null, BR = null, bstatLayer = null, TOURS = null;
+let LIVE = null, JOB = null, VARS = null, BR = null, bstatLayer = null, TOURS = null, PENDING = null;
+function openPending() {
+  if (!PENDING) return;
+  if (PENDING.includes('-R')) { const id = PENDING; PENDING = null; return setTimeout(() => goRow(id), 400); }
+  if (!BR) return;                           // retried when the block report arrives
+  const id = PENDING; PENDING = null; goBlock(id);
+}
+function shareLink(id) {
+  const u = location.href.split('#')[0] + '#' + id;
+  copy(u, null);
+}
 fetch('data/tours/index.json').then(r => r.ok ? r.json() : null).then(j => { TOURS = j; if (j && S.view === 'traseu') renderPanel(); }).catch(() => {});
 async function showTour(k) {
   const t = TOURS?.tours.find(x => x.day === k); if (!t) return;
@@ -792,7 +803,7 @@ Promise.all([fetch('data/blocks_report.json').then(r => r.ok ? r.json() : null),
   BR = {...rep, by: Object.fromEntries(rep.blocks.map(b => [b.vineyard_id, b]))};
   if (fc) bstatLayer = L.geoJSON(fc, {renderer: R, coordsToLatLng: toLL, style: f => ({color: BSC[f.properties.status], weight: 1.4, fillColor: BSC[f.properties.status], fillOpacity: .16}),
     onEachFeature: (f, l) => l.on('click', e => { L.DomEvent.stop(e); const b = BR.by[f.properties.vineyard_id]; if (b) select({type: 'block', b, layer: l}); })});
-  applyLayers(); renderLayers(); renderPanel();
+  applyLayers(); renderLayers(); renderPanel(); openPending();
 }).catch(() => {});
 const blockHa = b => (b.canopy_m2 + b.interrow_m2) / 1e4;
 function goBlock(vid) {
@@ -950,6 +961,8 @@ const VIEWS = {harta: viewHarta, traseu: viewTraseu, masuratori: viewMas, pipeli
 function renderPanel() { VIEWS[S.view](); }
 function show(v) {
   if (ROLES[v]) return setRole(v);         // #inspector, #fermier, #agronom
+  const idm = /^(V\d+)(-R\d+)?$/i.exec(v || '');   // shareable links: #V63 (block), #V02-R017 (row)
+  if (idm && !VIEWS[v]) { PENDING = v.toUpperCase(); if (S.view !== 'harta' || !$('#p-body').innerHTML) show('harta'); return openPending(); }
   if (!VIEWS[v]) v = 'harta';
   const wasWide = $('#panel').classList.contains('wide');
   if (S.view !== v) S.q = '';
@@ -1124,6 +1137,7 @@ document.addEventListener('click', e => {
     case 'role': return openRole();
     case 'legend': { const p = $('#legend'); if (p.hidden) renderLegend(); p.hidden = !p.hidden; b.setAttribute('aria-expanded', !p.hidden); if (!p.hidden) { $('#layers').hidden = true; $('#insp').hidden = true; } return; }
     case 'ruler': return rulerToggle();
+    case 'share': return shareLink(b.dataset.id);
     case 'ruler-undo': { RULER.pts.pop(); return rulerRender(); }
     case 'zoom-block': return S.sel?.b?.bbox && fitBounds(bnds(S.sel.b.bbox), 5);
     case 'bstat-on': { S.layers.bstat = true; store.set('layers', S.layers); applyLayers(); renderLayers(); return renderPanel(); }
@@ -1168,7 +1182,7 @@ addEventListener('hashchange', () => show(location.hash.slice(1)));
 applyTheme(store.get('theme', 'auto'));
 roleBtn();
 show(location.hash.slice(1) || (S.role ? ROLES[S.role].view : 'harta'));
-if (!S.role && !ROLES[location.hash.slice(1)]) openRole();
+if (!S.role && !ROLES[location.hash.slice(1)] && !/^#V\d+/i.test(location.hash)) openRole();   // shared links open straight on the object
 map.fitBounds(bnds(EXT), phone() ? {paddingTopLeft: [16, 70], paddingBottomRight: [16, innerHeight * .44 + 100]} : {paddingTopLeft: [leftPad() + 16, 76], paddingBottomRight: [76, 76]});
 renderLayers(); applyLayers(); scale();
 $('#loader').remove();
