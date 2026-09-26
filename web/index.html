@@ -207,6 +207,12 @@ input[type=range]{accent-color:var(--accent);width:100%}
 .params input{max-width:90px}
 .live{display:inline-flex;align-items:center;gap:6px}
 .live i{width:8px;height:8px;border-radius:50%;background:var(--accent)}
+.zoom button[aria-pressed="true"]{background:var(--accent);color:var(--on-accent)}
+.ruler{position:fixed;right:72px;bottom:70px;border-radius:14px;padding:10px 12px;z-index:1000;display:flex;align-items:center;gap:10px}
+.ruler b{font-size:18px}
+.leg{display:grid;grid-template-columns:28px 1fr;gap:8px 10px;align-items:start;font-size:13px}
+.leg i{display:block;width:26px;height:12px;border-radius:3px;margin-top:3px}
+.leg small{display:block;color:var(--muted);font-size:12px;line-height:1.35}
 .me{width:16px;height:16px;border-radius:50%;background:#2563EB;box-shadow:0 0 0 3px #fff,0 0 0 8px rgba(37,99,235,.3)}
 @media (max-width:820px){.nav,.panel:not(.collapsed) ~ .nav{left:12px;right:12px;width:auto;transform:none;top:auto;bottom:calc(84px + env(safe-area-inset-bottom,0px))}}
 .toast{position:fixed;left:50%;top:72px;transform:translateX(-50%);z-index:3000;background:var(--ink);color:var(--bg);font-weight:600;padding:10px 16px;border-radius:12px;box-shadow:var(--shadow)}
@@ -248,14 +254,18 @@ input[type=range]{accent-color:var(--accent);width:100%}
 <div class="tr">
   <button class="btn glass role-btn" type="button" data-act="role" id="role-btn" aria-label="Schimbă rolul"></button>
   <button class="icon-btn glass" type="button" data-act="layers" aria-label="Straturi" aria-expanded="false"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l9 5-9 5-9-5 9-5z"/><path d="M3 13l9 5 9-5"/></svg></button>
+  <button class="icon-btn glass" type="button" data-act="legend" aria-label="Legendă" aria-expanded="false"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M9.5 9.5a2.5 2.5 0 114 2c-.9.6-1.5 1.1-1.5 2.5M12 17h.01"/></svg></button>
   <button class="icon-btn glass" type="button" data-act="theme" id="theme-btn" aria-label="Schimbă tema"></button>
   <button class="btn primary" type="button" data-act="export"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v12M7 10l5 5 5-5M5 21h14"/></svg>Export</button>
 </div>
 <div class="pop glass" id="layers" hidden></div>
+<div class="pop glass" id="legend" hidden></div>
+<div class="ruler glass" id="ruler" hidden aria-live="polite"></div>
 <div class="insp glass" id="insp" hidden></div>
 <div class="zoom glass">
   <button type="button" data-act="zin" aria-label="Mărește"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg></button>
   <button type="button" data-act="zout" aria-label="Micșorează"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M5 12h14"/></svg></button>
+  <button type="button" data-act="ruler" aria-pressed="false" aria-label="Riglă: măsoară o distanță"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 17L17 3l4 4L7 21z"/><path d="M7 13l2 2M10 10l2 2M13 7l2 2"/></svg></button>
   <button type="button" data-act="fit" aria-label="Toată zona"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/></svg></button>
 </div>
 <div class="readout glass"><span class="sb"><i id="sb-bar"></i><span id="sb-txt"></span></span><span class="mono" id="xy">EPSG:32635</span></div>
@@ -526,7 +536,7 @@ function scale() {
 map.on('moveend zoomend', () => { refreshAnnotations(); syncTargets(); scale(); });
 const tileAt = (x, y) => TILES.find(t => t.name && x >= t.bounds[0] && x < t.bounds[2] && y >= t.bounds[1] && y < t.bounds[3]);
 map.on('mousemove', e => { const x = e.latlng.lng, y = e.latlng.lat, t = tileAt(x, y); $('#xy').textContent = `X ${x.toFixed(1)}  Y ${y.toFixed(1)}${t ? '  ·  ' + short(t.name) : ''}`; });
-map.on('click', e => { const t = tileAt(e.latlng.lng, e.latlng.lat); t ? select({type: 'tile', name: t.name}) : select(null); });
+map.on('click', e => { if (RULER.on) { RULER.pts.push([e.latlng.lng, e.latlng.lat]); return rulerRender(); } const t = tileAt(e.latlng.lng, e.latlng.lat); t ? select({type: 'tile', name: t.name}) : select(null); });
 
 function leftPad() { return phone() ? 0 : 88 + (S.collapsed ? 0 : ($('#panel').classList.contains('wide') ? Math.min(760, innerWidth - 120) : 392)) + 16; }
 function fitBounds(b, maxZoom = 5) {
@@ -652,6 +662,66 @@ function missingCard(r) {
   return `<section><div class="sec-title"><h2 style="display:flex;align-items:center;gap:8px"><span style="width:14px;height:4px;border-radius:2px;background:${r.color}"></span>Traseu ${r.name.toLowerCase()} · ${r.sub}</h2><span class="mono">${r.file}</span></div>
     <div class="callout"><b>Nu e calculat încă</b><p class="note">${r.name === 'Inspector' ? 'Trece pe la toate golurile din rânduri (butuci lipsă / morți) și pe la deșeuri.' : 'Trece doar pe la deșeuri, pentru colectare.'} Se calculează cu <span class="mono">pipeline/route.py --mode ${r.name === 'Inspector' ? 'inspector' : 'farmer'}</span>; harta îl afișează aici de îndată ce apare <span class="mono">web/data/${r.file}</span>.</p></div></section>`;
 }
+/* ============ legend (RO / EN) ============ */
+const LEG = {
+  ro: {title: 'Legendă', items: [
+    ['#FF3DAA', 'Coroană (vineyard)', 'Coroana unui butuc văzută de sus; aria coroanelor = uniunea poligoanelor.'],
+    ['#FFD43B', 'Rând regular', 'Axa rândului (row_id). Rândul are plantare continuă.'],
+    ['repeating-linear-gradient(90deg,#FF4D4D 0 6px,transparent 6px 10px)', 'Rând disrupted', 'Rând cu goluri sau butuci lipsă: candidat la inspecție și replantare.'],
+    ['#A8A8A8', 'Unassessable', 'Nu se poate aprecia din imagine (umbră, margine de tile).'],
+    ['#22D3EE', 'Inter-rând · bare_soil', 'Pământ gol între două rânduri; aici se merge pe jos.'],
+    ['#51CF66', 'Inter-rând · vegetation', 'Iarbă sau buruieni între rânduri.'],
+    ['#FAB005', 'Inter-rând · mixed', 'Parțial acoperit de vegetație.'],
+    ['#FFFFFF', 'Passage', 'Drum autorizat de organizatori; traseul poate trece pe aici.'],
+    ['#FF4D4D', 'Forbidden', 'Zonă interzisă: traseul nu intră aici.'],
+    ['#2563EB', 'Traseul inspectorului', 'Goluri în rânduri + deșeuri, START → START, pentru auditul de stat.'],
+    ['#DC2626', 'Traseul fermierului', 'Doar deșeurile, pentru colectare.'],
+    ['#10B981', 'Traseu personalizat / zi', 'Recalculat cu alți parametri sau o tură de o zi.'],
+    ['#9333EA', 'Țintă deșeu', 'Deșeu adnotat; traseul trece la ≤ 2 m de el.'],
+    ['#F97316', 'Candidat deșeu', 'Pată găsită automat, neconfirmată: se verifică în Marcaj.'],
+    ['linear-gradient(90deg,#EF4444,#F59E0B,#22C55E)', 'Starea blocului', 'Roșu > 30 % rânduri disrupted, galben 10–30 %, verde < 10 %.']]},
+  en: {title: 'Legend', items: [
+    ['#FF3DAA', 'Canopy (vineyard)', 'One vine seen from above; canopy area = union of the polygons.'],
+    ['#FFD43B', 'Regular row', 'Row axis (row_id) with continuous planting.'],
+    ['repeating-linear-gradient(90deg,#FF4D4D 0 6px,transparent 6px 10px)', 'Disrupted row', 'Row with gaps or missing vines: to inspect and replant.'],
+    ['#A8A8A8', 'Unassessable', 'Cannot be judged from the image (shadow, tile edge).'],
+    ['#22D3EE', 'Inter-row · bare_soil', 'Bare ground between two rows; the walking surface.'],
+    ['#51CF66', 'Inter-row · vegetation', 'Grass or weeds between rows.'],
+    ['#FAB005', 'Inter-row · mixed', 'Partly covered by vegetation.'],
+    ['#FFFFFF', 'Passage', 'Road authorised by the organisers; routes may use it.'],
+    ['#FF4D4D', 'Forbidden', 'No-go area: routes never enter it.'],
+    ['#2563EB', 'Inspector route', 'Row gaps + waste, START → START, for the state audit.'],
+    ['#DC2626', 'Farmer route', 'Waste only, for collection.'],
+    ['#10B981', 'Custom / day route', 'Recomputed with other parameters, or one field day.'],
+    ['#9333EA', 'Waste target', 'Annotated waste; the route passes within 2 m.'],
+    ['#F97316', 'Waste candidate', 'Spot found automatically, not confirmed: checked in Marcaj.'],
+    ['linear-gradient(90deg,#EF4444,#F59E0B,#22C55E)', 'Block status', 'Red > 30 % disrupted rows, yellow 10–30 %, green < 10 %.']]}};
+function renderLegend() {
+  const lang = store.get('lang', 'ro'), L2 = LEG[lang];
+  $('#legend').innerHTML = `<div class="sec-title" style="padding:2px 4px 8px"><h2>${L2.title}</h2>${seg([['ro', 'RO'], ['en', 'EN']], lang, 'lang')}</div>
+    <div class="leg">${L2.items.map(([c, t, d]) => `<i style="background:${c};border:1px solid var(--line)"></i><div><b>${t}</b><small>${d}</small></div>`).join('')}</div>`;
+}
+
+/* ============ ruler ============ */
+const RULER = {on: false, pts: [], layer: null};
+function rulerToggle() {
+  RULER.on = !RULER.on; RULER.pts = [];
+  $('[data-act="ruler"]').setAttribute('aria-pressed', RULER.on);
+  map.getContainer().style.cursor = RULER.on ? 'crosshair' : '';
+  if (RULER.on) toast('Riglă: apasă punctele pe hartă · Esc termină');
+  rulerRender();
+}
+function rulerRender() {
+  if (RULER.layer) { map.removeLayer(RULER.layer); RULER.layer = null; }
+  const box = $('#ruler'); if (!RULER.on) { box.hidden = true; return; }
+  let d = 0; for (let i = 1; i < RULER.pts.length; i++) d += Math.hypot(RULER.pts[i][0] - RULER.pts[i - 1][0], RULER.pts[i][1] - RULER.pts[i - 1][1]);
+  const ll2 = RULER.pts.map(toLL);
+  RULER.layer = L.layerGroup([L.polyline(ll2, {renderer: R, color: '#FFFFFF', weight: 5, opacity: .9, interactive: false}), L.polyline(ll2, {renderer: R, color: '#111', weight: 2, dashArray: '6 4', interactive: false}),
+    ...ll2.map(p => L.circleMarker(p, {renderer: R, radius: 4, color: '#111', weight: 1.5, fillColor: '#FFFFFF', fillOpacity: 1, interactive: false}))]).addTo(map);
+  box.hidden = false;
+  box.innerHTML = `<div><b class="num">${d >= 1000 ? fmt(d / 1000, 2) + ' km' : fmt(d, 1) + ' m'}</b><div class="note">${RULER.pts.length} puncte · ${fmt(d / (S.speed * 1000) * 60)} min pe jos</div></div><button class="btn sm" type="button" data-act="ruler-undo" ${RULER.pts.length ? '' : 'disabled'}>Anulează</button><button class="btn sm" type="button" data-act="ruler">Gata</button>`;
+}
+
 /* ============ roles ============ */
 const ROLES = {
   inspector: {name: 'Inspector de stat', short: 'Inspector', color: '#2563EB', view: 'traseu', sub: 'Audit pentru subvenții: goluri în rânduri, butuci lipsă, suprafețe declarate.',
@@ -1017,6 +1087,7 @@ document.addEventListener('click', e => {
   const b = e.target.closest('button,[data-rowid]'); if (!b) return;
   if (b.dataset.pi != null) { const x = palItems[+b.dataset.pi]; closePal(); return x.run(); }
   if (b.dataset.src) return setSrc(b.dataset.src);
+  if (b.dataset.lang) { store.set('lang', b.dataset.lang); return renderLegend(); }
   if (b.dataset.layer) { S.layers[b.dataset.layer] = !S.layers[b.dataset.layer]; store.set('layers', S.layers); renderLayers(); return applyLayers(); }
   if (b.dataset.tile) return goTile(b.dataset.tile);
   if (b.dataset.target) { const t = TG.find(x => x.id === b.dataset.target); if (t) { map.flyTo(ll(t.x, t.y), 3.5, {duration: .6}); select({type: 'target', t}); } return; }
@@ -1032,7 +1103,7 @@ document.addEventListener('click', e => {
     case 'zout': return map.zoomOut(0.75);
     case 'fit': return fitAll();
     case 'goto-start': return startLL && map.flyTo(startLL, 3.5, {duration: .6});
-    case 'layers': { const p = $('#layers'); p.hidden = !p.hidden; b.setAttribute('aria-expanded', !p.hidden); if (!p.hidden) $('#insp').hidden = true; return; }
+    case 'layers': { const p = $('#layers'); $('#legend').hidden = true; p.hidden = !p.hidden; b.setAttribute('aria-expanded', !p.hidden); if (!p.hidden) $('#insp').hidden = true; return; }
     case 'theme': { const o = ['auto', 'light', 'dark'], n = o[(o.indexOf(store.get('theme', 'auto')) + 1) % 3]; store.set('theme', n); return applyTheme(n); }
     case 'nav-start': return navStart();
     case 'nav-from-first': { NAV.startIdx = 0; NAV.skipped = {}; NAV.picking = false; navRender(); return; }
@@ -1051,6 +1122,9 @@ document.addEventListener('click', e => {
     case 'copy-repro': return copy($('#repro').innerText.replace(/^Copiază\s*/, ''), null);
     case 'unsel': return select(null);
     case 'role': return openRole();
+    case 'legend': { const p = $('#legend'); if (p.hidden) renderLegend(); p.hidden = !p.hidden; b.setAttribute('aria-expanded', !p.hidden); if (!p.hidden) { $('#layers').hidden = true; $('#insp').hidden = true; } return; }
+    case 'ruler': return rulerToggle();
+    case 'ruler-undo': { RULER.pts.pop(); return rulerRender(); }
     case 'zoom-block': return S.sel?.b?.bbox && fitBounds(bnds(S.sel.b.bbox), 5);
     case 'bstat-on': { S.layers.bstat = true; store.set('layers', S.layers); applyLayers(); renderLayers(); return renderPanel(); }
     case 'blocks-csv': { const t = blocksCsv(); if (downloadText('sarcini_blocuri.csv', t, 'text/csv')) toast('sarcini_blocuri.csv descărcat'); else copy(t, null); return; }
@@ -1080,7 +1154,7 @@ document.addEventListener('change', e => {
 document.addEventListener('keydown', e => {
   const typing = e.target.matches('input,textarea');
   if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'k') { e.preventDefault(); return $('#pal-veil').hidden ? openPal() : closePal(); }
-  if (e.key === 'Escape') { if (!$('#role-veil').hidden) return ($('#role-veil').hidden = true); if (!$('#pal-veil').hidden) return closePal(); if (!$('#ex-veil').hidden) return ($('#ex-veil').hidden = true); if (!$('#layers').hidden) return ($('#layers').hidden = true); if (S.sel) return select(null); }
+  if (e.key === 'Escape') { if (RULER.on) return rulerToggle(); if (!$('#legend').hidden) return ($('#legend').hidden = true); if (!$('#role-veil').hidden) return ($('#role-veil').hidden = true); if (!$('#pal-veil').hidden) return closePal(); if (!$('#ex-veil').hidden) return ($('#ex-veil').hidden = true); if (!$('#layers').hidden) return ($('#layers').hidden = true); if (S.sel) return select(null); }
   if (typing) return;
   if (e.key === '/') { e.preventDefault(); return openPal(); }
   if ('1234'.includes(e.key) && e.key.length === 1) location.hash = ['harta', 'traseu', 'masuratori', 'pipeline'][+e.key - 1];
