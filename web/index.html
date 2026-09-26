@@ -630,7 +630,7 @@ function routeCard(r) {
     <div class="stats"><div class="stat"><div class="v num" style="color:${r.color}">${kmH(r.len)}</div><div class="l">length_m = ${fmt(Math.round(r.len))}</div></div>
       <div class="stat"><div class="v num">${min >= 60 ? fmt(Math.floor(min / 60)) + '<small>h</small> ' + fmt(min % 60) : fmt(min)}<small>min</small></div><div class="l">pe jos, la ${fmt(S.speed, 1)} km/h · ${days} ${days === 1 ? 'zi' : 'zile'} × ${fmt(S.hours)} h</div></div>
       <div class="stat"><div class="v num">${fmt(p.targets_visited ?? 0)} / ${fmt(p.targets_total ?? 0)}</div><div class="l">ținte vizitate (≤ 2 m)</div></div>
-      <div class="stat"><div class="v num">${ck ? (ck.valid ? 'valid' : 'INVALID') : '—'}</div><div class="l">validare regulament${ck ? ` · ${fmt(ck.outside_share * 100, 1)}% în afară` : ''}</div></div></div>
+      <div class="stat"><div class="v num">${ck ? (ck.valid ? 'valid' : 'INVALID') : p.outside_share != null ? (p.outside_share <= 0.02 ? 'valid' : 'INVALID') : '—'}</div><div class="l">validare regulament${ck ? ` · ${fmt(ck.outside_share * 100, 1)}% în afară` : p.outside_share != null ? ` · ${fmt(p.outside_share * 100, 2)}% în afară` : ''}</div></div></div>
     ${checks.length ? `<div class="list" style="gap:2px;font-size:13px;margin-top:8px">${checks.map(([ok, t, v]) => `<div class="li" style="cursor:default"><span style="color:${ok ? 'var(--accent)' : 'var(--warn)'}">${ok ? IC.ok : '✕'}</span>${t}<span class="r">${v}</span></div>`).join('')}</div>` : ''}
     ${p.targets_total === 0 ? `<p class="note" style="margin-top:8px">Nicio țintă de acest tip încă: deșeurile se adnotează manual în Marcaj, apoi traseul se recalculează.</p>` : ''}</section>`;
 }
@@ -683,9 +683,17 @@ function paramsCard() {
     </div>
     ${LIVE && !canRoute ? `<p class="note" style="margin-top:8px">Traseul fermierului are nevoie de deșeuri adnotate: se recalculează după exportul din Marcaj.</p>` : LIVE ? `<div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:10px"><button class="btn primary" type="button" data-act="live-route" ${JOB ? 'disabled' : ''}>${JOB ? 'Se calculează…' : `Recalculează traseul ${mode}`}</button></div>
       <p class="note">${JOB ? `<span class="mono">${JOB.last || 'pornesc'}</span>` : `pipeline/route.py rulează pe laptop pe ${farmer ? 'deșeuri' : `țintele cu gol ≥ ${S.minGap} m`}; distanțele sunt în cache, durează 1–3 minute.`}</p>`
-      : `<p class="note">Timpii și zilele se recalculează imediat. Pentru un traseu nou cu alt prag de gol pornește site-ul de pe laptop: <span class="mono">python -m pipeline.serve</span>, apoi <span class="mono">http://127.0.0.1:8000</span>.</p>`}</section>`;
+      : `<p class="note">Timpii și zilele se recalculează imediat.${VARS && !farmer ? ` Pragul de gol schimbă traseul: variantele ≥ ${Object.keys(VARS).join(', ')} m sunt calculate dinainte.` : ''} Orice alt calcul (alt prag, alt start, un tile nou) rulează de pe laptop: <span class="mono">python -m pipeline.serve</span>, apoi <span class="mono">http://127.0.0.1:8000</span>.</p>`}</section>`;
 }
-let LIVE = null, JOB = null;
+let LIVE = null, JOB = null, VARS = null;
+fetch('data/variants/index.json').then(r => r.ok ? r.json() : null).then(j => { VARS = j; }).catch(() => {});
+async function loadVariant(g) {                // static site: precomputed route for this gap threshold
+  const v = VARS?.[String(g)]; if (!v) return false;
+  try {
+    const [fc, tg] = await Promise.all([fetch(v.route).then(r => r.json()), fetch(v.targets).then(r => r.json())]);
+    addLiveRoute(fc, tg, 'inspector', g, 'Variantă precalculată'); ROUTES.live.file = v.route.split('/').pop(); renderPanel(); return true;
+  } catch (e) { return false; }
+}
 const AN = [];
 fetch('api/status', {cache: 'no-store'}).then(r => r.ok ? r.json() : null).then(j => { if (j?.live) { LIVE = j; renderPanel(); } }).catch(() => {});
 async function liveRoute() {
@@ -705,10 +713,10 @@ async function liveRoute() {
     setTimeout(poll, 2000);
   } catch (e) { JOB = null; toast('Nu pot porni recalcularea: ' + e.message); renderPanel(); }
 }
-function addLiveRoute(fc, tg, mode, gap) {
+function addLiveRoute(fc, tg, mode, gap, name = 'Personalizat') {
   if (ROUTES.live) map.removeLayer(ROUTES.live.layer);
   const p = fc.features[0].properties, line = geo(fc, {color: '#10B981', weight: 3.5});
-  ROUTES.live = {fc, tg, ck: null, key: 'live', p, len: p.length_m || 0, name: 'Personalizat', sub: `${mode === 'farmer' ? 'fermier' : 'inspector'}, gol ≥ ${gap} m`,
+  ROUTES.live = {fc, tg, ck: null, key: 'live', p, len: p.length_m || 0, name, sub: `${mode === 'farmer' ? 'fermier' : 'inspector'}, gol ≥ ${gap} m`,
     color: '#10B981', file: 'route_live.geojson', layer: L.layerGroup([geo(fc, {color: '#FFFFFF', weight: 7, opacity: .9}), line])};
   S.layers.route_live = true; applyLayers(); renderLayers(); renderPanel();
   map.fitBounds(line.getBounds(), {padding: [40, 40]});
@@ -999,6 +1007,7 @@ document.addEventListener('change', e => {
   const P = {'p-speed': ['speed', 'speed', 1, 10], 'p-hours': ['hours', 'hours', 1, 16], 'p-gap': ['minGap', 'mingap', 1, 50], 'p-price': ['price', 'price', 0, 10000]}[id];
   if (!P || !(v >= P[2] && v <= P[3])) return;
   S[P[0]] = v; store.set(P[1], v); renderPanel();
+  if (id === 'p-gap' && !LIVE) loadVariant(v).then(ok => { if (!ok && ROUTES.live) { map.removeLayer(ROUTES.live.layer); delete ROUTES.live; renderLayers(); renderPanel(); } });
 });
 document.addEventListener('keydown', e => {
   const typing = e.target.matches('input,textarea');
