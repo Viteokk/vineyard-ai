@@ -1,6 +1,6 @@
 # Aliniere la UE: registrul viticol, autorizații de plantare, controale
 
-Moldova e țară candidată; sectorul vitivinicol trebuie aliniat la acquis. Ce spun actele UE despre ce face Field Planner.
+Moldova e țară candidată; sectorul vitivinicol trebuie aliniat la acquis. Ce spun actele UE despre ce face VinePlan.
 Surse (EUR-Lex, versiuni consolidate, citite pe 26.09.2026):
 [CMO] Reg. 1308/2013 (cons. 18.08.2026, include Reg. 2026/471), [R273] Reg. delegat 2018/273, [R274] Reg. de punere
 în aplicare 2018/274, [R126] Reg. delegat 2022/126, [R1173] Reg. 2022/1173 (IACS).
@@ -48,7 +48,7 @@ Surse (EUR-Lex, versiuni consolidate, citite pe 26.09.2026):
 - IGP: cel puțin 85 % din struguri din aria delimitată; DOP: 100 % ([CMO] art. 93).
 
 ## Ce avem față de ce cere UE
-| Cerință UE | Field Planner | Lipsește |
+| Cerință UE | VinePlan | Lipsește |
 |---|---|---|
 | Suprafață = contur butuci + ½ distanța dintre rânduri | lungime rânduri × distanță | bufferul de la capete, conturul de parcelă; golurile nu se scad |
 | Parcelă legată de LPIS / cadastru, 1:5 000 | cadastrul ASP (real) | ID LPIS, precizia ortofoto (RMSE) |

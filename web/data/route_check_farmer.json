@@ -7,6 +7,7 @@
  "outside_share": 0.0,
  "canopy_m": 0.0,
  "forbidden_m": 0.0,
+ "row_crossings": 0,
  "targets": 0,
  "visited": 0,
  "not_visited": []

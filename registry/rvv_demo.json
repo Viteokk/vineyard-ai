@@ -2,114 +2,67 @@
  "_about": "DATE DEMONSTRATIVE (sintetice) - nu sunt inregistrari reale din RVV/AIPA.",
  "records": [
   {
-   "vineyard_id": "V01",
-   "rvv_code": "RVV-DEMO-V01",
-   "exploatant": "Exploatant demo 01",
-   "variety": "Rara Neagra",
-   "planting_year": 2004,
-   "declared_area_ha": 0.255,
-   "igp": "Codru",
-   "declared_density": 3290,
-   "demo": true,
-   "cad_nr": [
-    "DEMO-0001"
-   ]
-  },
-  {
    "vineyard_id": "V02",
    "rvv_code": "RVV-DEMO-V02",
    "exploatant": "Exploatant demo 02",
-   "variety": "Muscat Ottonel",
-   "planting_year": 2024,
-   "declared_area_ha": 2.666,
+   "variety": "Rara Neagra",
+   "planting_year": 2004,
+   "declared_area_ha": 3.297,
    "igp": "Codru",
-   "declared_density": 3400,
+   "declared_density": 3420,
    "demo": true,
-   "aipa_request": {
-    "measure": "SP_2.5 Investitii in exploatatii din sectorul viticol - infiintarea plantatiilor (struguri pentru vin)",
-    "year": 2024,
-    "requested_lei": 133300,
-    "demo": true
-   },
    "cad_nr": [
-    "DEMO-0002",
-    "DEMO-0003"
+    "DEMO-0001",
+    "DEMO-0002"
    ]
   },
   {
    "vineyard_id": "V04",
    "rvv_code": "RVV-DEMO-V04",
    "exploatant": "Exploatant demo 04",
-   "variety": "Rara Neagra",
-   "planting_year": 2012,
-   "declared_area_ha": 1.364,
+   "variety": "Muscat Ottonel",
+   "planting_year": 2024,
+   "declared_area_ha": 1.344,
    "igp": "Codru",
-   "declared_density": 2950,
+   "declared_density": 2890,
    "demo": true,
+   "aipa_request": {
+    "measure": "SP_2.5 Investitii in exploatatii din sectorul viticol - infiintarea plantatiilor (struguri pentru vin)",
+    "year": 2024,
+    "requested_lei": 47000,
+    "demo": true
+   },
    "cad_nr": [
-    "DEMO-0004"
+    "DEMO-0003"
    ]
   },
   {
-   "vineyard_id": "V08",
-   "rvv_code": "RVV-DEMO-V08",
-   "exploatant": "Exploatant demo 08",
-   "variety": "Isabella",
-   "planting_year": 2018,
-   "declared_area_ha": 1.393,
+   "vineyard_id": "V09",
+   "rvv_code": "RVV-DEMO-V09",
+   "exploatant": "Exploatant demo 09",
+   "variety": "Rara Neagra",
+   "planting_year": 2012,
+   "declared_area_ha": 0.194,
    "igp": "Codru",
-   "declared_density": 3690,
+   "declared_density": 3670,
    "demo": true,
    "cad_nr": [
     "DEMO-0005"
    ]
   },
   {
-   "vineyard_id": "V10",
-   "rvv_code": "RVV-DEMO-V10",
-   "exploatant": "Exploatant demo 10",
-   "variety": "Merlot",
-   "planting_year": 2025,
-   "declared_area_ha": 0.173,
-   "igp": "Codru",
-   "declared_density": 3730,
-   "demo": true,
-   "cad_nr": [
-    "DEMO-0007"
-   ]
-  },
-  {
-   "vineyard_id": "V11",
-   "rvv_code": "RVV-DEMO-V11",
-   "exploatant": "Exploatant demo 11",
-   "variety": "Viorica",
-   "planting_year": 2024,
-   "declared_area_ha": 1.181,
-   "igp": "Codru",
-   "declared_density": 3470,
-   "demo": true,
-   "aipa_request": {
-    "measure": "SP_2.5 Investitii in exploatatii din sectorul viticol - infiintarea plantatiilor (struguri pentru vin)",
-    "year": 2024,
-    "requested_lei": 59000,
-    "demo": true
-   },
-   "cad_nr": [
-    "DEMO-0008"
-   ]
-  },
-  {
    "vineyard_id": "V14",
    "rvv_code": "RVV-DEMO-V14",
    "exploatant": "Exploatant demo 14",
-   "variety": "Feteasca Alba",
+   "variety": "Aligote",
    "planting_year": 2018,
-   "declared_area_ha": 0.218,
+   "declared_area_ha": 1.484,
    "igp": "Codru",
-   "declared_density": 2950,
+   "declared_density": 3020,
    "demo": true,
    "cad_nr": [
-    "DEMO-0010"
+    "DEMO-0006",
+    "DEMO-0007"
    ]
   },
   {
@@ -118,57 +71,79 @@
    "exploatant": "Exploatant demo 15",
    "variety": "Merlot",
    "planting_year": 2025,
-   "declared_area_ha": 0.232,
+   "declared_area_ha": 1.589,
    "igp": "Codru",
-   "declared_density": 3690,
+   "declared_density": 3090,
    "demo": true,
+   "aipa_request": {
+    "measure": "SP_2.5 Investitii in exploatatii din sectorul viticol - infiintarea plantatiilor (struguri pentru vin)",
+    "year": 2025,
+    "requested_lei": 79400,
+    "demo": true
+   },
    "cad_nr": [
+    "DEMO-0008",
+    "DEMO-0009"
+   ]
+  },
+  {
+   "vineyard_id": "V16",
+   "rvv_code": "RVV-DEMO-V16",
+   "exploatant": "Exploatant demo 16",
+   "variety": "Viorica",
+   "planting_year": 2024,
+   "declared_area_ha": 1.337,
+   "igp": "Codru",
+   "declared_density": 2930,
+   "demo": true,
+   "aipa_request": {
+    "measure": "SP_2.5 Investitii in exploatatii din sectorul viticol - infiintarea plantatiilor (struguri pentru vin)",
+    "year": 2024,
+    "requested_lei": 46800,
+    "demo": true
+   },
+   "cad_nr": [
+    "DEMO-0010",
     "DEMO-0011"
    ]
   },
   {
-   "vineyard_id": "V21",
-   "rvv_code": "RVV-DEMO-V21",
-   "exploatant": "Exploatant demo 21",
-   "variety": "Viorica",
-   "planting_year": 2012,
-   "declared_area_ha": 0.206,
+   "vineyard_id": "V17",
+   "rvv_code": "RVV-DEMO-V17",
+   "exploatant": "Exploatant demo 17",
+   "variety": "Feteasca Alba",
+   "planting_year": 2018,
+   "declared_area_ha": 0.313,
    "igp": "Codru",
-   "declared_density": 3000,
+   "declared_density": 2870,
    "demo": true,
    "cad_nr": [
     "DEMO-0012"
    ]
   },
   {
-   "vineyard_id": "V24",
-   "rvv_code": "RVV-DEMO-V24",
-   "exploatant": "Exploatant demo 24",
-   "variety": "Feteasca Neagra",
+   "vineyard_id": "V21",
+   "rvv_code": "RVV-DEMO-V21",
+   "exploatant": "Exploatant demo 21",
+   "variety": "Merlot",
    "planting_year": 2025,
-   "declared_area_ha": 1.465,
+   "declared_area_ha": 0.266,
    "igp": "Codru",
-   "declared_density": 3050,
+   "declared_density": 2680,
    "demo": true,
-   "aipa_request": {
-    "measure": "SP_2.5 Investitii in exploatatii din sectorul viticol - infiintarea plantatiilor (struguri pentru vin)",
-    "year": 2025,
-    "requested_lei": 73200,
-    "demo": true
-   },
    "cad_nr": [
     "DEMO-0013"
    ]
   },
   {
-   "vineyard_id": "V29",
-   "rvv_code": "RVV-DEMO-V29",
-   "exploatant": "Exploatant demo 29",
-   "variety": "Aligote",
-   "planting_year": 1985,
-   "declared_area_ha": 1.496,
+   "vineyard_id": "V22",
+   "rvv_code": "RVV-DEMO-V22",
+   "exploatant": "Exploatant demo 22",
+   "variety": "Viorica",
+   "planting_year": 2012,
+   "declared_area_ha": 0.201,
    "igp": "Codru",
-   "declared_density": 3110,
+   "declared_density": 3050,
    "demo": true,
    "cad_nr": [
     "DEMO-0014"
@@ -178,21 +153,42 @@
    "vineyard_id": "V32",
    "rvv_code": "RVV-DEMO-V32",
    "exploatant": "Exploatant demo 32",
+   "variety": "Feteasca Neagra",
+   "planting_year": 2025,
+   "declared_area_ha": 0.183,
+   "igp": "Codru",
+   "declared_density": 3110,
+   "demo": true,
+   "cad_nr": [
+    "DEMO-0015"
+   ]
+  },
+  {
+   "vineyard_id": "V34",
+   "rvv_code": "RVV-DEMO-V34",
+   "exploatant": "Exploatant demo 34",
+   "variety": "Aligote",
+   "planting_year": 1985,
+   "declared_area_ha": 0.253,
+   "igp": "Codru",
+   "declared_density": 3350,
+   "demo": true,
+   "cad_nr": [
+    "DEMO-0016"
+   ]
+  },
+  {
+   "vineyard_id": "V38",
+   "rvv_code": "RVV-DEMO-V38",
+   "exploatant": "Exploatant demo 38",
    "variety": "Rara Neagra",
    "planting_year": 2024,
-   "declared_area_ha": 2.805,
+   "declared_area_ha": 0.346,
    "igp": "Codru",
-   "declared_density": 3060,
+   "declared_density": 3140,
    "demo": true,
-   "aipa_request": {
-    "measure": "SP_2.5 Investitii in exploatatii din sectorul viticol - infiintarea plantatiilor (struguri pentru vin)",
-    "year": 2024,
-    "requested_lei": 140200,
-    "demo": true
-   },
    "cad_nr": [
-    "DEMO-0015",
-    "DEMO-0016"
+    "DEMO-0017"
    ]
   },
   {
@@ -201,276 +197,40 @@
    "exploatant": "Exploatant demo 39",
    "variety": "Viorica",
    "planting_year": 2025,
-   "declared_area_ha": 0.811,
+   "declared_area_ha": 0.361,
    "igp": "Codru",
-   "declared_density": 3430,
+   "declared_density": 3150,
    "demo": true,
-   "aipa_request": {
-    "measure": "SP_2.5 Investitii in exploatatii din sectorul viticol - infiintarea plantatiilor (struguri pentru vin)",
-    "year": 2025,
-    "requested_lei": 40600,
-    "demo": true
-   },
-   "cad_nr": [
-    "DEMO-0017"
-   ]
-  },
-  {
-   "vineyard_id": "V42",
-   "rvv_code": "RVV-DEMO-V42",
-   "exploatant": "Exploatant demo 42",
-   "variety": "Muscat Ottonel",
-   "planting_year": 2024,
-   "declared_area_ha": 1.136,
-   "igp": "Codru",
-   "declared_density": 3962,
-   "demo": true,
-   "aipa_request": {
-    "measure": "SP_2.5 Investitii in exploatatii din sectorul viticol - infiintarea plantatiilor (struguri pentru vin)",
-    "year": 2024,
-    "requested_lei": 62500,
-    "demo": true
-   },
    "cad_nr": [
     "DEMO-0018"
    ]
   },
   {
-   "vineyard_id": "V45",
-   "rvv_code": "RVV-DEMO-V45",
-   "exploatant": "Exploatant demo 45",
-   "variety": "Feteasca Neagra",
-   "planting_year": 1978,
-   "declared_area_ha": 0.69,
+   "vineyard_id": "V41",
+   "rvv_code": "RVV-DEMO-V41",
+   "exploatant": "Exploatant demo 41",
+   "variety": "Muscat Ottonel",
+   "planting_year": 2024,
+   "declared_area_ha": 0.2,
    "igp": "Codru",
-   "declared_density": 2880,
+   "declared_density": 4275,
    "demo": true,
    "cad_nr": [
     "DEMO-0019"
    ]
   },
   {
-   "vineyard_id": "V46",
-   "rvv_code": "RVV-DEMO-V46",
-   "exploatant": "Exploatant demo 46",
-   "variety": "Pinot Noir",
-   "planting_year": 2018,
-   "declared_area_ha": 0.223,
+   "vineyard_id": "V42",
+   "rvv_code": "RVV-DEMO-V42",
+   "exploatant": "Exploatant demo 42",
+   "variety": "Feteasca Neagra",
+   "planting_year": 1978,
+   "declared_area_ha": 0.506,
    "igp": "Codru",
-   "declared_density": 2850,
+   "declared_density": 3060,
    "demo": true,
    "cad_nr": [
     "DEMO-0020"
-   ]
-  },
-  {
-   "vineyard_id": "V47",
-   "rvv_code": "RVV-DEMO-V47",
-   "exploatant": "Exploatant demo 47",
-   "variety": "Pinot Noir",
-   "planting_year": 2021,
-   "declared_area_ha": 0.277,
-   "igp": "Codru",
-   "declared_density": 3820,
-   "demo": true,
-   "cad_nr": [
-    "DEMO-0021"
-   ]
-  },
-  {
-   "vineyard_id": "V53",
-   "rvv_code": "RVV-DEMO-V53",
-   "exploatant": "Exploatant demo 53",
-   "variety": "Feteasca Neagra",
-   "planting_year": 2024,
-   "declared_area_ha": 0.525,
-   "igp": "Codru",
-   "declared_density": 4162,
-   "demo": true,
-   "aipa_request": {
-    "measure": "SP_2.5 Investitii in exploatatii din sectorul viticol - infiintarea plantatiilor (struguri pentru vin)",
-    "year": 2024,
-    "requested_lei": 31500,
-    "demo": true
-   },
-   "cad_nr": [
-    "DEMO-0022"
-   ]
-  },
-  {
-   "vineyard_id": "V55",
-   "rvv_code": "RVV-DEMO-V55",
-   "exploatant": "Exploatant demo 55",
-   "variety": "Rara Neagra",
-   "planting_year": 2021,
-   "declared_area_ha": 0.229,
-   "igp": "Codru",
-   "declared_density": 3690,
-   "demo": true,
-   "cad_nr": [
-    "DEMO-0023"
-   ]
-  },
-  {
-   "vineyard_id": "V60",
-   "rvv_code": "RVV-DEMO-V60",
-   "exploatant": "Exploatant demo 60",
-   "variety": "Feteasca Regala",
-   "planting_year": 2018,
-   "declared_area_ha": 0.203,
-   "igp": "Codru",
-   "declared_density": 3690,
-   "demo": true,
-   "cad_nr": [
-    "DEMO-0024"
-   ]
-  },
-  {
-   "vineyard_id": "V61",
-   "rvv_code": "RVV-DEMO-V61",
-   "exploatant": "Exploatant demo 61",
-   "variety": "Feteasca Neagra",
-   "planting_year": 1985,
-   "declared_area_ha": 0.163,
-   "igp": "Codru",
-   "declared_density": 3020,
-   "demo": true,
-   "cad_nr": [
-    "DEMO-0025"
-   ]
-  },
-  {
-   "vineyard_id": "V62",
-   "rvv_code": "RVV-DEMO-V62",
-   "exploatant": "Exploatant demo 62",
-   "variety": "Rara Neagra",
-   "planting_year": 2004,
-   "declared_area_ha": 1.028,
-   "igp": "Codru",
-   "declared_density": 3380,
-   "demo": true,
-   "cad_nr": [
-    "DEMO-0026"
-   ]
-  },
-  {
-   "vineyard_id": "V63",
-   "rvv_code": "RVV-DEMO-V63",
-   "exploatant": "Exploatant demo 63",
-   "variety": "Cabernet Sauvignon",
-   "planting_year": 1992,
-   "declared_area_ha": 4.101,
-   "igp": "Codru",
-   "declared_density": 3400,
-   "demo": true,
-   "cad_nr": [
-    "DEMO-0027",
-    "DEMO-0028"
-   ]
-  },
-  {
-   "vineyard_id": "V64",
-   "rvv_code": "RVV-DEMO-V64",
-   "exploatant": "Exploatant demo 64",
-   "variety": "Pinot Noir",
-   "planting_year": 1992,
-   "declared_area_ha": 0.33,
-   "igp": "Codru",
-   "declared_density": 4080,
-   "demo": true,
-   "cad_nr": [
-    "DEMO-0029"
-   ]
-  },
-  {
-   "vineyard_id": "V65",
-   "rvv_code": "RVV-DEMO-V65",
-   "exploatant": "Exploatant demo 65",
-   "variety": "Muscat Ottonel",
-   "planting_year": 2025,
-   "declared_area_ha": 0.812,
-   "igp": "Codru",
-   "declared_density": 3670,
-   "demo": true,
-   "aipa_request": {
-    "measure": "SP_2.5 Investitii in exploatatii din sectorul viticol - infiintarea plantatiilor (struguri pentru vin)",
-    "year": 2025,
-    "requested_lei": 44700,
-    "demo": true
-   },
-   "cad_nr": [
-    "DEMO-0030"
-   ]
-  },
-  {
-   "vineyard_id": "V66",
-   "rvv_code": "RVV-DEMO-V66",
-   "exploatant": "Exploatant demo 66",
-   "variety": "Viorica",
-   "planting_year": 2012,
-   "declared_area_ha": 1.076,
-   "igp": "Codru",
-   "declared_density": 3580,
-   "demo": true,
-   "cad_nr": [
-    "DEMO-0031"
-   ]
-  },
-  {
-   "vineyard_id": "V67",
-   "rvv_code": "RVV-DEMO-V67",
-   "exploatant": "Exploatant demo 67",
-   "variety": "Merlot",
-   "planting_year": 1978,
-   "declared_area_ha": 0.209,
-   "igp": "Codru",
-   "declared_density": 3770,
-   "demo": true,
-   "cad_nr": [
-    "DEMO-0032"
-   ]
-  },
-  {
-   "vineyard_id": "V68",
-   "rvv_code": "RVV-DEMO-V68",
-   "exploatant": "Exploatant demo 68",
-   "variety": "Aligote",
-   "planting_year": 2018,
-   "declared_area_ha": 2.079,
-   "igp": "Codru",
-   "declared_density": 3500,
-   "demo": true,
-   "cad_nr": [
-    "DEMO-0033",
-    "DEMO-0034"
-   ]
-  },
-  {
-   "vineyard_id": "V69",
-   "rvv_code": "RVV-DEMO-V69",
-   "exploatant": "Exploatant demo 69",
-   "variety": "Feteasca Alba",
-   "planting_year": 2024,
-   "declared_area_ha": 0.158,
-   "igp": "Codru",
-   "declared_density": 5212,
-   "demo": true,
-   "cad_nr": [
-    "DEMO-0035"
-   ]
-  },
-  {
-   "vineyard_id": "V70",
-   "rvv_code": "RVV-DEMO-V70",
-   "exploatant": "Exploatant demo 70",
-   "variety": "Feteasca Alba",
-   "planting_year": 1992,
-   "declared_area_ha": 0.565,
-   "igp": "Codru",
-   "declared_density": 3140,
-   "demo": true,
-   "cad_nr": [
-    "DEMO-0036"
    ]
   }
  ]
