@@ -1142,7 +1142,7 @@ function viewCor() {
 let CMP = null, cmpLayer = null, BFC = null, CAD = null, cadLayer = null;
 /* ============ Moldova: contur, raioane, satul zonei studiate ============ */
 let mdLayer = null, mdBounds = null;
-fetch('data/moldova.geojson').then(r => r.ok ? r.json() : null).then(fc => {
+fetch('data/moldova.geojson?v=2').then(r => r.ok ? r.json() : null).then(fc => {
   if (!fc) return;
   const country = fc.features.filter(f => f.properties.kind === 'country'), raions = fc.features.filter(f => f.properties.kind === 'raion'), com = fc.features.filter(f => f.properties.kind === 'commune');
   const studyRaion = raions.find(f => com.length && L.geoJSON(f, {coordsToLatLng: toLL}).getBounds().contains(L.geoJSON(com[0], {coordsToLatLng: toLL}).getBounds().getCenter()));

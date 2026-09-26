@@ -46,9 +46,9 @@ nav a.link:hover{color:#fff}
 .mapcard .eyebrow{font:600 12px/1 'Geist',sans-serif;letter-spacing:.14em;text-transform:uppercase;color:var(--yellow)}
 .mapcard svg{width:100%;height:auto;max-height:430px;display:block}
 .mapcard .country{fill:none;stroke:#fff;stroke-width:3;stroke-linejoin:round;pointer-events:none}
-.mapcard .raion{fill:url(#flag);stroke:rgba(255,255,255,.55);stroke-width:.8;stroke-linejoin:round;cursor:pointer;transition:filter .15s,opacity .15s}
-.mapcard svg:hover .raion{opacity:.55}
-.mapcard svg .raion:hover,.mapcard svg .raion.on{opacity:1;filter:brightness(1.25) saturate(1.15);stroke:#fff;stroke-width:2}
+.mapcard .raion{fill:url(#flag);stroke:rgba(255,255,255,.35);stroke-width:.7;stroke-linejoin:round;cursor:pointer;transition:filter .15s,opacity .15s}
+.mapcard svg:hover .raion{opacity:.78}
+.mapcard svg .raion:hover,.mapcard svg .raion.on{opacity:1;filter:brightness(1.2) saturate(1.2);stroke:#fff;stroke-width:2.4}
 .mapcard .raion.study{stroke:#fff;stroke-width:2.2}
 .mapcard .commune{fill:#0B0F0D;stroke:#fff;stroke-width:1.5;pointer-events:none}
 .mapcard .dot{fill:#0B0F0D;stroke:#fff;stroke-width:3;pointer-events:none}
@@ -312,7 +312,7 @@ footer{border-top:1px solid var(--line);padding-block:28px 40px;color:var(--mute
   const box = document.getElementById('md'), place = document.getElementById('place'), detail = document.getElementById('detail');
   const def = {p: place.textContent, d: detail.innerHTML};
   let fc;
-  try { fc = await fetch('data/moldova.geojson').then(r => r.json()); } catch (e) { box.textContent = 'Harta nu s-a putut încărca.'; return; }
+  try { fc = await fetch('data/moldova.geojson?v=2').then(r => r.json()); } catch (e) { box.textContent = 'Harta nu s-a putut încărca.'; return; }
   const country = fc.features.find(f => f.properties.kind === 'country'), raions = fc.features.filter(f => f.properties.kind === 'raion'), com = fc.features.find(f => f.properties.kind === 'commune');
   const polys = g => g.type === 'Polygon' ? [g.coordinates] : g.coordinates;
   let x0 = Infinity, y0 = Infinity, x1 = -Infinity, y1 = -Infinity;
@@ -339,7 +339,7 @@ footer{border-top:1px solid var(--line);padding-block:28px 40px;color:var(--mute
     el.classList.add('on');
     const f = raions[+el.dataset.i];
     place.textContent = clean(f.properties.name);
-    detail.textContent = el.classList.contains('study') ? (matchMedia('(hover: none)').matches ? 'Aici e Sireț3: 145 ha zburate cu drona. Atinge din nou ca să intri.' : 'Aici e Sireț3: 145 ha zburate cu drona. Apasă ca să intri.') : 'Încă nezburat. Același pipeline merge pe orice zbor nou din raion.';
+    detail.textContent = el.classList.contains('study') ? (matchMedia('(hover: none)').matches ? 'Aici e Sireț3: 145 ha zburate cu drona. Atinge din nou ca să intri.' : 'Aici e Sireț3: 145 ha zburate cu drona. Apasă ca să intri.') : f.properties.left_bank ? 'Regiunea din stânga Nistrului. Cadastrul ASP nu o acoperă încă; nezburată.' : 'Încă nezburat. Același pipeline merge pe orice zbor nou din raion.';
   };
   box.addEventListener('mouseover', e => { const el = e.target.closest('.raion'); if (el) show(el); });
   box.addEventListener('mouseleave', () => { if (!matchMedia('(hover: none)').matches) show(null); });

@@ -79,12 +79,11 @@ legend{font-size:14px;font-weight:600;margin-bottom:8px;padding:0}
     <p class="err" id="err" role="alert" hidden></p>
     <button class="go" type="submit" id="go">Intră ca Inspector</button>
     <button class="linkbtn" type="button" id="forgot">Ai uitat parola?</button>
-    <div class="demo"><span>Cont demo:</span><code id="demo-email"></code><span>parola</span><code id="demo-pw"></code><button type="button" id="fill">Completează</button></div>
     <div class="or">sau</div>
     <a class="mpass" href="https://mpass.gov.md/login/saml" rel="noopener"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="10" width="16" height="11" rx="2"/><path d="M8 10V7a4 4 0 018 0v3"/></svg>Intră cu MPass</a>
     <a class="sim" href="mpass.html?return=app.html">Simulare MPass pentru demo</a>
   </form>
-  <p class="note">MVP demonstrativ: se intră doar cu conturile demo; parola nu pleacă din browser și nu se salvează. Revenirea din MPass cere înregistrarea platformei la Agenția de Guvernare Electronică.</p>
+  <p class="note">MVP demonstrativ: contul demo al rolului e deja completat; parola nu pleacă din browser și nu se salvează. Revenirea din MPass cere înregistrarea platformei la Agenția de Guvernare Electronică.</p>
 </main>
 <script>
 /* demo accounts only: checked in the browser, nothing is sent, the password is never stored */
@@ -100,22 +99,20 @@ function syncRole() {
   const a = ACCOUNTS[role()];
   document.documentElement.style.setProperty('--c', COLORS[role()]);
   $('#go').textContent = 'Intră ca ' + a.label;
-  $('#demo-email').textContent = a.email; $('#demo-pw').textContent = DEMO_PW;
+  f.email.value = a.email; f.password.value = DEMO_PW;      // demo: the role's account is prefilled
   err.hidden = true;
 }
 f.addEventListener('change', e => { if (e.target.name === 'role') syncRole(); });
-$('#fill').addEventListener('click', () => { f.email.value = ACCOUNTS[role()].email; f.password.value = DEMO_PW; err.hidden = true; $('#go').focus(); });
 $('#eye').addEventListener('click', e => { const b = e.currentTarget, on = b.getAttribute('aria-pressed') !== 'true'; b.setAttribute('aria-pressed', on); b.setAttribute('aria-label', on ? 'Ascunde parola' : 'Arată parola'); f.password.type = on ? 'text' : 'password'; });
-$('#forgot').addEventListener('click', () => say('În demo nu există resetare: datele contului demo sunt mai jos.', true));
+$('#forgot').addEventListener('click', () => say(`În demo nu există resetare. Cont: ${ACCOUNTS[role()].email}, parola ${DEMO_PW}.`, true));
 f.addEventListener('submit', e => {
   e.preventDefault();
   const email = f.email.value.trim().toLowerCase(), pw = f.password.value;
   if (!email || !pw) return say('Completează poșta electronică și parola.');
   const owner = Object.keys(ACCOUNTS).find(k => ACCOUNTS[k].email === email);
-  if (!owner || pw !== DEMO_PW) { f.password.value = ''; return say('Poșta sau parola nu se potrivesc cu un cont demo.'); }
+  if (!owner || pw !== DEMO_PW) { return say('Poșta sau parola nu se potrivesc cu un cont demo.'); }
   if (owner !== role()) return say(`Acest cont nu are rolul ${ACCOUNTS[role()].label}. Alege „${ACCOUNTS[owner].label}” sus.`);
   const a = ACCOUNTS[owner];
-  f.password.value = '';
   try {
     localStorage.setItem('fpm.session', JSON.stringify({role: owner, name: a.name, org: a.org, email: a.email, via: 'parola-demo', at: new Date().toISOString()}));
     localStorage.setItem('fpm.role', JSON.stringify(owner));
