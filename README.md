@@ -140,6 +140,22 @@ visited, measurements per block / row, pipeline status. Data contract: `web/data
   (precomputed routes for ≥ 5 / 8 / 10 m on the static site, `scripts/build_route_variants.py`).
 - **Field use:** GPX export of each route, GPS navigation on the phone with a chosen start and checked targets.
 
+### Vineyard register (DEMO, EU-compatible)
+`python -m pipeline.register [--make-demo]` → `web/data/register.geojson`, `out/register.csv` (≈ 2 s).
+Model in [`registry/schema.json`](registry/schema.json), aligned with Reg. (EU) 2018/273 art. 7 and annexes III–IV:
+**grower** (`DEMO-G-xx`, pseudonymised) → **parcel** (`cad_nr` `DEMO-xxxx`, geometry, RVV code, declared area, variety,
+planting year and scheme, authorisation, status planted / grubbed_up / abandoned, IGP) → **events** (planting,
+replanting, grubbing-up, inspection). **Everything declared is synthetic and marked `demo: true`**; the parcels are
+generated from the detected blocks (whole blocks, halves split parallel to the rows, one half without authorisation,
+two parcels with no vines, one declared abandoned) and linked to `registry/rvv_demo.json` by `cad_nr`.
+Measured fields per parcel come from the pipeline: rows clipped to the parcel × the block's median row spacing
+(`measured_area_ha`, a few % below the block figure because rows are cut exactly at the parcel edge), rows, density
+nominal / effective (1.2 m vine spacing), gap share, missing vines, inter-row cover shares and `status_detected`
+(`no_vines`: measured < 10 % of the parcel; `abandoned`, heuristic: vegetation inter-rows > 80 % and gaps > 40 %).
+Tests: `python -m unittest tests.test_register` (halves sum to the block within 1 %, every parcel has id / geometry /
+status, scenarios present, registry linked). Real integration (ONVV RVV, ASP cadastre, AIPA) would be a data exchange
+through MConnect; not implemented.
+
 ### Compliance: vineyard register (ONVV), cadastre, AIPA subsidies
 Tab „Conformitate” (role *Inspector*): per block, what the drone measured (planted area, density, gaps) against the
 Registrul vitivinicol entry and the AIPA request (demo records, clearly labelled), plus the **real public cadastral parcels**

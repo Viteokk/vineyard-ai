@@ -1,0 +1,64 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "vineyard-ai/registry/schema.json",
+  "title": "Registru viticol DEMO (grower -> parcel -> events)",
+  "description": "Structure aligned with the EU vineyard register, Reg. (EU) 2018/273 art. 7 and annexes III-IV: grower identity, parcel identified through the land-parcel / cadastral system with GIS geometry, area, variety, planting year, authorisation, PDO/PGI and the history of plantings, grubbing-up and inspections. All values in registry/parcels_demo.geojson are SYNTHETIC (DEMO). Measured fields are added by pipeline/register.py from the drone survey (web/data/register.geojson).",
+  "$defs": {
+    "Grower": {
+      "type": "object",
+      "required": ["grower_id"],
+      "properties": {"grower_id": {"type": "string", "pattern": "^DEMO-G-\\d{2}$", "description": "pseudonymised grower id (production: IDNO / IDNP via MPass, never shown on the map)"}}
+    },
+    "Event": {
+      "type": "object",
+      "required": ["type", "date", "result"],
+      "properties": {
+        "type": {"enum": ["planting", "grubbing_up", "replanting", "inspection"]},
+        "date": {"type": "string", "format": "date"},
+        "result": {"type": "string"},
+        "note": {"type": "string"}
+      }
+    },
+    "Measured": {
+      "type": "object",
+      "description": "filled automatically from the pipeline outputs (EPSG:32635, horizontal)",
+      "properties": {
+        "parcel_area_ha": {"type": "number", "description": "geometric area of the parcel"},
+        "measured_area_ha": {"type": "number", "description": "row length inside the parcel x row spacing of the block"},
+        "rows": {"type": "integer", "description": "distinct row_id with >= 2 m inside the parcel"},
+        "row_length_m": {"type": "number"},
+        "row_spacing_m": {"type": "number", "description": "median distance between neighbouring row axes of the block"},
+        "density_nominal": {"type": "integer", "description": "vines/ha = 10000 / (row spacing x 1.2 m vine spacing)"},
+        "density_effective": {"type": "integer", "description": "density_nominal x (1 - gap_share)"},
+        "gap_length_m": {"type": "number"}, "gap_share": {"type": "number"}, "missing_vines": {"type": "integer"},
+        "bare_soil_share": {"type": "number"}, "vegetation_share": {"type": "number"}, "mixed_share": {"type": "number"},
+        "status_detected": {"enum": ["planted", "no_vines", "abandoned"], "description": "no_vines: measured area < 10 % of the parcel; abandoned (heuristic): vegetation inter-rows > 80 % and gap share > 40 %"},
+        "area_diff_ha": {"type": "number", "description": "measured - declared, planted parcels only"},
+        "area_diff_pct": {"type": ["number", "null"]}
+      }
+    },
+    "Parcel": {
+      "type": "object",
+      "required": ["cad_nr", "grower_id", "declared_area_ha", "status", "demo"],
+      "properties": {
+        "cad_nr": {"type": "string", "pattern": "^DEMO-\\d{4}$", "description": "cadastral / land-parcel identifier (DEMO)"},
+        "grower_id": {"type": "string"},
+        "rvv_code": {"type": ["string", "null"], "description": "Registrul Vitivinicol code; null = parcel not covered by a registration"},
+        "vineyard_id": {"type": ["string", "null"], "description": "detected block the parcel was generated from (link to the map)"},
+        "declared_area_ha": {"type": "number"},
+        "variety": {"type": "string"},
+        "planting_year": {"type": "integer"},
+        "planting_scheme": {"type": "string", "description": "row spacing x vine spacing, as declared"},
+        "authorisation_nr": {"type": ["string", "null"], "description": "planting authorisation (Reg. (EU) 1308/2013 art. 62); null = none"},
+        "status": {"enum": ["planted", "grubbed_up", "abandoned"]},
+        "pdo_pgi": {"type": "string"},
+        "scenario": {"enum": ["whole", "split", "split_unauthorised", "no_vines", "abandoned_declared"], "description": "how the DEMO parcel was generated (test scenarios)"},
+        "demo": {"const": true},
+        "events": {"type": "array", "items": {"$ref": "#/$defs/Event"}},
+        "measured": {"$ref": "#/$defs/Measured"}
+      }
+    }
+  },
+  "type": "object",
+  "properties": {"features": {"type": "array", "items": {"type": "object", "properties": {"properties": {"$ref": "#/$defs/Parcel"}}}}}
+}

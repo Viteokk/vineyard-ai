@@ -8,7 +8,7 @@ Stages (each is also a CLI on its own, see the module docstrings):
             pipeline.tours     the inspector tour split into day tours           -> web/data/tours/
   validate  pipeline.validate  official route rules                               -> out/route_check_*.json
   measure   pipeline.measurements + pipeline.block_report + pipeline.compliance   -> measurements.csv, web/data/blocks_report.json,
-                                                                                   web/data/compliance.json
+            + pipeline.register                                                     web/data/compliance.json, web/data/register.geojson
   export    pipeline.export_cvat  Marcaj upload ZIPs                              -> out/upload/*.zip
   web       scripts.make_web_tiles + scripts.build_web_map                        -> web/data/
 Timings per stage and the hardware go to out/timing.json (quoted in README.md).
@@ -90,6 +90,7 @@ def main() -> None:
             sh([PY, "-m", "pipeline.block_report"])          # per-block status / tasks for the web map
             sh([PY, "-m", "pipeline.cadastre"])              # ASP cadastral parcels x blocks (cached download)
             sh([PY, "-m", "pipeline.compliance", "--visit-route"])   # RVV / AIPA checks per block (demo registry)
+            sh([PY, "-m", "pipeline.register"])              # DEMO vineyard register: parcels, declared vs measured (US-2)
         elif stage == "export":
             sh([PY, "-m", "pipeline.export_cvat", "--inp", str(global_xml), "--tiles", a.tiles])
         elif stage == "web":

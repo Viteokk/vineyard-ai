@@ -10,7 +10,10 @@
    "declared_area_ha": 0.255,
    "igp": "Codru",
    "declared_density": 3290,
-   "demo": true
+   "demo": true,
+   "cad_nr": [
+    "DEMO-0001"
+   ]
   },
   {
    "vineyard_id": "V02",
@@ -27,7 +30,11 @@
     "year": 2024,
     "requested_lei": 133300,
     "demo": true
-   }
+   },
+   "cad_nr": [
+    "DEMO-0002",
+    "DEMO-0003"
+   ]
   },
   {
    "vineyard_id": "V04",
@@ -38,7 +45,10 @@
    "declared_area_ha": 1.364,
    "igp": "Codru",
    "declared_density": 2950,
-   "demo": true
+   "demo": true,
+   "cad_nr": [
+    "DEMO-0004"
+   ]
   },
   {
    "vineyard_id": "V08",
@@ -49,7 +59,10 @@
    "declared_area_ha": 1.393,
    "igp": "Codru",
    "declared_density": 3690,
-   "demo": true
+   "demo": true,
+   "cad_nr": [
+    "DEMO-0005"
+   ]
   },
   {
    "vineyard_id": "V10",
@@ -60,7 +73,10 @@
    "declared_area_ha": 0.173,
    "igp": "Codru",
    "declared_density": 3730,
-   "demo": true
+   "demo": true,
+   "cad_nr": [
+    "DEMO-0007"
+   ]
   },
   {
    "vineyard_id": "V11",
@@ -77,7 +93,10 @@
     "year": 2024,
     "requested_lei": 59000,
     "demo": true
-   }
+   },
+   "cad_nr": [
+    "DEMO-0008"
+   ]
   },
   {
    "vineyard_id": "V14",
@@ -88,7 +107,10 @@
    "declared_area_ha": 0.218,
    "igp": "Codru",
    "declared_density": 2950,
-   "demo": true
+   "demo": true,
+   "cad_nr": [
+    "DEMO-0010"
+   ]
   },
   {
    "vineyard_id": "V15",
@@ -99,7 +121,10 @@
    "declared_area_ha": 0.232,
    "igp": "Codru",
    "declared_density": 3690,
-   "demo": true
+   "demo": true,
+   "cad_nr": [
+    "DEMO-0011"
+   ]
   },
   {
    "vineyard_id": "V21",
@@ -110,7 +135,10 @@
    "declared_area_ha": 0.206,
    "igp": "Codru",
    "declared_density": 3000,
-   "demo": true
+   "demo": true,
+   "cad_nr": [
+    "DEMO-0012"
+   ]
   },
   {
    "vineyard_id": "V24",
@@ -127,7 +155,10 @@
     "year": 2025,
     "requested_lei": 73200,
     "demo": true
-   }
+   },
+   "cad_nr": [
+    "DEMO-0013"
+   ]
   },
   {
    "vineyard_id": "V29",
@@ -138,7 +169,10 @@
    "declared_area_ha": 1.496,
    "igp": "Codru",
    "declared_density": 3110,
-   "demo": true
+   "demo": true,
+   "cad_nr": [
+    "DEMO-0014"
+   ]
   },
   {
    "vineyard_id": "V32",
@@ -155,7 +189,11 @@
     "year": 2024,
     "requested_lei": 140200,
     "demo": true
-   }
+   },
+   "cad_nr": [
+    "DEMO-0015",
+    "DEMO-0016"
+   ]
   },
   {
    "vineyard_id": "V39",
@@ -172,7 +210,10 @@
     "year": 2025,
     "requested_lei": 40600,
     "demo": true
-   }
+   },
+   "cad_nr": [
+    "DEMO-0017"
+   ]
   },
   {
    "vineyard_id": "V42",
@@ -189,7 +230,10 @@
     "year": 2024,
     "requested_lei": 62500,
     "demo": true
-   }
+   },
+   "cad_nr": [
+    "DEMO-0018"
+   ]
   },
   {
    "vineyard_id": "V45",
@@ -200,7 +244,10 @@
    "declared_area_ha": 0.69,
    "igp": "Codru",
    "declared_density": 2880,
-   "demo": true
+   "demo": true,
+   "cad_nr": [
+    "DEMO-0019"
+   ]
   },
   {
    "vineyard_id": "V46",
@@ -211,7 +258,10 @@
    "declared_area_ha": 0.223,
    "igp": "Codru",
    "declared_density": 2850,
-   "demo": true
+   "demo": true,
+   "cad_nr": [
+    "DEMO-0020"
+   ]
   },
   {
    "vineyard_id": "V47",
@@ -222,7 +272,10 @@
    "declared_area_ha": 0.277,
    "igp": "Codru",
    "declared_density": 3820,
-   "demo": true
+   "demo": true,
+   "cad_nr": [
+    "DEMO-0021"
+   ]
   },
   {
    "vineyard_id": "V53",
@@ -239,7 +292,10 @@
     "year": 2024,
     "requested_lei": 31500,
     "demo": true
-   }
+   },
+   "cad_nr": [
+    "DEMO-0022"
+   ]
   },
   {
    "vineyard_id": "V55",
@@ -250,7 +306,10 @@
    "declared_area_ha": 0.229,
    "igp": "Codru",
    "declared_density": 3690,
-   "demo": true
+   "demo": true,
+   "cad_nr": [
+    "DEMO-0023"
+   ]
   },
   {
    "vineyard_id": "V60",
@@ -261,7 +320,10 @@
    "declared_area_ha": 0.203,
    "igp": "Codru",
    "declared_density": 3690,
-   "demo": true
+   "demo": true,
+   "cad_nr": [
+    "DEMO-0024"
+   ]
   },
   {
    "vineyard_id": "V61",
@@ -272,7 +334,10 @@
    "declared_area_ha": 0.163,
    "igp": "Codru",
    "declared_density": 3020,
-   "demo": true
+   "demo": true,
+   "cad_nr": [
+    "DEMO-0025"
+   ]
   },
   {
    "vineyard_id": "V62",
@@ -283,7 +348,10 @@
    "declared_area_ha": 1.028,
    "igp": "Codru",
    "declared_density": 3380,
-   "demo": true
+   "demo": true,
+   "cad_nr": [
+    "DEMO-0026"
+   ]
   },
   {
    "vineyard_id": "V63",
@@ -294,7 +362,11 @@
    "declared_area_ha": 4.101,
    "igp": "Codru",
    "declared_density": 3400,
-   "demo": true
+   "demo": true,
+   "cad_nr": [
+    "DEMO-0027",
+    "DEMO-0028"
+   ]
   },
   {
    "vineyard_id": "V64",
@@ -305,7 +377,10 @@
    "declared_area_ha": 0.33,
    "igp": "Codru",
    "declared_density": 4080,
-   "demo": true
+   "demo": true,
+   "cad_nr": [
+    "DEMO-0029"
+   ]
   },
   {
    "vineyard_id": "V65",
@@ -322,7 +397,10 @@
     "year": 2025,
     "requested_lei": 44700,
     "demo": true
-   }
+   },
+   "cad_nr": [
+    "DEMO-0030"
+   ]
   },
   {
    "vineyard_id": "V66",
@@ -333,7 +411,10 @@
    "declared_area_ha": 1.076,
    "igp": "Codru",
    "declared_density": 3580,
-   "demo": true
+   "demo": true,
+   "cad_nr": [
+    "DEMO-0031"
+   ]
   },
   {
    "vineyard_id": "V67",
@@ -344,7 +425,10 @@
    "declared_area_ha": 0.209,
    "igp": "Codru",
    "declared_density": 3770,
-   "demo": true
+   "demo": true,
+   "cad_nr": [
+    "DEMO-0032"
+   ]
   },
   {
    "vineyard_id": "V68",
@@ -355,7 +439,11 @@
    "declared_area_ha": 2.079,
    "igp": "Codru",
    "declared_density": 3500,
-   "demo": true
+   "demo": true,
+   "cad_nr": [
+    "DEMO-0033",
+    "DEMO-0034"
+   ]
   },
   {
    "vineyard_id": "V69",
@@ -366,7 +454,10 @@
    "declared_area_ha": 0.158,
    "igp": "Codru",
    "declared_density": 5212,
-   "demo": true
+   "demo": true,
+   "cad_nr": [
+    "DEMO-0035"
+   ]
   },
   {
    "vineyard_id": "V70",
@@ -377,7 +468,10 @@
    "declared_area_ha": 0.565,
    "igp": "Codru",
    "declared_density": 3140,
-   "demo": true
+   "demo": true,
+   "cad_nr": [
+    "DEMO-0036"
+   ]
   }
  ]
 }
