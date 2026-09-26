@@ -306,7 +306,7 @@ input[type=range]{accent-color:var(--accent);width:100%}
 
 <div class="veil" id="pal-veil" hidden>
   <div class="palette" role="dialog" aria-modal="true" aria-label="Căutare">
-    <input id="pal-in" type="text" placeholder="Caută r021_c012, V01-R05, măsurători…" autocomplete="off" aria-label="Caută">
+    <input id="pal-in" type="text" placeholder="Caută r021_c012, V01-R05, nr. cadastral 80371140153…" autocomplete="off" aria-label="Caută">
     <div class="pal-list" id="pal-list"></div>
     <div class="pal-foot"><span><kbd>↑</kbd> <kbd>↓</kbd> alege</span><span><kbd>↵</kbd> deschide</span><span><kbd>esc</kbd> închide</span></div>
   </div>
@@ -617,10 +617,11 @@ function select(sel) {
     const p = sel.p;
     html = `<div class="p-top"><div><div class="eyebrow">Parcelă cadastrală · ASP</div><h2 style="font-size:19px">${p.cod}</h2></div>${close}</div>
       <dl><dt>Mod de folosință</dt><dd>${p.landuse || '—'}</dd><dt>Suprafață (cadastru)</dt><dd class="num">${p.aria_decl || '—'} · ${fmt(p.parcel_ha, 3)} ha geometrie</dd>
-        <dt>Vie detectată</dt><dd class="num">${fmt(p.vine_ha, 3)} ha (${fmt(p.vine_share * 100)} %)</dd><dt>Blocuri</dt><dd>${p.blocks.join(', ') || '—'}</dd></dl>
+        <dt>Vie detectată</dt><dd class="num">${p.vine_ha == null ? (p.outside ? 'în afara zborului' : '—') : fmt(p.vine_ha, 3) + ' ha (' + fmt(p.vine_share * 100) + ' %)'}</dd><dt>Blocuri</dt><dd>${p.blocks.join(', ') || '—'}</dd>${p.typeproperty ? `<dt>Proprietate</dt><dd>${p.typeproperty}</dd>` : ''}</dl>
+      ${p.outside ? '<p class="note">Parcela e în afara ortofotoului Sireț3: vezi conturul din cadastru; pentru analiza viei trebuie un zbor de dronă acolo (sau un tile încărcat în modul live).</p>' : ''}
       ${p.flags.includes('rvv') ? '<p class="note">Peste 0,15 ha de vie: înregistrarea în Registrul vitivinicol e obligatorie (Legea 57/2006, art. 21).</p>' : ''}
       ${p.flags.includes('landuse') ? `<p class="note" style="color:var(--warn)">Vie detectată pe un teren înregistrat „${p.landuse}”: de verificat modul de folosință.</p>` : ''}
-      <div class="acts"><a class="btn" href="https://rvv.gov.md/publicpart/check.jsf" target="_blank" rel="noopener">Caută în RVV</a><button class="btn" type="button" data-act="copy-cod" data-id="${p.cod}">Copiază nr. cadastral</button></div>
+      <div class="acts"><a class="btn" href="https://rvv.gov.md/publicpart/check.jsf" target="_blank" rel="noopener">Caută în RVV</a><button class="btn" type="button" data-act="copy-cod" data-id="${p.cod}">Copiază nr.</button><button class="btn" type="button" data-act="share" data-id="C${p.cod}">Copiază linkul</button></div>
       <p class="note">${CAD?.source || ''}. Căutarea publică RVV acceptă numărul cadastral.</p>`;
     if (sel.layer) hi = L.geoJSON(sel.layer.feature, {renderer: R, coordsToLatLng: toLL, style: {color: '#FFFFFF', weight: 3, fill: false}, interactive: false}).addTo(map);
   } else if (sel.type === 'cmp') {
@@ -924,6 +925,48 @@ function viewCor() {
 
 /* ============ conformitate: registrul viticol (ONVV) + cereri AIPA vs dronă ============ */
 let CMP = null, cmpLayer = null, BFC = null, CAD = null, cadLayer = null;
+/* ============ căutare după număr cadastral (local + cadastrul național ASP, WFS public cu CORS) ============ */
+const D4026 = '+proj=tmerc +lat_0=0 +lon_0=28.4 +k=0.99994 +x_0=200000 +y_0=-5000000 +ellps=GRS80 +towgs84=0,0,0,0,0,0,0 +units=m +no_defs';   // MOLDREF99 / Moldova TM
+const CAD_WFS = 'https://geodata.gov.md/geoserver/cadastru_data/wfs?service=WFS&version=2.0.0&request=GetFeature&typeNames=cadastru_data%3Aterenuri&outputFormat=application%2Fjson';
+let cadHit = null, CADRES = null;
+const ringA = r => { let a = 0; for (let i = 0; i < r.length - 1; i++) a += r[i][0] * r[i + 1][1] - r[i + 1][0] * r[i][1]; return Math.abs(a) / 2; };
+function geomArea(g) { const polys = g.type === 'Polygon' ? [g.coordinates] : g.coordinates; return polys.reduce((s, p) => s + ringA(p[0]) - p.slice(1).reduce((h, r) => h + ringA(r), 0), 0); }
+function toUtmFeature(f) {
+  const tr = c => typeof c[0] === 'number' ? proj4(D4026, UTM, [c[0], c[1]]) : c.map(tr);
+  const g = {type: f.geometry.type, coordinates: tr(f.geometry.coordinates)}, p = f.properties || {};
+  return {type: 'Feature', geometry: g, properties: {cod: (p.codcadastral || '').trim(), landuse: String(p.landuse || '').replace(/\s+/g, ' ').trim(), aria_decl: (p.aria || '').trim(),
+    typeproperty: p.typeproperty || '', parcel_ha: geomArea(g) / 1e4, vine_ha: null, vine_share: 0, blocks: [], flags: [], remote: true}};
+}
+function showParcel(f) {
+  if (cadHit) map.removeLayer(cadHit);
+  cadHit = L.geoJSON(f, {renderer: R, coordsToLatLng: toLL, style: {color: '#F97316', weight: 3, fillColor: '#F97316', fillOpacity: .15}, interactive: false}).addTo(map);
+  const b = cadHit.getBounds(), inside = bnds(EXT).intersects(b);
+  fitBounds(b, 4);
+  select({type: 'parcel', p: {...f.properties, outside: !inside}, layer: {feature: f}});
+}
+async function cadSearch(raw) {
+  const q = String(raw || '').replace(/\D/g, '');
+  if (q.length < 4) return toast('Scrie cel puțin 4 cifre din numărul cadastral');
+  const loc = CAD?.features.find(f => f.properties.cod === q);
+  if (loc) { CADRES = null; return showParcel(loc); }
+  if (!UTM) return toast('Căutarea în cadastru are nevoie de biblioteca de coordonate');
+  toast(`Caut ${q} în cadastrul național…`);
+  const exact = q.length >= 10;
+  try {
+    const j = await fetch(CAD_WFS + `&count=${exact ? 5 : 25}&CQL_FILTER=` + encodeURIComponent(exact ? `codcadastral='${q}'` : `codcadastral LIKE '${q}%'`)).then(r => r.json());
+    const fs = (j.features || []).filter(f => f.geometry).map(toUtmFeature);
+    if (!fs.length) { CADRES = null; toast(`Nicio parcelă cu numărul ${q} în cadastrul ASP`); return renderPanel(); }
+    if (fs.length === 1) { CADRES = null; return showParcel(fs[0]); }
+    CADRES = {q, items: fs}; if (S.view !== 'conformitate') location.hash = 'conformitate'; else renderPanel();
+    toast(`${fs.length} parcele încep cu ${q}`);
+  } catch (e) { toast('Cadastrul național nu răspunde acum. Încearcă din nou.'); }
+}
+function cadSearchCard() {
+  return `<section><div class="sec-title"><h2>Caută după număr cadastral</h2><span class="note">toată Moldova · ASP</span></div>
+    <div style="display:flex;gap:8px;flex-wrap:wrap"><input class="search" id="cad-q" type="search" inputmode="numeric" placeholder="ex. 80371140153" aria-label="Număr cadastral" style="flex:1;min-width:160px"><button class="btn primary" type="button" data-act="cad-search">Caută</button></div>
+    <p class="note">Numărul întreg (11 cifre) găsește parcela; primele cifre (ex. 8037114) listează parcelele din acel sector. Parcela se deschide pe hartă, cu folosința și suprafața din cadastru și cu vița detectată, dacă e în zona zburată.</p>
+    ${CADRES ? `<div class="list">${CADRES.items.map((f, i) => `<button type="button" class="li" data-cadpick="${i}"><b class="mono">${f.properties.cod}</b><span class="r">${f.properties.landuse} · ${f.properties.aria_decl || fmt(f.properties.parcel_ha, 2) + ' ha'}</span></button>`).join('')}</div>` : ''}</section>`;
+}
 const CADC = f => f.properties.flags.includes('landuse') ? '#A855F7' : f.properties.flags.includes('rvv') ? '#38BDF8' : '#E5E7EB';
 fetch('data/cadastre.geojson').then(r => r.ok ? r.json() : null).then(fc => {
   if (!fc) return; CAD = fc;
@@ -978,7 +1021,7 @@ function viewConf() {
   $('#p-head').innerHTML = head('Conformitate · ONVV + AIPA', 'Registru vs dronă');
   if (!CMP) { $('#p-body').innerHTML = `<p class="note">Se încarcă <span class="mono">data/compliance.json</span>…</p>`; return; }
   const u = CMP.summary, visit = u.visit.map(v => CMP.by[v]).filter(Boolean), ok = CMP.blocks.filter(b => b.status === 'conform');
-  $('#p-body').innerHTML = `${u.demo_registry ? `<div class="demo-band"><b>DATE DEMONSTRATIVE.</b> Înregistrările RVV și cererile AIPA de aici sunt sintetice (${u.registry_source}); măsurătorile sunt reale, din dronă. În producție extrasul vine de la ONVV / AIPA${LIVE ? ' — încarcă-l mai jos ca CSV' : ''}.</div>` : `<div class="callout"><b>Registru încărcat:</b> ${u.registry_source}</div>`}
+  $('#p-body').innerHTML = `${cadSearchCard()}${u.demo_registry ? `<div class="demo-band"><b>DATE DEMONSTRATIVE.</b> Înregistrările RVV și cererile AIPA de aici sunt sintetice (${u.registry_source}); măsurătorile sunt reale, din dronă. În producție extrasul vine de la ONVV / AIPA${LIVE ? ' — încarcă-l mai jos ca CSV' : ''}.</div>` : `<div class="callout"><b>Registru încărcat:</b> ${u.registry_source}</div>`}
     <div class="stats">${['neconform', 'verificare', 'conform', 'sub_prag'].map(k => `<div class="stat"><div class="v num" style="color:${CMC[k]}">${fmt(u.status[k])}</div><div class="l">${CMN[k]}</div></div>`).join('')}</div>
     <div class="stats">
       <div class="stat"><div class="v num">${fmt(u.registered)}</div><div class="l">blocuri în Registrul Vitivinicol</div></div>
@@ -1178,6 +1221,7 @@ function renderPanel() { VIEWS[S.view](); }
 function show(v) {
   if (v === 'administrator') v = 'fermier';
   if (ROLES[v]) return setRole(v);         // #inspector, #fermier (#administrator)
+  if (/^C\d{4,}$/i.test(v || '')) { const q = v.slice(1); if (S.view !== 'conformitate') show('conformitate'); setTimeout(() => cadSearch(q), 600); return; }
   const idm = /^(V\d+)(-R\d+)?$/i.exec(v || '');   // shareable links: #V63 (block), #V02-R017 (row)
   if (idm && !VIEWS[v]) { PENDING = v.toUpperCase(); if (S.view !== 'harta' || !$('#p-body').innerHTML) show('harta'); return openPending(); }
   if (!VIEWS[v]) v = 'harta';
@@ -1262,6 +1306,10 @@ function palSearch(q) {
   if (WC.length && (!q || 'candidați deșeuri deseuri'.includes(q))) it.push({g: 'Locuri', k: 'D', l: 'Candidați deșeuri', r: `${WC.length} din checklist`, run: () => wcGo((WC.find(x => !WCV[x.rank]) || WC[0]).rank)});
   if (!q || 'start'.includes(q)) it.push({g: 'Locuri', k: 'S', l: 'START', r: 'punctul de plecare', run: () => startLL && map.flyTo(startLL, 3)});
   if (q) for (const t of TILES.filter(t => t.name && t.name.includes(q)).slice(0, 12)) { const g = cur().by[t.name]; it.push({g: 'Tile-uri', k: 'T', l: short(t.name), r: g ? `${g.can.length} coroane` : 'fără detecții', run: () => goTile(t.name)}); }
+  if (/^\d{4,}$/.test(q)) {
+    for (const f of (CAD?.features || []).filter(f => f.properties.cod.startsWith(q)).slice(0, 8)) it.push({g: 'Parcele cadastrale', k: 'C', l: f.properties.cod, r: `${f.properties.landuse} · ${fmt(f.properties.vine_ha, 2)} ha vie`, run: () => showParcel(f)});
+    it.push({g: 'Parcele cadastrale', k: '⌕', l: `Caută ${q} în cadastrul național`, r: 'geodata.gov.md · toată Moldova', run: () => cadSearch(q)});
+  }
   if (q.length > 1 && BR) for (const b of BR.blocks.filter(b => b.vineyard_id.toLowerCase().includes(q)).slice(0, 8)) it.push({g: 'Blocuri', k: 'V', l: b.vineyard_id, r: `${BSN[b.status]} · ${fmt(b.rows)} rânduri · ~${fmt(b.missing_vines)} butuci lipsă`, run: () => goBlock(b.vineyard_id)});
   if (q.length > 1) { const s = cur(); let n = 0; for (const t of s.tiles) for (const f of s.by[t].rows) if (n < 10 && f.properties.row_id.toLowerCase().includes(q)) { n++; it.push({g: 'Rânduri', k: 'R', l: f.properties.row_id, r: fmt(f.properties.length_m, 1) + ' m', run: () => goRow(f.properties.row_id)}); } }
   return it.slice(0, 40);
@@ -1328,6 +1376,7 @@ document.addEventListener('click', e => {
   if (b.dataset.role) return setRole(b.dataset.role);
   if (b.dataset.block) return goBlock(b.dataset.block);
   if (b.dataset.cmp) return goCmp(b.dataset.cmp);
+  if (b.dataset.cadpick) return CADRES && showParcel(CADRES.items[+b.dataset.cadpick]);
   if (b.dataset.corTile) { if (S.src !== 'pred') setSrc('pred'); return goTile(b.dataset.corTile); }
   if (b.dataset.corDone) { const k = b.dataset.corDone; if (CORD[k]) delete CORD[k]; else CORD[k] = true; store.set('cor', CORD); return renderPanel(); }
   if (b.dataset.tour) return showTour(+b.dataset.tour);
@@ -1366,6 +1415,7 @@ document.addEventListener('click', e => {
     case 'pv': return S.sel?.b && printPV(S.sel.b);
     case 'cad-on': { S.layers.cad = true; store.set('layers', S.layers); applyLayers(); renderLayers(); return renderPanel(); }
     case 'copy-cod': return copy(b.dataset.id, null);
+    case 'cad-search': return cadSearch($('#cad-q')?.value);
     case 'cmp-on': { S.layers.cmp = true; store.set('layers', S.layers); applyLayers(); renderLayers(); return renderPanel(); }
     case 'cmp-csv': { const t = cmpCsv(); if (downloadText('conformitate.csv', t, 'text/csv')) toast('conformitate.csv descărcat'); else copy(t, null); return; }
     case 'cmp-upload': return $('#csv-in').click();
@@ -1400,6 +1450,7 @@ document.addEventListener('change', e => {
   if (id === 'p-gap' && !LIVE) loadVariant(v).then(ok => { if (!ok && ROUTES.live) { map.removeLayer(ROUTES.live.layer); delete ROUTES.live; renderLayers(); renderPanel(); } });
 });
 document.addEventListener('keydown', e => {
+  if (e.key === 'Enter' && e.target.id === 'cad-q') return cadSearch(e.target.value);
   const typing = e.target.matches('input,textarea');
   if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'k') { e.preventDefault(); return $('#pal-veil').hidden ? openPal() : closePal(); }
   if (e.key === 'Escape') { if (CST.picking) { CST.picking = false; map.getContainer().style.cursor = ''; return renderPanel(); } if (RULER.on) return rulerToggle(); if (!$('#legend').hidden) return ($('#legend').hidden = true); if (!$('#role-veil').hidden) return ($('#role-veil').hidden = true); if (!$('#pal-veil').hidden) return closePal(); if (!$('#ex-veil').hidden) return ($('#ex-veil').hidden = true); if (!$('#layers').hidden) return ($('#layers').hidden = true); if (S.sel) return select(null); }
@@ -1416,7 +1467,7 @@ addEventListener('hashchange', () => show(location.hash.slice(1)));
 applyTheme(store.get('theme', 'auto'));
 roleBtn();
 show(location.hash.slice(1) || (S.role ? ROLES[S.role].view : 'harta'));
-if (!S.role && !ROLES[location.hash.slice(1)] && !/^#V\d+/i.test(location.hash)) openRole();   // shared links open straight on the object
+if (!S.role && !ROLES[location.hash.slice(1)] && !/^#[VC]\d+/i.test(location.hash)) openRole();   // shared links open straight on the object
 map.fitBounds(bnds(EXT), phone() ? {paddingTopLeft: [16, 70], paddingBottomRight: [16, innerHeight * .44 + 100]} : {paddingTopLeft: [leftPad() + 16, 76], paddingBottomRight: [76, 76]});
 renderLayers(); applyLayers(); scale(); drawCustomStart();
 $('#loader').remove();
