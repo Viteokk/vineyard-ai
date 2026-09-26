@@ -158,6 +158,7 @@ input[type=range]{accent-color:var(--accent);width:100%}
 .insp dt{color:var(--muted)}
 .insp dd{margin:0;font-weight:600;text-align:right;word-break:break-all}
 .insp .acts{display:flex;gap:8px}
+.wc-img{display:block;width:100%;max-width:256px;aspect-ratio:1;object-fit:cover;border-radius:8px;border:1px solid var(--line);margin:4px 0 8px}
 .insp .acts .btn{flex:1;min-height:36px;font-size:13px;padding:0 10px}
 .zoom{position:fixed;right:16px;bottom:16px;display:flex;flex-direction:column;border-radius:14px;z-index:1000;overflow:hidden}
 .zoom button{width:44px;height:44px;display:grid;place-items:center;color:var(--ink)}
@@ -302,6 +303,7 @@ try {
   EXTRA = {study, passages, forbidden, start,
            routes: {blue: {fc: routeB, tg: tgB, ck: ckB, name: 'Inspector', sub: 'goluri + deșeuri', color: '#2563EB', file: 'route.geojson'},
                     red: {fc: routeR, tg: tgR, ck: ckR, name: 'Fermier', sub: 'doar deșeuri', color: '#DC2626', file: 'route_waste.geojson'}}};
+  EXTRA.wcand = await j('data/waste_candidates.geojson', true);
   const [pSum, pRows, pInter, pCan, rSum, rRows, rInter, rCan] = await Promise.all([
     j('data/pred/summary.json', true), j('data/pred/rows.geojson', true), j('data/pred/interrows.geojson', true), j('data/pred/canopies.json', true),
     j('data/summary.json', true), j('data/rows.geojson', true), j('data/interrows.geojson', true), j('data/canopies.geojson', true)]);
@@ -333,7 +335,7 @@ Object.values(SRC).forEach(indexSource);
 /* ============ state ============ */
 const S = {
   view: 'harta', src: store.get('src', SRC.pred ? 'pred' : 'ref'), sel: null, q: '', collapsed: false,
-  layers: Object.assign({ortho: true, canopy: true, rows: true, inter: true, passage: true, forbidden: true, study: true, grid: false, route_blue: true, route_red: true, targets: true}, store.get('layers', {})),
+  layers: Object.assign({ortho: true, canopy: true, rows: true, inter: true, passage: true, forbidden: true, study: true, grid: false, route_blue: true, route_red: true, targets: true, wcand: true}, store.get('layers', {})),
   op: store.get('op', 1)
 };
 if (!SRC[S.src]) S.src = Object.keys(SRC)[0];
@@ -407,6 +409,27 @@ if (TG.length) {
   }));
 }
 
+/* waste checklist candidates: automatic, NOT annotated waste; a human confirms each one before drawing it in Marcaj */
+const WC = (EXTRA.wcand?.features || []).map(f => ({...f.properties, x: f.geometry.coordinates[0], y: f.geometry.coordinates[1]})).sort((a, b) => a.rank - b.rank);
+const WCV = store.get('wc', {});               // rank -> 'y' (waste) | 'n' (not waste); this browser only
+const WCC = {y: '#9333EA', n: '#8A958F', u: '#F97316'};
+const wcStyle = c => { const v = WCV[c.rank] || 'u'; return {radius: v === 'n' ? 4 : 6, color: '#1A1A1A', weight: 1.5, fillColor: WCC[v], fillOpacity: v === 'n' ? .7 : 1}; };
+const wcMk = {};
+const wcLayer = WC.length ? L.layerGroup(WC.map(c => {
+  const m = L.circleMarker(ll(c.x, c.y), {renderer: R, ...wcStyle(c)});
+  m.on('click', e => { L.DomEvent.stop(e); select({type: 'wcand', c}); });
+  return (wcMk[c.rank] = m);
+})) : null;
+function wcMark(c, v) {
+  if (WCV[c.rank] === v) delete WCV[c.rank]; else WCV[c.rank] = v;
+  store.set('wc', WCV); wcMk[c.rank]?.setStyle(wcStyle(c)); if (S.view === 'harta') renderPanel();
+  return WCV[c.rank] === v;
+}
+function wcGo(rank) {
+  const c = WC.find(x => x.rank === rank); if (!c) return;
+  map.flyTo(ll(c.x, c.y), Math.max(map.getZoom(), 4), {duration: .5}); select({type: 'wcand', c});
+}
+
 /* annotation layers, drawn per visible tile */
 const ROWC = {regular: '#FFD43B', disrupted: '#FF4D4D', unassessable: '#A8A8A8'};
 const COVC = {bare_soil: '#22D3EE', mixed: '#FAB005', vegetation: '#51CF66', unassessable: '#A8A8A8'};
@@ -458,6 +481,7 @@ function applyLayers() {
   for (const k of ['study', 'passage', 'forbidden', 'grid']) S.layers[k] ? ctx[k].addTo(map) : map.removeLayer(ctx[k]);
   for (const [k, r] of Object.entries(ROUTES)) S.layers['route_' + k] ? r.layer.addTo(map) : map.removeLayer(r.layer);
   syncTargets();
+  if (wcLayer) S.layers.wcand ? wcLayer.addTo(map) : map.removeLayer(wcLayer);
   ortho.eachLayer(l => l.setOpacity(S.op)); hires.eachLayer(l => l.setOpacity(S.op));
   refreshAnnotations();
 }
@@ -514,6 +538,15 @@ function select(sel) {
       ${t.order ? `<div class="acts"><button class="btn primary" type="button" data-act="nav-here" data-id="${t.id}">Navighează de aici</button></div>` : ''}`;
     if (NAV.picking) navStartFrom(t, 'ales pe hartă');
     hi = L.circleMarker(ll(t.x, t.y), {renderer: R, radius: 11, color: '#FFFFFF', weight: 3, fill: false}).addTo(map);
+  } else if (sel.type === 'wcand') {
+    const c = sel.c, v = WCV[c.rank], n = WC.length, done = Object.keys(WCV).length, yes = Object.values(WCV).filter(x => x === 'y').length;
+    html = `<div class="p-top"><div><div class="eyebrow">Candidat deșeu #${c.rank} din ${n} · automat, neconfirmat</div><h2 style="font-size:19px">${short(c.tile)} · px ${Math.round((c.px[0] + c.px[2]) / 2)}, ${Math.round((c.px[1] + c.px[3]) / 2)}</h2></div>${close}</div>
+      ${c.thumb ? `<img class="wc-img" src="${c.thumb}" alt="Decupaj 2,5 cm/px în jurul candidatului #${c.rank}">` : ''}
+      <dl><dt>Box pe tile (px)</dt><dd class="mono">${c.px.join(', ')}</dd><dt>vineyard_id</dt><dd>${c.vineyard_id || '— (peste 10 m de un bloc)'}</dd><dt>Arie pată</dt><dd class="num">${fmt(c.area_m2, 2)} m²</dd><dt>Tip · scor</dt><dd>${c.kind} · ${c.score}${c.on_passage ? ' · pe drum' : ''}</dd><dt>X, Y</dt><dd class="mono">${c.x.toFixed(2)}, ${c.y.toFixed(2)}</dd></dl>
+      <div class="acts"><button class="btn ${v === 'y' ? 'primary' : ''}" type="button" data-act="wc-y" aria-pressed="${v === 'y'}">E deșeu</button><button class="btn ${v === 'n' ? 'primary' : ''}" type="button" data-act="wc-n" aria-pressed="${v === 'n'}">Nu e</button></div>
+      <div class="acts"><button class="btn" type="button" data-act="wc-prev" ${c.rank > 1 ? '' : 'disabled'}>‹ Anterior</button><button class="btn" type="button" data-act="wc-next" ${c.rank < n ? '' : 'disabled'}>Următor ›</button></div>
+      <p class="note">${done} din ${n} verificați · ${yes} deșeu (salvat doar în acest browser). Cutia se desenează în Marcaj pe ${short(c.tile)}, la pixelii de mai sus. În dubiu, nu adnota.</p>`;
+    hi = L.layerGroup([L.circleMarker(ll(c.x, c.y), {renderer: R, radius: 12, color: '#FFFFFF', weight: 3, fill: false}), L.rectangle(bnds(c.box), {renderer: R, color: '#FFFFFF', weight: 2, fill: false})]).addTo(map);
   } else if (sel.type === 'tile') {
     const g = cur().by[sel.name], b = TB[sel.name];
     html = `<div class="p-top"><div><div class="eyebrow">Tile · 51,2 × 51,2 m</div><h2 style="font-size:19px">${short(sel.name)}</h2></div>${close}</div>
@@ -545,6 +578,9 @@ function viewHarta() {
   $('#p-head').innerHTML = head('Sireț3 · ortofoto 2,5 cm/px', s.name, srcSeg());
   $('#p-body').innerHTML = `${statsBlock(s)}
     <p class="note">${S.src === 'pred' ? 'Detecții automate pe toate cele 311 tile-uri, înainte de corectura umană din Marcaj. Unele tile-uri fără vie (livezi, sat) au detecții false: folosește lista de mai jos ca să le verifici.' : 'Adnotările oficiale ale organizatorilor pentru cele 2 tile-uri exemplu. Mărește pe ele: imaginea trece automat la rezoluția completă de 2,5 cm/px.'}</p>
+    ${WC.length ? `<section><div class="sec-title"><h2 style="display:flex;align-items:center;gap:8px"><span style="width:10px;height:10px;border-radius:50%;background:#F97316;border:1.5px solid #1A1A1A"></span>Candidați deșeuri</h2><span class="num">${Object.keys(WCV).length} / ${WC.length} verificați · ${Object.values(WCV).filter(x => x === 'y').length} deșeu</span></div>
+      <p class="note">Pete găsite automat (checklist pentru Marcaj). Nu sunt adnotări și nu intră în trasee: fiecare se verifică pe imagine (E deșeu / Nu e), apoi se desenează de mână în Marcaj.</p>
+      <div style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn primary" type="button" data-act="wc-start">${Object.keys(WCV).length ? 'Continuă verificarea' : 'Începe verificarea'}</button></div></section>` : ''}
     <section><div class="sec-title"><h2>Tile-uri cu detecții</h2><span class="num">${list.length} din ${s.tiles.length}</span></div>
       <input class="search" id="tile-q" type="search" placeholder="Filtrează, ex. r021 sau c012" value="${S.q.replace(/"/g, '')}" aria-label="Filtrează tile-uri">
       <div class="list" style="margin-top:6px">${list.slice(0, 150).map(t => { const g = s.by[t]; return `<button type="button" class="li" data-tile="${t}"><b>${short(t)}</b><span class="mini" style="width:${Math.max(3, g.can.length / max * 70)}px"></span><span class="r num">${g.can.length} coroane · ${g.rows.length} rânduri</span></button>`; }).join('')}</div>
@@ -700,6 +736,7 @@ function renderLayers() {
     ['passage', 'Passage (drumuri)', '#FFFFFF'], ['forbidden', 'Forbidden', '#FF4D4D'], ['study', 'Zona de studiu', '#FFFFFF'], ['grid', 'Grilă tile-uri', '#9AA59F']];
   for (const [k, r] of Object.entries(ROUTES)) L1.push(['route_' + k, `Traseu ${r.name.toLowerCase()} (${r.sub})`, r.color]);
   if (targetsLayer) L1.push(['targets', 'Ținte (goluri, deșeuri)', '#2563EB']);
+  if (wcLayer) L1.push(['wcand', 'Candidați deșeuri (checklist, neconfirmați)', '#F97316']);
   $('#layers').innerHTML = `<div class="sec-title" style="padding:2px 4px 4px"><h2>Straturi</h2><span><kbd>L</kbd></span></div>` +
     L1.map(([k, l, c]) => `<button type="button" class="sw" role="switch" aria-checked="${!!S.layers[k]}" data-layer="${k}"><span class="sw-i" style="background:${c};border:1px solid var(--line)"></span>${l}<span class="tg"></span></button>`).join('') +
     `<label for="op">Opacitate ortofoto<input type="range" id="op" min="15" max="100" value="${Math.round(S.op * 100)}"></label>
@@ -712,6 +749,7 @@ function palSearch(q) {
   q = q.trim().toLowerCase(); const it = [];
   for (const [v, l, k] of [['harta', 'Hartă', '1'], ['traseu', 'Traseu', '2'], ['masuratori', 'Măsurători', '3'], ['pipeline', 'Pipeline', '4']]) if (!q || l.toLowerCase().includes(q)) it.push({g: 'Secțiuni', k, l, run: () => { location.hash = v; }});
   for (const [k, s] of Object.entries(SRC)) if (!q || s.name.toLowerCase().includes(q)) it.push({g: 'Sursă date', k: '◧', l: s.name, r: s.sub, run: () => setSrc(k)});
+  if (WC.length && (!q || 'candidați deșeuri deseuri'.includes(q))) it.push({g: 'Locuri', k: 'D', l: 'Candidați deșeuri', r: `${WC.length} din checklist`, run: () => wcGo((WC.find(x => !WCV[x.rank]) || WC[0]).rank)});
   if (!q || 'start'.includes(q)) it.push({g: 'Locuri', k: 'S', l: 'START', r: 'punctul de plecare', run: () => startLL && map.flyTo(startLL, 3)});
   if (q) for (const t of TILES.filter(t => t.name && t.name.includes(q)).slice(0, 12)) { const g = cur().by[t.name]; it.push({g: 'Tile-uri', k: 'T', l: short(t.name), r: g ? `${g.can.length} coroane` : 'fără detecții', run: () => goTile(t.name)}); }
   if (q.length > 1) { const s = cur(); let n = 0; for (const t of s.tiles) for (const f of s.by[t].rows) if (n < 10 && f.properties.row_id.toLowerCase().includes(q)) { n++; it.push({g: 'Rânduri', k: 'R', l: f.properties.row_id, r: fmt(f.properties.length_m, 1) + ' m', run: () => goRow(f.properties.row_id)}); } }
@@ -800,6 +838,10 @@ document.addEventListener('click', e => {
     case 'copy-ex': return copy($('#ex-text').value, $('#ex-text'));
     case 'copy-repro': return copy($('#repro').innerText.replace(/^Copiază\s*/, ''), null);
     case 'unsel': return select(null);
+    case 'wc-y': case 'wc-n': { const c = S.sel?.c; if (!c) return; const set = wcMark(c, b.dataset.act === 'wc-y' ? 'y' : 'n'); return set && c.rank < WC.length ? wcGo(c.rank + 1) : select({type: 'wcand', c}); }
+    case 'wc-prev': return S.sel?.c && wcGo(S.sel.c.rank - 1);
+    case 'wc-next': return S.sel?.c && wcGo(S.sel.c.rank + 1);
+    case 'wc-start': { S.layers.wcand = true; store.set('layers', S.layers); applyLayers(); if (phone()) collapsePanel(true); return wcGo((WC.find(x => !WCV[x.rank]) || WC[0]).rank); }
     case 'zoom-tile': return fitBounds(bnds(TB[S.sel.name]), 5);
   }
 });
